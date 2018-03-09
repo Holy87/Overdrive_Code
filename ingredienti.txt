@@ -1,0 +1,185 @@
+goods.push(i[1])
+    goods.push(i[2]) if $game_party.has_item?($data_items[144])
+    goods.push(i[3]) if $game_party.has_item?($data_items[145])
+    goods.push(i[4]) if $game_party.has_item?($data_items[145])
+    goods.push(i[5])
+    goods.push(i[6])
+    goods.push(i[7]) if $game_party.has_item?($data_items[144])
+    goods.push(i[8]) if $game_party.has_item?($data_items[146])
+    goods.push(i[15]) if $game_party.has_item?($data_items[145])
+    goods.push(i[16]) if $game_party.has_item?($data_items[145])
+    goods.push(i[17]) if $game_party.has_item?($data_items[146])
+    goods.push(i[20]) if $game_party.has_item?($data_items[147])
+    goods.push(i[21])
+    goods.push(i[22]) if $game_party.has_item?($data_items[144])
+    goods.push(i[23]) if $game_party.has_item?($data_items[144])
+    goods.push(i[24]) if $game_party.has_item?($data_items[145])
+    goods.push(i[25]) if $game_party.has_item?($data_items[146])
+    goods.push(i[26]) if $game_party.has_item?($data_items[145])
+    goods.push(i[27]) if $game_party.has_item?($data_items[145])
+    goods.push(i[152])if $game_party.has_item?($data_items[144])
+    goods.push(i[30])
+    goods.push(i[163]) if actor.skills.include?($data_skills[346])
+    goods.push(i[164]) if actor.skills.include?($data_skills[347])
+    goods.push(i[165]) if actor.skills.include?($data_skills[348])
+    goods.push(i[166]) if actor.skills.include?($data_skills[349])
+    goods.push(i[167]) if actor.skills.include?($data_skills[350])
+    goods.push(i[168]) if actor.skills.include?($data_skills[351])
+    goods.push(i[170]) if $game_party.has_item?($data_items[145])
+    goods.push(i[171]) if $game_party.has_item?($data_items[146])
+    goods.push(w[89])
+    goods.push(w[90]) if $game_party.has_item?($data_items[144])
+    goods.push(w[91]) if $game_party.has_item?($data_items[145])
+    goods.push(w[92]) if $game_party.has_item?($data_items[146])
+    if $game_party.has_item?($data_items[145])
+      goods.push(i[50]);goods.push(i[51]);goods.push(i[52])
+      goods.push(i[76]);goods.push(i[77])
+    end
+
+WeaponIngredient = {}
+
+  #41 Carota, 42 Cipolla, 43 Patata, 44 Carne, 45 Bulbo, 46 Fungo, 47 Noci,
+  #48 Arancia, 49 Gemma dp, 50 Vernice, 51 Corda, 52 Tessuto, 53 Ossa, 54 Ala di P.,
+  #55 Piuma ucc, 56 Pelle Animale, 57 Essenza B, 58 Interiora Zombie,
+  #59 Guscio Animale, 60 Corno Belva, 61 Acqua Cristallizzata, 62 Fuoco Solido,
+  #63 Cenere El, 64 Legno, 65 Radici, 66 Betulla, 67 P. Runica, 68 Acqua S,
+  #69 Sc.Drago, 70 P. Mutaf, 71 Indurente, 72 Quarzo, 73 Lyrium, 74 Lubrificante, 75 Acciaio,
+  #76 Ferro, 77 Alluminio, 78 Mithril, 79 Oliacro, 80 Resina, 81 P. Ossa,
+  #82 P. Lavorata, 83 Triade Elementale, 84 P. Energetica, 85 L. Mithril,
+  #86 V. Purezza, 87 Nucleo, 88 Seta, 89 Antimateria
+
+  WeaponIngredient[13] = [{76 => 2, 71=>2, 77=>3 },{},{}]
+  WeaponIngredient[15] = [{85 => 1, 73=>1},{},{}]#sp mithril
+  WeaponIngredient[17] = [{76 => 2, 71=>2, 64=>3 },{},{}]
+  WeaponIngredient[18] = [{75 => 1, 84=>1, 81=>1 },{},{}]#Ascia Nanica
+  WeaponIngredient[24] = [{75 => 2, 69=>2, 82=>2 },{},{}]#ammazzadr
+  WeaponIngredient[36] = [{76 => 2, 71=>2, 67=>2 },{},{}]
+  WeaponIngredient[40] = [{75 => 1, 71=>3, 77=>3 },{},{}]
+  WeaponIngredient[54] = [{77 => 4, 71=>2, 80=>3 },{},{}]
+  WeaponIngredient[55] = [{75 => 1, 81=>2, 86=>1 },{},{}]#Giavellotto
+  WeaponIngredient[74] = [{51 => 2, 64=>3, 80=>3 },{},{}]
+  WeaponIngredient[75] = [{82 => 1, 62=>3, 71=>1,74=>2 },{},{}]#arco scarl
+  WeaponIngredient[110] = [{86 => 1, 71=>2, 73=>2 },{},{}]
+  WeaponIngredient[111]= [{72 => 2, 84=>1, 83=>2 },{},{}]#solco quantico
+  WeaponIngredient[130] = [{76 => 2, 74=>2, 77=>3 },{},{}]
+  WeaponIngredient[133]= [{75 => 1, 72=>1, 60=>2 },{},{}]#lama cristallo
+  WeaponIngredient[156] = [{78 => 1, 67=>1, 76=>2 },{},{}]
+  WeaponIngredient[157]= [{75 => 2, 50=>3, 67=>2 },{},{}]#shocker
+  WeaponIngredient[176] = [{75 => 1, 56=>2},{},{}]
+
+  #Armi di Angelo
+  WeaponIngredient[89] = [{76 => 1, 62 => 1},{},{}]
+  WeaponIngredient[90] = [{77 => 2, 76 => 2},{},{}]
+  WeaponIngredient[91] = [{76 => 5, 62 => 3},{},{}]
+  WeaponIngredient[92] = [{75 => 1, 71 => 1, 72 => 3},{},{}]
+  WeaponIngredient.default = [{},{},{}]
+  #=========================================================================
+  #  ArmorIngredient: Imposta gli ingredienti per comprare le armature.
+  #-------------------------------------------------------------------------
+  #  Sintassi:
+  #    ArmorIngredient[aId1] = [{iId => n, ...}, {wId => n, ...}, {aId2 => n, ...}]
+  #  Parametri:
+  #    aId1: id dell'armatura da comprare
+  #    iId: id degli oggetti richiesti per comprare l'armatura
+  #    wId: id delle armi richieste per comprare l'armatura
+  #    aId2: id delle armature richieste per comprare l'armatura
+  #    n: quantità dell'oggetto richiesta
+  #=========================================================================
+  ArmorIngredient = {}
+  ArmorIngredient[6] = [{76 => 1,59 => 2},{},{}]#scudo ferro
+  ArmorIngredient[9] = [{77=>3,56=>3,71=>2},{},{}]
+  ArmorIngredient[10] = [{75 => 1,73 => 2,63=>1},{},{}]#scudo nem
+  ArmorIngredient[11] = [{75 => 1,74 => 2,67=>2},{},{}]#scudo cust
+  ArmorIngredient[24] = [{76 => 1,60 => 2,77=>1},{},{}]#elmo ferro
+  ArmorIngredient[26] = [{56 => 1,52 => 1},{},{}]#Cappa di cuoio
+  ArmorIngredient[39] = [{52 => 1,55 => 2,63=>1},{},{}]#Cappello Arcobal
+  ArmorIngredient[40] = [{75=>1,71=>1},{},{}]
+  ArmorIngredient[41] = [{82=>1,60=>2},{},{}]
+  ArmorIngredient[42] = [{75=>1,73=>1},{},{}]
+  ArmorIngredient[43] = [{75 => 1,71 => 1,59=>2},{},{}]#elmo nemesi
+  ArmorIngredient[44] = [{75 => 1,71 => 1,67=>3},{},{}]#elmo custode
+  ArmorIngredient[45] = [{76 => 1,68 => 1,71=>1},{},{}]#copric. benedetto
+  ArmorIngredient[46] = [{88 => 1,73 => 1,74=>1},{},{}]#cappello elfico
+  ArmorIngredient[47] = [{77 => 2,60 => 2,71=>1},{},{}]#casco vento
+  ArmorIngredient[48] = [{82 => 1,60 => 2,55=>2},{},{}]#copric elfico
+  ArmorIngredient[68] = [{76 => 2,60 => 3,77=>2},{},{}]#armatura ferro
+  ArmorIngredient[69] = [{56 => 2,59 => 2,53=>2},{},{}]#giacca cuoio
+  ArmorIngredient[76] = [{52 => 2,55 => 3,63=>2},{},{}]#manto arcobal
+  ArmorIngredient[81] = [{75=>1,77=>3,71=>1},{},{}]
+  ArmorIngredient[82] = [{77=>3,75=>1},{},{}]
+  ArmorIngredient[83] = [{52=>1,51=>2,77=>1},{},{}]
+  ArmorIngredient[84] = [{75 => 1,82 => 1,71=>1},{},{}]#armat nemesi
+  ArmorIngredient[85] = [{75 => 1,82 => 1,72=>2},{},{}]#armat custode
+  ArmorIngredient[86] = [{88 => 2,68 => 2,86=>1},{},{}]#vesti mistiche
+  ArmorIngredient[87] = [{88 => 2,73 => 2,83=>1},{},{}]#vesti elfico
+  ArmorIngredient[88] = [{82 => 2,65 => 2,61=>2},{},{}]#mantello elfo
+  ArmorIngredient[89] = [{77 => 4,71 => 2,55=>4},{},{}]#corazza vento
+  ArmorIngredient[200] = [{80=>2,67=>2,76=>2},{},{}]
+  ArmorIngredient[244] = [{56=>2,53=>2},{},{}]
+  ArmorIngredient[245] = [{82=>1,60=>3},{},{}]
+  ArmorIngredient[246] = [{82=>2,71=>1,77=>2},{},{}]
+    #41 Carota, 42 Cipolla, 43 Patata, 44 Carne, 45 bulbo oculare, 46 Fungo, 47 Estratto di tossine,
+    #48 Arancia, 49 Gemma dp, 50 Vernice, 51 Acqua pura, 52 Tessuto, 53 Ossa, 54 Ala di P.,
+    #55 Piuma ucc, 56 Pelle Animale, 57 Essenza B, 58 Interiora Zombie,
+    #59 Guscio Animale, 60 Corno Belva, 61 Acqua Cristallizzata, 62 Fuoco Solido,
+    #63 Cenere El, 64 Legno, 65 Radici, 66 Betulla, 67 P. Runica, 68 Acqua S,
+    #69 Sc.Drago, 70 Zolfo, 71 Indurente, 72 Quarzo, 73 Lyrium, 74 Lubrificante, 75 Acciaio,
+    #76 Ferro, 77 Alluminio, 78 Mithril, 79 Oliacro, 80 Resina, 81 P. Ossa,
+    #82 P. Lavorata, 83 Gel elementale, 84 P. Energetica, 85 L. Mithril,
+    #86 V. Purezza, 87 Nucleo, 88 Seta, 89 Antimateria, 90 polvere da sparo, 91 Vitralfrutto
+    #116 bottiglia vuota, 151 Cianfrusaglie
+
+  ArmorIngredient[4] = [{3 => 4},{3 => 1},{}]
+  ArmorIngredient.default = [{},{},{}]
+
+  #Oggetti
+  ItemIngredient ={}
+  ItemIngredient[1] = [{57 => 4, 65 => 1},{},{}] #Pozione
+  ItemIngredient[2] = [{1=> 2, 46 => 2, 65 => 2},{},{}] #Poz Ottima
+  ItemIngredient[3] = [{2=> 4, 63 => 2, 48 => 2},{},{}] #Poz Raffinata
+  ItemIngredient[4] = [{73 => 5, 45 => 7},{},{}] #acqua magica
+  ItemIngredient[5] = [{55 => 3, 68 => 1},{},{},2] #vitalfr
+  ItemIngredient[6] = [{48 => 2, 65 => 1},{},{},2] #antidoto
+  ItemIngredient[7] = [{66 => 3, 55 => 2},{},{},2] #erba m
+  ItemIngredient[8] = [{3 => 2,68 => 7, 85 => 5},{},{}] #elisir
+  ItemIngredient[15] = [{65 => 10, 60 => 2},{},{}] #polvere di st
+  ItemIngredient[16] = [{1=> 4, 46 => 2, 65 => 2},{},{}] #essenza g
+  ItemIngredient[17] = [{8 => 2, 89 => 10},{},{}]
+  ItemIngredient[18] = [{81 => 2, 89 => 5},{},{}]
+  ItemIngredient[19] = [{4 => 2, 87 => 3},{},{}]
+  ItemIngredient[20] = [{44 => 30, 86 => 12},{},{}]
+  ItemIngredient[21] = [{46 => 2, 6 => 5},{},{},2] #veleno
+  ItemIngredient[22] = [{42 => 2, 63 => 2},{},{},2] #bomba stord
+  ItemIngredient[23] = [{60 => 5, 62 => 4},{},{},3] #granata
+  ItemIngredient[24] = [{76 => 4, 61 => 2},{},{},3] #shuriken
+  ItemIngredient[25] = [{44 => 5, 50 => 8},{},{}]
+  ItemIngredient[26] = [{48 => 5, 43 => 8},{},{}]
+  ItemIngredient[27] = [{57 => 5, 63 => 2, 54=>4},{},{}]
+  ItemIngredient[30] = [{45 => 2, 58 => 3},{},{}]
+  ItemIngredient[163] = [{76 => 1, 62 => 2},{},{},3] #proiettile esplosivo
+  ItemIngredient[164] = [{76 => 1, 61 => 1},{},{},3]
+  ItemIngredient[165] = [{76 => 1, 50 => 1, 57 => 1},{},{},3]
+  ItemIngredient[166] = [{76 => 1, 60 => 1},{},{},3]
+  ItemIngredient[167] = [{76 => 1, 42 => 2},{},{},3]
+  ItemIngredient[168] = [{76 => 1, 63 => 2},{},{},3]
+  ItemIngredient[170] = [{116 => 1, 57 => 2},{},{}]
+  ItemIngredient[171] = [{116 => 1, 65=>2, 61=>1,80=>1},{},{}]
+
+  ItemIngredient[50] = [{60 => 1, 58 => 1},{},{}]
+  ItemIngredient[82] = [{56 => 4},{},{}]
+  ItemIngredient[81] = [{53 => 3},{},{}]
+  ItemIngredient[75] = [{76 => 3, 50 => 2,},{},{}]
+  ItemIngredient[85] = [{75 => 1, 78 => 1, 86 => 1},{},{}]
+  ItemIngredient[86] = [{49 => 1, 50=> 2, 81 => 2},{},{}]
+  ItemIngredient[83] = [{61 => 1, 62 => 1, 63 => 1},{},{}]
+  ItemIngredient[84] = [{57 => 5, 71 => 1, 80 => 2},{},{}]
+  ItemIngredient[87] = [{84 => 1, 73 => 2, 79 => 1},{},{}]
+  ItemIngredient[88] = [{82 => 1, 52 => 2},{},{}]
+
+  ItemIngredient[50] = [{151 => 3},{},{}]
+  ItemIngredient[51] = [{151 => 6},{},{}]
+  ItemIngredient[52] = [{151 => 2},{},{}]
+  ItemIngredient[76] = [{151 => 5},{},{}]
+  ItemIngredient[77] = [{151 => 4},{},{}]
+
+  ItemIngredient[152] = [{151 => 4,170=>1,73=>2,49=>1},{},{}]
