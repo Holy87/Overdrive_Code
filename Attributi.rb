@@ -786,7 +786,7 @@ module RPG
       if self.range_type != nil
         return self.range_type == 0
       end
-      return false if self.element_set & H87AttrSettings::RANGED_ELEMENTS > 0
+      return false if (self.element_set & H87AttrSettings::RANGED_ELEMENTS).size > 0
       self.atk_f > 0
     end
     #--------------------------------------------------------------------------
@@ -796,8 +796,8 @@ module RPG
       if self.range_type != nil
         return self.range_type == 1
       end
-      return true if self.element_set & H87AttrSettings::RANGED_ELEMENTS > 0
-      self.atk_f == 0
+      return true if (self.element_set & H87AttrSettings::RANGED_ELEMENTS).size > 0
+      self.atk_f <= 0
     end
     #--------------------------------------------------------------------------
     # * Restituisce il nome dell'abilità
