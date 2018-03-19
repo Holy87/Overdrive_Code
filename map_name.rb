@@ -30,7 +30,6 @@ class Game_Temp
   #--------------------------------------------------------------------------
   def map_names
     @map_names ||= load_map_names
-    @map_names
   end
   #--------------------------------------------------------------------------
   # * Carica i nomi della mappa (solo la prima volta)

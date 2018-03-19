@@ -4,27 +4,27 @@ require 'rm_vx_data'
 # Difficoltà utente: ★★★★
 # Versione 1.0
 #===============================================================================
-#Gestisce le evocazioni di Overdrive.
-#ATTENZIONE: Nel caso tu voglia usare questo script nel tuo gioco, sappi che
-#hai bisogno dello script KGC Large Party.
-#Istruzioni:
-#Crea un eroe nel database, dai i suoi i parametri come un normale eroe. Se
-#vuoi, mettigli "battaglia automatica" (consigliato).
-#Imposta quindi, in Esper_List nello script, l'eroe creato in questo modo:
-#ID_Eroe => [Variabile_Usata, attacco, t_ricarica, turni]
-#ID_Eroe è l'ID dell'eroe che sarà esper
-#Variabile_Usata è la variabile che tiene conto di quante battaglie dovrà
-#aspettare il giocatore prima che sia di nuovo utilizzabile.
-#attacca indica se l'esper può attaccare oppure usa solo le abilità. Serve
-#solo se l'esper combatte con "Battaglia Automatica".
-#turni è il numero di turni in cui l'esper sarà in campo, dopodichè scomparirà.
-#Dopo creato l'esper, per creare il potere d'invocazione, hai bisogno di 
-#inserire l'ID della skill in Invocazioni, indicando il relativo ID dell'Esper.
-#Questa funzione serve per fare in modo che il potere non possa essere utilizzato
-#se l'esper non è ancora carico, o se non è possibile evocare esper.
-#Impostando il potere, devi fare in modo che esso chiami un evento comune, e
-#all'interno di quest'evento devi mettere un call script inserendo:
-#Espers.evoca(id) dove id è l'ID dell'esper.
+# Gestisce le evocazioni di Overdrive.
+# ATTENZIONE: Nel caso tu voglia usare questo script nel tuo gioco, sappi che
+# hai bisogno dello script KGC Large Party.
+# Istruzioni:
+# Crea un eroe nel database, dai i suoi i parametri come un normale eroe. Se
+# vuoi, mettigli "battaglia automatica" (consigliato).
+# Imposta quindi, in Esper_List nello script, l'eroe creato in questo modo:
+# ID_Eroe => [Variabile_Usata, attacco, t_ricarica, turni]
+# ID_Eroe è l'ID dell'eroe che sarà esper
+# Variabile_Usata è la variabile che tiene conto di quante battaglie dovrà
+# aspettare il giocatore prima che sia di nuovo utilizzabile.
+# attacca indica se l'esper può attaccare oppure usa solo le abilità. Serve
+# solo se l'esper combatte con "Battaglia Automatica".
+# turni è il numero di turni in cui l'esper sarà in campo, dopodichè scomparirà.
+# Dopo creato l'esper, per creare il potere d'invocazione, hai bisogno di
+# inserire l'ID della skill in Invocazioni, indicando il relativo ID dell'Esper.
+# Questa funzione serve per fare in modo che il potere non possa essere utilizzato
+# se l'esper non è ancora carico, o se non è possibile evocare esper.
+# Impostando il potere, devi fare in modo che esso chiami un evento comune, e
+# all'interno di quest'evento devi mettere un call script inserendo:
+# Espers.evoca(id) dove id è l'ID dell'esper.
 module Espers
 #===============================================================================
 # CONFIGURAZIONE
@@ -126,7 +126,7 @@ module Vocab
   def self.in_use_by;"In uso da";end
   def self.esper_duration;"Durata:";end
   def self.no_user;"nessuno";end
-  def self.actBonus;"Bonus";end
+  def self.act_bonus;"Bonus";end
   def self.activate_skill;'Attiva/Disattiva abilità';end
   def self.bonus_desc;"Visualizza i potenziamenti attivati dal tempio delle|Dominazioni.";end
   def self.summon_number;"Evocato:";end
@@ -490,6 +490,12 @@ class Game_Actor < Game_Battler
   def charge_state=(value)
     @charge_state ||= recharge_max
     @charge_state = value
+  end
+  #--------------------------------------------------------------------------
+  # * Restituisce la percentuale di ricarica (valore da 0 a 1)
+  #--------------------------------------------------------------------------
+  def charge_state_rate
+    recharge_status.to_f / recharge_max.to_f
   end
   #--------------------------------------------------------------------------
   # * Carica la dominazione di una battaglia

@@ -65,7 +65,7 @@ class Window_EsperStatus < Window_Base
   # @param [Fixnum] y
   #--------------------------------------------------------------------------
   def draw_esper_charge(esper, x, y, width = contents_width - x)
-    rate = esper.recharge_status.to_f / esper.recharge_max.to_f
+    rate = esper.charge_state_rate
     draw_gauge(x, y, width, rate, mp_gauge_color1, mp_gauge_color2)
     text = sprintf('%d/%d', esper.recharge_status, esper.recharge_max)
     change_color(normal_color)

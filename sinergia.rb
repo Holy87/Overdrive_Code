@@ -75,11 +75,11 @@ module H87_SINERGIC
 end
 
 #===============================================================================
-# ** SinergyStats
+# ** Sinergy_Stats
 #-------------------------------------------------------------------------------
 # Attributi per la Sinergia
 #===============================================================================
-module SinergyStats
+module Sinergy_Stats
   INCENTIVE = /<incentivo:[ ]*([+\-]\d+)([%％])>/i
   SIN_DURAB = /<durata sinergia:[ ]*([+\-]\d+)([%％])>/i
   SIN_BONUS = /<bonus sinergia:[ ]*([+\-]\d+)([%％])>/i
@@ -189,10 +189,10 @@ end #usableitem
 #-------------------------------------------------------------------------------
 # Inclusione dei parametri sinergia
 #===============================================================================
-class RPG::Weapon;  include SinergyStats; end
-class RPG::Armor;   include SinergyStats; end
-class RPG::State;   include SinergyStats; end
-class RPG::Item;    include SinergyStats; end
+class RPG::Weapon;  include Sinergy_Stats; end
+class RPG::Armor;   include Sinergy_Stats; end
+class RPG::State;   include Sinergy_Stats; end
+class RPG::Item;    include Sinergy_Stats; end
 
 #===============================================================================
 # ** Scene_Title

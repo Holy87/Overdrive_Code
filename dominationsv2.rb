@@ -513,7 +513,7 @@ class Window_DominationCommand < Window_Command
     add_command(Vocab.skill, :skills)
     add_command(Vocab.milky, :milks)
     add_command(Vocab.elements, :elements)
-    add_command(Vocab.actBonus, :bonuses)
+    add_command(Vocab.act_bonus, :bonuses)
   end
   #--------------------------------------------------------------------------
   # * Get Window Width

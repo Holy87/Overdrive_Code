@@ -15,6 +15,7 @@ module H87HUD_SETTINGS
       :mp => Color.new(4, 169, 218),
       :wh => Color.new(255,255,255),
       :ch => Color.new(123,227,29),
+      :es => Color::DEEPPINK
   }
 
   GRAD_COLORS2 = {
@@ -22,6 +23,7 @@ module H87HUD_SETTINGS
       :mp => Color.new(122, 217, 246),
       :wh => Color.new(255,255,255,0),
       :ch => Color.new(201,255,48),
+      :es => Color::PINK
   }
 
   # Tonalità dell'eroe attivo
@@ -412,6 +414,7 @@ class Actor_BattleStatus
       @mp_bar.set_value(actor.mp_cost_rate*100)
       @mp_numbers.change_value(actor.mp, actor.mmp)
     end
+    @esper_bar.set_value(actor.charge_state_rate) if actor.is_esper?
     @bface.z = 999
     refresh_bface
   end
@@ -451,6 +454,7 @@ class Actor_BattleStatus
   def create_bars
     create_hp_bar
     actor.charge_gauge? ? create_anger_bar : create_mp_bar
+    create_esper_bar if actor.is_esper?
   end
   #--------------------------------------------------------------------------
   # * HP bar creation
@@ -475,6 +479,14 @@ class Actor_BattleStatus
     @anger_bar = Battle_Charge_Bar.new(210, 18, anger_width)
     @anger_bar.set_value(actor.anger_rate*100)
     register_object(@anger_bar)
+  end
+  #--------------------------------------------------------------------------
+  # * Esper Gauge Creation
+  #--------------------------------------------------------------------------
+  def create_esper_bar
+    @esper_bar = Battle_EsperBar.new(@mp_bar.x + @mp_bar.width + 20, 18)
+    @esper_bar.set_value(actor.charge_state_rate * 100)
+    register_object(@esper_bar)
   end
   #--------------------------------------------------------------------------
   # * returns HP bar width
@@ -657,7 +669,6 @@ class Battle_Bar
   def z;@z;end
   def width;@width;end
   def height;@height;end
-  # @return [Game_Actor]
   def actor; @actor;end
   #--------------------------------------------------------------------------
   # * Sets the visible property
@@ -868,6 +879,20 @@ class Battle_MpBar < Battle_Bar
       @background.flash(Color.new(255,255,255,50),40)
       @foreground.flash(Color.new(255,255,255,50),40)
     end
+  end
+end
+
+#==============================================================================
+# ** Battle_EsperBar
+#------------------------------------------------------------------------------
+#  Bar for Esper duration
+#==============================================================================
+class Battle_EsperBar < Battle_Bar
+  def initialize(x, y, width = 100)
+    height = H87HUD_SETTINGS::MP_HEIGHT
+    background_bitmap = Cache.hud_bar(:black)
+    foreground_bitmap = Cache.gradient_bitmap(:es)
+    super(x, y, width, height, background_bitmap, foreground_bitmap)
   end
 end
 
