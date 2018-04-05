@@ -1,5 +1,28 @@
 require 'rm_vx_data'
+#===============================================================================
+# Overdrive Battle HUD
+# Versione 1.0
+# Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
+# lo script nei propri progetti, sia amatoriali che commerciali. Vietata
+# l'attribuzione impropria.
+#===============================================================================
+# Questo HUD di battaglia sostituisce la vecchia finestra status con delle barre
+# animate e dinamiche. Le funzioni sono le seguenti:
+# - Mostra barre PV ed MP con lunghezza determinata da PV e PM massimi
+# - Mostra il danno/cura con tacche rosse o verdi sulla barra
+# - Mostra tutti gli status alterati. Se si supera il limite di 5, cominciano a
+#   ruotare.
+# - Se uno stato alterato sta per svanire, lampeggia
+# - Se un eroe sta per morire, si avverte un suono e la sua barra lampeggia
+# - Mostra anche le barre Furia e tempo di evocazione
+#===============================================================================
+# Istruzioni: inserire lo script sotto Materials, prima del Main.
+# RICHIEDE UNA SERIE DI SCRIPT INCLUSI NEL GIOCO.
+# Non dico che è vietato usarlo per il vostro gioco, ma necessita di adattamenti.
 
+#===============================================================================
+# ** CONFIGURAZIONE
+#===============================================================================
 module H87HUD_SETTINGS
   # Colori dello sfondo delle barre
   BAR_COLORS = {
@@ -219,11 +242,17 @@ class Battle_Hud
   # * Refresh
   #--------------------------------------------------------------------------
   def refresh
-    if @members_id != get_members_id($game_party.members)
-      clear_all
+    if party_members_changed?
+      clear_all # ripristina tutti i personaggi se il gruppo cambia
     else
       @battle_status_elements.each{|bt| bt.refresh}
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Determines if the party changed
+  #--------------------------------------------------------------------------
+  def party_members_changed?
+    @members_id != get_members_id($game_party.members)
   end
   #--------------------------------------------------------------------------
   # * Dispose old HUD for party changing
@@ -414,7 +443,9 @@ class Actor_BattleStatus
       @mp_bar.set_value(actor.mp_cost_rate*100)
       @mp_numbers.change_value(actor.mp, actor.mmp)
     end
-    @esper_bar.set_value(actor.charge_state_rate) if actor.is_esper?
+    if actor.is_esper?
+      @esper_bar.set_value($game_temp.domination_turns_rate * 100)
+    end
     @bface.z = 999
     refresh_bface
   end
@@ -484,8 +515,10 @@ class Actor_BattleStatus
   # * Esper Gauge Creation
   #--------------------------------------------------------------------------
   def create_esper_bar
-    @esper_bar = Battle_EsperBar.new(@mp_bar.x + @mp_bar.width + 20, 18)
-    @esper_bar.set_value(actor.charge_state_rate * 100)
+    width = $game_temp.domination_max_turns * 5
+    x = @mp_bar.x + @mp_bar.width + 20
+    @esper_bar = Battle_EsperBar.new(x, 18, width)
+    @esper_bar.set_value($game_temp.domination_turns_rate * 100)
     register_object(@esper_bar)
   end
   #--------------------------------------------------------------------------

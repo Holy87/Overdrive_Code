@@ -1,6 +1,6 @@
 require File.expand_path 'rm_vx_data'
 $imported = {} if $imported == nil
-$imported['H87_UniversalModule'] = 1.7
+$imported['H87_UniversalModule'] = 1.8
 =begin
  ==============================================================================
   ■ Utility universali di Holy87
@@ -32,6 +32,8 @@ $imported['H87_UniversalModule'] = 1.7
         invece che nel file dedicato Version.ini
       - Win.temp_flush deprecato
       - Sistemazione e rifinitura del codice
+      - Aggiunti i metodi on_vx_ace? e on_vx? che determinano su che versione
+        di RPG Maker sta girando lo script.
       - Piccoli bugfix
     ● V 1.7.1
       - Bugfix
@@ -783,6 +785,10 @@ module HTTP
   #--------------------------------------------------------------------------
   def self.send_post_request(url, params, https = false)
     https = true if url =~ /^https:\/\//
+
+    if on_vx_ace?
+      puts sprintf('POST request at %s\nParams:%s, HTTPS: %s', url, params, https)
+    end
     #variable initialization
     info = url_info(url)
     server = info[:server]
@@ -821,6 +827,9 @@ module HTTP
       if r&&n==0
         break
       end
+    end
+    if on_vx_ace?
+      puts sprintf('response: %s', response)
     end
     response
   end
@@ -1633,6 +1642,14 @@ class Object
   def submit_post_request(url, params, https = false)
     HTTP.send_post_request(url, params, https)
   end
+  #--------------------------------------------------------------------------
+  # * Determina se il gioco è VX Ace
+  #--------------------------------------------------------------------------
+  def on_vx_ace?; RUBY_VERSION == '1.9.2'; end
+  #--------------------------------------------------------------------------
+  # * Determina se il gioco è VX
+  #--------------------------------------------------------------------------
+  def on_vx?; RUBY_VERSION == '1.8.1'; end
 end
 
 # launched when can't connect with the server

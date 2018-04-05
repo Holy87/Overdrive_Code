@@ -15,7 +15,6 @@ require 'rm_vx_data'
 #
 #===============================================================================
 
-
 #===============================================================================
 # ** Impostazioni Sinergia
 #-------------------------------------------------------------------------------
@@ -688,7 +687,7 @@ class Game_Party < Game_Unit
     sum = 0
     battle_members.each {|member|
       next if member.nil?
-      sum += member.sin_incentive
+        sum += member.sin_incentive
     }
     sum
   end

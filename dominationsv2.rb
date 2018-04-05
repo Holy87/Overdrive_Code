@@ -184,7 +184,7 @@ class Scene_Dominations < Scene_MenuBase
     milk = @milks_window.item
     domination = @milks_window.domination
     domination.apply_domination_recharge(milk.milk_power)
-    $game_party.use_item(milk)
+    $game_party.consume_item(milk)
     Sound.play_use_item
     @detail_window.refresh
     @milks_window.refresh

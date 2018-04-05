@@ -1975,6 +1975,7 @@ class Game_Actor < Game_Battler
   def counter_states
     states = super
     self.equips.each{|equip|
+      next if equip.nil?
       states += equip.counter_states
     }
     states

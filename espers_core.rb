@@ -370,6 +370,24 @@ class Game_Temp
     @domination_energy = 0 if @domination_energy.nil?
     @domination_energy=value
   end
+  #--------------------------------------------------------------------------
+  # * restituisce il numero di turni a disposizione della dominazione
+  #--------------------------------------------------------------------------
+  def domination_max_turns
+    @domination_max_turns
+  end
+  #--------------------------------------------------------------------------
+  # * imposta i turni massimi della dominazione
+  #--------------------------------------------------------------------------
+  def domination_max_turns=(value)
+    @domination_max_turns = value
+  end
+  #--------------------------------------------------------------------------
+  # * restituisce il rapporto di turni della dominazione
+  #--------------------------------------------------------------------------
+  def domination_turns_rate
+    @domination_energy.to_f / @domination_max_turns.to_f
+  end
 end
 
 #===============================================================================
@@ -834,7 +852,7 @@ class Scene_Battle < Scene_Base
     end
   end
   #--------------------------------------------------------------------------
-  # *
+  # * evoca l'esper in battaglia
   #--------------------------------------------------------------------------
   def evoca_esper(esper_id)
     prepara_azzeramento
@@ -843,11 +861,13 @@ class Scene_Battle < Scene_Base
     add_esper_in_battle(esper)
     $game_temp.domination_energy = esper.duration
     $game_temp.esper_used = true if esper.domination?
+    $game_temp.domination_max_turns = esper.duration
     esper.summon_times += 1
     azzera_tutto
   end
   #--------------------------------------------------------------------------
-  # *
+  # * aggiunge l'evocazione in battaglia
+  # @param [Game_Actor] esper
   #--------------------------------------------------------------------------
   def add_esper_in_battle(esper)
     size = $game_party.members.size+1
