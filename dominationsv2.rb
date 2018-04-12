@@ -19,6 +19,7 @@ class Scene_Dominations < Scene_MenuBase
     create_milks_window
     create_elements_window
     create_powerups_window
+    create_powerup_effect_window
     all_windows_invisible
   end
   #--------------------------------------------------------------------------
@@ -54,6 +55,7 @@ class Scene_Dominations < Scene_MenuBase
     @command_window.set_handler(:skills, method(:skill_selection))
     @command_window.set_handler(:milks, method(:milk_selection))
     @command_window.set_handler(:cancel, method(:back_selection))
+    @command_window.set_handler(:empowers, method(:empower_selection))
     @command_window.set_handler(:cursor_move, method(:update_vista))
     @command_window.deactivate
     @command_window.index = -1
@@ -121,8 +123,17 @@ class Scene_Dominations < Scene_MenuBase
   def create_powerups_window
     rec = subwindows_position
     y = Graphics.height
-    @power_window = Window_DominationPowerUps.new(rec.x, y, rec.width, rec.height)
-    @detail_window.bind(@elements_window)
+    @power_window = Window_DominationEmpowerments.new(rec.x, y, rec.width, rec.height)
+    @detail_window.bind(@power_window)
+  end
+  #--------------------------------------------------------------------------
+  # * crea la finestra dei PA della dominazione
+  #--------------------------------------------------------------------------
+  def create_powerup_effect_window
+    x = @power_window.x
+    width = @power_window.y
+    @emp_effect_window = Window_DominationJP.new(x, 0, width)
+    @emp_effect_window.y = @command_window.y - @emp_effect_window.height
   end
   #--------------------------------------------------------------------------
   # * evento di selezione dominazione (attivazione menu comandi)
@@ -146,6 +157,7 @@ class Scene_Dominations < Scene_MenuBase
   def back_to_command
     @boost_window.close
     @sk_help_window.close
+    @emp_effect_window.close
     @command_window.activate
     @boosts_window.index = -1
     @skills_window.index = -1
@@ -165,6 +177,13 @@ class Scene_Dominations < Scene_MenuBase
     @skills_window.activate
     @skills_window.index = 0
     @sk_help_window.open
+  end
+  #--------------------------------------------------------------------------
+  # * evento di selezione della finestra potenziamenti
+  #--------------------------------------------------------------------------
+  def empower_selection
+    @power_window.activate
+    @emp_effect_window.open
   end
   #--------------------------------------------------------------------------
   # * restituisce il rettangolo delle dimensioni delle finestre a lista
@@ -209,6 +228,16 @@ class Scene_Dominations < Scene_MenuBase
     @boosts_window.refresh
     @boosts_window.activate
     Sound.play_equip
+  end
+  #--------------------------------------------------------------------------
+  # * potenzia il parametro della dominazione
+  #--------------------------------------------------------------------------
+  def empower_param
+    domination = @power_window.domination
+    domination.esper_up_param(@power_window.item[0])
+    @power_window.redraw_current_item
+    @emp_effect_window.refresh
+    @detail_window.refresh
   end
   #--------------------------------------------------------------------------
   # * torna alla selezione dei comandi
@@ -513,7 +542,7 @@ class Window_DominationCommand < Window_Command
     add_command(Vocab.skill, :skills)
     add_command(Vocab.milky, :milks)
     add_command(Vocab.elements, :elements)
-    add_command(Vocab.act_bonus, :bonuses)
+    add_command(Vocab.act_bonus, :empowers)
   end
   #--------------------------------------------------------------------------
   # * Get Window Width
@@ -1087,8 +1116,156 @@ class Window_DominationElements < Window_Base
   end
 end
 
+class Window_DominationEmpowerments < Window_Selectable
+  #--------------------------------------------------------------------------
+  # * inizializzazione
+  # @param [Integer] x
+  # @param [Integer] y
+  # @param [Integer] width
+  # @param [Integer] height
+  #--------------------------------------------------------------------------
+  def initialize(x, y, width, height)
+    make_item_list
+    super
+    deactivate
+    self.index = -1
+    refresh
+  end
+  #--------------------------------------------------------------------------
+  # * crea la lista degli oggetti
+  #--------------------------------------------------------------------------
+  def make_item_list
+    @data = []
+    domination.esper_ups.each_pair { pair
+      @data.push(pair)
+    }
+  end
+  #--------------------------------------------------------------------------
+  # * Restituisce il numero massimo di colonne
+  # @return [Integer]
+  #--------------------------------------------------------------------------
+  def col_max; 1; end
+  #--------------------------------------------------------------------------
+  # * Restituisce la dominazione attuale
+  # @return [Game_Actor]
+  #--------------------------------------------------------------------------
+  def domination; @domination; end
+  #--------------------------------------------------------------------------
+  # * Imposta la dominazione
+  # @param [Game_Actor] new_dom
+  #--------------------------------------------------------------------------
+  def domination=(new_dom)
+    return if new_dom == @domination
+    @domination = new_dom
+    make_item_list
+    create_contents
+    refresh
+  end
+  #--------------------------------------------------------------------------
+  # * restituisce l'oggetto come array [simbolo, valore]
+  # @return [Array]
+  #--------------------------------------------------------------------------
+  def item(index = self.index)
+    @data[index]
+  end
+  #--------------------------------------------------------------------------
+  # * Ottiene il numero di elementi
+  # @return [Integer]
+  #--------------------------------------------------------------------------
+  def item_max
+    @data ? @data.size : 1
+  end
+  #--------------------------------------------------------------------------
+  # * Disegna l'oggetto nella riga
+  # @param [Integer] index l'indice
+  #--------------------------------------------------------------------------
+  def draw_item(index)
+    item = item(index)
+    rect = item_rect(index)
+    enabled = enable?(item)
+    draw_item_name(item, rect.x, rect.y, enabled)
+    draw_item_cost(item, rect, enabled)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_item_name(item, x, y, enabled)
+    change_color(normal_color, enabled)
+    param_name = Vocab.status_param(item[0])
+    param_incr = Espers::ESPER_UPS_INCREMENTS[item[0]]
+    text = sprintf('%s + %d', param_name, param_incr)
+    draw_text(x, y, contents_width - x, line_height, text)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  # @param [Array] item
+  # @param [Rect] rect
+  # @param [Boolean] enabled
+  #--------------------------------------------------------------------------
+  def draw_item_cost(item, rect, enabled)
+    cost = domination.get_cost_esper_up(item[0])
+    change_color(crisis_color, enabled)
+    text = sprintf('%d %s', cost, Vocab.jp)
+    draw_text(rect, text, 2)
+  end
+  #--------------------------------------------------------------------------
+  # * true se è possibile usare l'oggetto
+  # @param [Array] item
+  #--------------------------------------------------------------------------
+  def enable?(item)
+    return false unless domination
+    domination.esper_can_up?(item[0])
+  end
+  #--------------------------------------------------------------------------
+  # * aggiorna la finestra d'aiuto
+  #--------------------------------------------------------------------------
+  def update_help
+    return if @help_window.nil?
+    sym = item[0]
+    increment = Espers::ESPER_UPS_INCREMENTS[sym]
+    text = sprintf(Vocab.power_up_incr, Vocab.status_param(sym), increment)
+    @help_window.set_text(text)
+  end
+end
+
+class Window_DominationJP < Window_Base
+  #--------------------------------------------------------------------------
+  # * inizializzazione
+  #--------------------------------------------------------------------------
+  def initialize(x, y, width)
+    super(x, y, width, fitting_height(1))
+    self.openness = 0
+  end
+  #--------------------------------------------------------------------------
+  # * aggiorna la finestra
+  #--------------------------------------------------------------------------
+  def refresh
+    contents.clear
+    return if @domination.nil?
+    change_color(normal_color)
+    draw_text(0, 0, contents_width, line_height, Vocab.esper_jp_help)
+    change_color(crisis_color)
+    draw_text(0, 0, contents_width, line_height, domination.jp)
+  end
+  #--------------------------------------------------------------------------
+  # * restituisce la dominazione
+  # @return [Game_Actor]
+  #--------------------------------------------------------------------------
+  def domination; @domination; end
+  #--------------------------------------------------------------------------
+  # * imposta la dominazione
+  # @param [Game_Actor] new_domination
+  #--------------------------------------------------------------------------
+  def set_domination(new_domination)
+    return if @domination == new_domination
+    @domination = new_domination
+    refresh
+  end
+end
+
 #===============================================================================
 # ** classe Window_DominationPowerUps
+# @deprecated
 #===============================================================================
 class Window_DominationPowerUps < Window_Base
   #--------------------------------------------------------------------------

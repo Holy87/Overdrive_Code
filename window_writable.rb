@@ -143,7 +143,7 @@ class Words_Container
     @x = x
     @y = y
     @color = color
-    @bitmaps = {}
+    @bitmap = Bitmap.new(width, height)
     @width = width
     @height = height
     @cursor = Writable_Cursor.new(viewport, color, line_height)

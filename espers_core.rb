@@ -96,6 +96,18 @@ module Espers
             #311=>1000,#è una skill di reinard, ma lo forzo ad usare la sinergia.
   }
 
+  ESPER_UPS_INCREMENTS = {
+      :hp => 10,
+      :mp => 5,
+      :atk => 1,
+      :def => 1,
+      :spi => 1,
+      :agi => 1
+  }
+
+  ESPER_UPS_INITIAL_COST = 50 # PA
+  ESPER_UPS_COST_INCREASE = 20 # %
+
   #===============================================================================
   # FINE CONFIGURAZIONE
   #===============================================================================
@@ -133,6 +145,8 @@ module Vocab
   def self.summon_times;"%d volte.";end
   def self.boost_desc;"Attivando i Turbo l'evocazione sarà più potente, ma resterà|per minor tempo in campo.";end
   def self.domination_ready;"%s è pronto a combattere.";end
+  def self.power_up_incr;"Incrementa il parametro %s di %d punti";end
+  def self.esper_jp_help;"PA totali"; end
 end
 
 #===============================================================================
@@ -432,6 +446,14 @@ end
 #===============================================================================
 class Game_Actor < Game_Battler
   include Espers
+  unless $@
+    alias esp_batk base_atk
+    alias esp_bdef base_def
+    alias esp_bspi base_spi
+    alias esp_bagi base_agi
+    alias esp_bhp  base_maxhp
+    alias esp_bmp  base_maxmp
+  end
   #--------------------------------------------------------------------------
   # * determina se è un'evocazione
   #--------------------------------------------------------------------------
@@ -700,6 +722,60 @@ class Game_Actor < Game_Battler
       activate_boost(boost.id)
     end
   end
+  #--------------------------------------------------------------------------
+  # * restituisce l'hash dei potenziamenti
+  # @return [Hash]
+  #--------------------------------------------------------------------------
+  def esper_ups
+    check_init_esper_ups
+    @esper_ups
+  end
+  #--------------------------------------------------------------------------
+  # * potenzia il parametro
+  # @param [Symbol] sym
+  # @return [Hahs]
+  #--------------------------------------------------------------------------
+  def esper_up_param(sym)
+    check_init_esper_ups
+    if esper_can_up?(sym)
+      @esper_ups[sym] += 1
+      lose_jp(get_cost_esper_up(sym))
+      true
+    else
+      false
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * ottiene il costo per potenziare il parametro
+  #--------------------------------------------------------------------------
+  def get_cost_esper_up(sym)
+    ((esper_ups[sym] * ESPER_UPS_COST_INCREASE / 100.0 + 1) * ESPER_UPS_INITIAL_COST).to_i
+  end
+  #--------------------------------------------------------------------------
+  # * determina se l'esper ha i requisiti per potenziare il parametro
+  #--------------------------------------------------------------------------
+  def esper_can_up?(sym)
+    self.jp >= get_cost_esper_up(sym)
+  end
+  #--------------------------------------------------------------------------
+  # * controlla se esiste l'hash dei potenziamenti
+  #--------------------------------------------------------------------------
+  def check_init_esper_ups
+    return if @esper_ups
+    @esper_ups = {:hp => 0, :mp => 0, :atk => 0, :def => 0, :spi => 0, :agi => 0}
+  end
+  #--------------------------------------------------------------------------
+  # * ridetermina i parametri di base
+  #--------------------------------------------------------------------------
+  def base_atk; esp_batk + esper_ups[:atk] * ESPER_UPS_INCREMENTS[:atk]; end
+  def base_def; esp_bdef + esper_ups[:def] * ESPER_UPS_INCREMENTS[:def]; end
+  def base_spi; esp_bspi + esper_ups[:spi] * ESPER_UPS_INCREMENTS[:spi]; end
+  def base_agi; esp_bagi + esper_ups[:agi] * ESPER_UPS_INCREMENTS[:agi]; end
+  def base_maxhp; esp_bhp + esper_ups[:hp] * ESPER_UPS_INCREMENTS[:hp]; end
+  def base_maxmp; esp_bmp + esper_ups[:mp] * ESPER_UPS_INCREMENTS[:mp]; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
 end
 
 #===============================================================================
