@@ -2,12 +2,13 @@ require File.expand_path('rm_vx_data')
 #===============================================================================
 # Interfaccia XInput di Holy87
 # Difficoltà utente: ★
-# Versione 1.02
+# Versione 1.03
 # Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
 # lo script nei propri progetti, sia amatoriali che commerciali. Vietata
 # l'attribuzione impropria.
 #
 # changelog
+# v1.03 => Ora l'uso del controller non è bloccante per la tastiera
 # v1.02 => Inserita compatibilità con sistemi che non supportano DX11
 # v1.01 => Bugfix
 #===============================================================================
@@ -855,45 +856,68 @@ module Input
   # * Keydown
   #--------------------------------------------------------------------------
   def self.trigger?(key, controller_index = 0)
-    if controller_used?(controller_index)
+    if controller_trigger?(key, controller_index)
       @last_input_used = :controller
-      real_key = adjust_button(key, controller_index)
-      timing = @key_timing[controller_index][real_key]
-      timing == 0
-    else
-      result = legacy_trigger?(key)
-      @last_input_used = :legacy if result
-      result
+      return true
+    elsif legacy_trigger?(key) && controller_index == 0
+      @last_input_used = :legacy
+      return true
     end
+    false
+  end
+  #--------------------------------------------------------------------------
+  # * Controller Keydown
+  #--------------------------------------------------------------------------
+  def self.controller_trigger?(key, controller_index = 0)
+    return false unless controller_used?(controller_index)
+    real_key = adjust_button(key, controller_index)
+    timing = @key_timing[controller_index][real_key]
+    timing == 0
   end
   #--------------------------------------------------------------------------
   # * Key pressed
   #--------------------------------------------------------------------------
   def self.press?(key, pad_index = 0)
-    if controller_used?(pad_index)
-      key = normalize_input(key) if key.is_a?(Integer)
+    if controller_press?(key, pad_index)
       @last_input_used = :controller
-      @key_state[pad_index].include?(adjust_button(key, pad_index))
+      true
+    elsif legacy_press?(key) && pad_index == 0
+      @last_input_used = :legacy
+      true
     else
-      result = legacy_press?(key)
-      @last_input_used = :legacy if result
-      result
+      false
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Controller Press
+  #--------------------------------------------------------------------------
+  def self.controller_press?(key, pad_index = 0)
+    return false unless controller_used?(pad_index)
+    key = normalize_input(key) if key.is_a?(Integer)
+    @key_state[pad_index].include?(adjust_button(key, pad_index))
   end
   #--------------------------------------------------------------------------
   # * Cursor moving
   #--------------------------------------------------------------------------
   def self.repeat?(key, controller_index = 0)
-    if controller_used?(controller_index)
+    if controller_repeat?(key, controller_index)
       @last_input_used = :controller
-      real_key = adjust_button(key, controller_index)
-      timing = @key_timing[controller_index][real_key]
-      timing != nil and (timing == 0 or timing == 30 or timing > 30 and timing % 5 == 0)
+      true
+    elsif legacy_repeat?(key) && controller_index == 0
+      @last_input_used = :legacy
+      true
     else
-      result = legacy_repeat?(key)
-      @last_input_used = :legacy if result
-      result
+      false
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Controller Repeat
+  #--------------------------------------------------------------------------
+  def self.controller_repeat?(key, controller_index = 0)
+    return false unless controller_used?(controller_index)
+    real_key = adjust_button(key, controller_index)
+    timing = @key_timing[controller_index][real_key]
+    timing != nil and (timing == 0 or timing == 30 or timing > 30 and timing % 5 == 0)
   end
   #--------------------------------------------------------------------------
   # * Normalizes input from a conditional branch code
