@@ -30,6 +30,14 @@ module ControllerSettings
   #--------------------------------------------------------------------------
   CONTROLLER_COMMAND = 'Configura Game Pad'
   CONTROLLER_HELP = 'Imposta i comandi del controller PC'
+  BATTERY_COMMAND = 'Stato della batteria'
+  BATTERY_HELP = 'Visualizza lo stato della batteria del controller.'
+  BATTERY_HIGH = 'Carica'
+  BATTERY_OK = 'Buona'
+  BATTERY_LOW = 'Bassa'
+  BATTERY_CRITICAL = 'Scarica'
+  BATTERY_NO_STATE = 'Non rilevata'
+  BATTERY_DISCONNECTED = 'Disconnesso'
   VIBRATION_COMMAND = 'Vibrazione'
   VIBRATION_HELP = 'Imposta la potenza della vibrazione del controller'
   RESET_COMMAND = 'Ripristina comandi'
@@ -37,6 +45,8 @@ module ControllerSettings
   HELP_INPUT = 'Premi un tasto sul pad per assegnarlo'
   HELP_KEY  = 'Puoi cambiare i tasti del controller.
 Seleziona Ripristina o premi CTRL per resettare.'
+
+  SHOW_BATTERY_INFO = true
   #--------------------------------------------------------------------------
   # * Tasti configurabili nella schermata.
   #--------------------------------------------------------------------------
@@ -100,6 +110,13 @@ module ControllerSettings
                :distance => 10, :default => 100}
     command
   end
+
+  def self.create_battery_command
+    command = {:type => :advanced, :text => BATTERY_COMMAND,
+              :help => BATTERY_HELP, :condition => 'false',
+              :val_mt => :get_battery_state}
+    command
+  end
   #--------------------------------------------------------------------------
   # * Excluded keys from the configuration
   #--------------------------------------------------------------------------
@@ -111,6 +128,9 @@ end
 #--------------------------------------------------------------------------
 H87Options.push_keys_option(ControllerSettings.create_keys_command)
 H87Options.push_keys_option(ControllerSettings.create_vibration_command)
+if ControllerSettings::SHOW_BATTERY_INFO
+  H87Options.push_keys_option(ControllerSettings.create_battery_command)
+end
 
 #===============================================================================
 # ** Vocab
@@ -164,6 +184,12 @@ class Option
   def get_vibration
     $game_system.vibration_rate
   end
+  #--------------------------------------------------------------------------
+  # * Gets the current battery state
+  #--------------------------------------------------------------------------
+  def get_battery_state
+    Input.battery_level
+  end
 end
 
 #===============================================================================
@@ -195,6 +221,10 @@ class Scene_Options < Scene_MenuBase
   def update_controller_connection
     if @connected != Input.controller_connected?
       @connected = Input.controller_connected?
+      @old_battery_state = Input.battery_level
+      @option_window.refresh
+    end
+    if Input.battery_level != @old_battery_state
       @option_window.refresh
     end
   end
@@ -493,4 +523,54 @@ class Window_Input_Key < Window_Base
   # * Gets the window width
   #--------------------------------------------------------------------------
   def calc_width; Graphics.width; end
+end
+
+class Window_GameOptions < Window_Selectable
+  alias bt_draw_advanced draw_advanced unless $@
+  #--------------------------------------------------------------------------
+  # *
+  # @param [Rect] rect
+  # @param [Option] item
+  #--------------------------------------------------------------------------
+  def draw_advanced(rect, item)
+    if item.value_method == :get_battery_state
+      draw_battery_info(rect, item)
+    else
+      bt_draw_advanced(rect, item)
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * disegna le informazioni sullo stato della batteria
+  # @param [Rect] rect
+  # @param [Option] item
+  #--------------------------------------------------------------------------
+  def draw_battery_info(rect, item)
+    case item.value
+    when -2
+      text = ControllerSettings::BATTERY_DISCONNECTED
+      color = normal_color
+    when -1
+      text = ControllerSettings::BATTERY_NO_STATE
+      color = normal_color
+    when 0
+      text = ControllerSettings::BATTERY_CRITICAL
+      color = knockout_color
+    when 1
+      text = ControllerSettings::BATTERY_LOW
+      color = crisis_color
+    when 2
+      text = ControllerSettings::BATTERY_OK
+      color = normal_color
+    when 3
+      text = ControllerSettings::BATTERY_HIGH
+      color = power_up_color
+    else
+      text = sprintf('Not found value %d', Input.battery_level)
+      color = normal_color
+    end
+    x = get_state_x(rect)
+    width = rect.width / 2
+    change_color(color, Input.controller_connected?)
+    draw_text(x, rect.y, width, line_height, text, 1)
+  end
 end

@@ -452,11 +452,11 @@ module H87Options
   #--------------------------------------------------------------------------
   def self.option_list
     options = []
-    for option in all_options
+    all_options.each {|option|
       opt = Option.new(option)
       next if opt.for_game? and $game_temp.nil? || $game_temp.in_game == false
       options.push(opt)
-    end
+    }
     return options
   end
 end
@@ -602,6 +602,7 @@ class Option
   attr_reader :value_method #metodo che restituisce il valore
   attr_reader :bar_color    #colore della barra
   attr_reader :tag          #etichetta (per salvataggio in game_settings)
+  attr_reader :id           #identificatore (per trovarlo altrove)
   #--------------------------------------------------------------------------
   # * Inizializzazione
   #--------------------------------------------------------------------------
@@ -612,6 +613,7 @@ class Option
     @for_game = hash[:in_game]
     @tag = hash[:tag]
     @default = hash[:default]
+    @id = hash[:id]
     @min = 0
     case @type
       when :switch; init_switch(hash)
@@ -984,7 +986,7 @@ class Scene_Options < Scene_MenuBase
   # * Restituisce la finestra di popup attualmente aperta
   #--------------------------------------------------------------------------
   def popup
-    return @popups[@popup_index]
+    @popups[@popup_index]
   end
   #--------------------------------------------------------------------------
   # * Mostra la finestra di popup
@@ -1224,19 +1226,19 @@ class Window_GameOptions < Window_Selectable
   # * Restituisce l'opzione selezionata
   #--------------------------------------------------------------------------
   def item
-    return @data[index]
+    @data[index]
   end
   #--------------------------------------------------------------------------
   # * Restituisce la coordinata X dove disegnare lo stato
   #--------------------------------------------------------------------------
   def get_state_x(rect)
-    return rect.x + rect.width / 2
+    rect.x + rect.width / 2
   end
   #--------------------------------------------------------------------------
   # * Restituisce la larghezza del valore in caso di più valori
   #--------------------------------------------------------------------------
   def get_state_width(x, rect, item)
-    return (rect.width - x) / item.values.size
+    (rect.width - x) / item.values.size
   end
   #--------------------------------------------------------------------------
   # * Esecuzione dell'azione di selezione (INVIO)
