@@ -8,6 +8,7 @@ require 'rm_vx_data' if false
 # l'attribuzione impropria.
 #
 # Changleog
+# 1.2   => Aggiunta la visualizzazione dello stato della batteria
 # 1.1   => Possibilità di inserire pulsanti del pad riservati (che non possono
 #          essere assegnati)
 #===============================================================================
