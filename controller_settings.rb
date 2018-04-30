@@ -46,7 +46,14 @@ module ControllerSettings
   HELP_KEY  = 'Puoi cambiare i tasti del controller.
 Seleziona Ripristina o premi CTRL per resettare.'
 
+  # Mostrare lo stato della batteria nel menu?
   SHOW_BATTERY_INFO = true
+  # Scegli le icone per lo stato della batteria. Se non le inserisci, non
+  # verranno mostrate.
+  # -2: Non collegato
+  # -1: Batteria non rilevata
+  # 0,1,2,3: Batteria da scarica a carica
+  BATTERY_INFO_ICONS = {-1 => 534, 0 => 535, 1 => 536, 2 => 550, 3 => 551}
   #--------------------------------------------------------------------------
   # * Tasti configurabili nella schermata.
   #--------------------------------------------------------------------------
@@ -226,6 +233,7 @@ class Scene_Options < Scene_MenuBase
     end
     if Input.battery_level != @old_battery_state
       @option_window.refresh
+      @old_battery_state = Input.battery_level
     end
   end
 end
@@ -525,6 +533,9 @@ class Window_Input_Key < Window_Base
   def calc_width; Graphics.width; end
 end
 
+#===============================================================================
+# ** Window_GameOptions
+#===============================================================================
 class Window_GameOptions < Window_Selectable
   alias bt_draw_advanced draw_advanced unless $@
   #--------------------------------------------------------------------------
@@ -545,6 +556,8 @@ class Window_GameOptions < Window_Selectable
   # @param [Option] item
   #--------------------------------------------------------------------------
   def draw_battery_info(rect, item)
+    icons = ControllerSettings::BATTERY_INFO_ICONS
+    icon = icons[item.value] || 0
     case item.value
     when -2
       text = ControllerSettings::BATTERY_DISCONNECTED
@@ -570,6 +583,7 @@ class Window_GameOptions < Window_Selectable
     end
     x = get_state_x(rect)
     width = rect.width / 2
+    draw_icon(icon, x, rect.y)
     change_color(color, Input.controller_connected?)
     draw_text(x, rect.y, width, line_height, text, 1)
   end
