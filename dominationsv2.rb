@@ -1242,9 +1242,17 @@ class Window_DominationJP < Window_Base
   def refresh
     contents.clear
     return if @domination.nil?
-    change_color(normal_color)
-    draw_text(0, 0, contents_width, line_height, Vocab.esper_jp_help)
-    change_color(crisis_color)
+    change_color(normal_color, enabled)
+    master = domination.esper_master
+    if master
+      text = sprintf(Vocab.esper_jp_help, master.name)
+      enabled = true
+    else
+      text = Vocab.esper_no_mast
+      enabled = false
+    end
+    draw_text(0, 0, contents_width, line_height, text)
+    change_color(crisis_color, enabled)
     draw_text(0, 0, contents_width, line_height, domination.jp)
   end
   #--------------------------------------------------------------------------

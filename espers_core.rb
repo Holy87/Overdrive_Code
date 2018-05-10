@@ -146,7 +146,8 @@ module Vocab
   def self.boost_desc;"Attivando i Turbo l'evocazione sarà più potente, ma resterà|per minor tempo in campo.";end
   def self.domination_ready;"%s è pronto a combattere.";end
   def self.power_up_incr;"Incrementa il parametro %s di %d punti";end
-  def self.esper_jp_help;"PA totali"; end
+  def self.esper_jp_help;"PA di %s"; end
+  def self.esper_no_mast;"Nessun evocatore assegnato"; end
 end
 
 #===============================================================================
@@ -408,8 +409,9 @@ end
 # ** classe Game_Battler
 #===============================================================================
 class Game_Battler
-  alias uso_skill skill_can_use?
+  alias uso_skill skill_can_use? unless $@
   alias add_boost_states states unless $@
+  alias own_jp jp unless $@
   #--------------------------------------------------------------------------
   # * restituisce gli status attuali + bonus attivati
   #--------------------------------------------------------------------------
@@ -721,6 +723,13 @@ class Game_Actor < Game_Battler
     else
       activate_boost(boost.id)
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Cambia il metodo che restituisce i PA puntando ai PA dell'evocatore.
+  # @return [Integer]
+  #--------------------------------------------------------------------------
+  def jp
+    esper_master ? esper_master.jp : 0
   end
   #--------------------------------------------------------------------------
   # * restituisce l'hash dei potenziamenti
