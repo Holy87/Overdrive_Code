@@ -51,6 +51,13 @@ module H87HUD_SETTINGS
 
   # Tonalità dell'eroe attivo
   SELECTED_TONE = Tone.new(100,255,0)
+  # Tonalità del riquadro volto eroe
+  NORMAL_FACE_TONE = Tone.new(0, 0, 0)
+  DEAD_FACE_TONE = Tone.new(0, 0, 0, 255)
+  # Colori del flash volto eroe
+  DAMAGE_FLASH_CL = Color.new(255,0,0)
+  HEAL_FLASH_CL = Color.new(0,255,0)
+  FLASH_DURATION = 30
   # Altezza barra PV
   HP_HEIGHT = 12
   # Altezza barra PM
@@ -455,11 +462,12 @@ class Actor_BattleStatus
   def refresh_bface
     @old_hp = actor.hp if @old_hp.nil?
     return if @old_hp == actor.hp
-    @bface.tone =  actor.hp == 0 ? Tone.new(0,0,0,255) : Tone.new(0,0,0)
+    @bface.tone =  actor.hp == 0 ? H87HUD_SETTINGS::NORMAL_FACE_TONE : H87HUD_SETTINGS::DEAD_FACE_TONE
+    duration = H87HUD_SETTINGS::FLASH_DURATION
     if actor.hp < @old_hp
-      @bface.flash(Color.new(255,0,0),30)
+      @bface.flash(H87HUD_SETTINGS::DAMAGE_FLASH_CL, duration)
     else
-      @bface.flash(Color.new(0,255,0),30)
+      @bface.flash(H87HUD_SETTINGS::HEAL_FLASH_CL, duration)
     end
     @old_hp = actor.hp
   end
@@ -1049,15 +1057,11 @@ class Battle_Numbers
   #--------------------------------------------------------------------------
   # * Returns container width
   #--------------------------------------------------------------------------
-  def width
-    50
-  end
+  def width; 50; end
   #--------------------------------------------------------------------------
   # * Returns container height
   #--------------------------------------------------------------------------
-  def height
-    10
-  end
+  def height; 10; end
   #--------------------------------------------------------------------------
   # * Set initial T coordinate for all numbers
   #--------------------------------------------------------------------------
@@ -1114,13 +1118,12 @@ class Battle_Numbers
     return if value == @value
     @value = value
     val_string = value.to_s
-    (0..@numbers.size-1).each {|i|
-      number = @numbers[i]
+    @numbers.each_with_index { |number, i|
       if val_string[i].nil?
         number.visible = false
       else
         number.visible = true
-        number.set_number(val_string[i].to_i - 48)
+        number.set_number(val_string[i].to_i - 48) #TODO: Cambiare questo metodo
       end
     }
   end
@@ -1198,11 +1201,11 @@ class Battle_Numbers
 end
 
 #==============================================================================
-# **
+# ** States_Shower
 #------------------------------------------------------------------------------
-#
-#==============================================================================
+# contenitore delle icone degli stati alterati
 # noinspection RubyInstanceVariableNamingConvention,RubyInstanceMethodNamingConvention
+#==============================================================================
 class States_Shower
   #--------------------------------------------------------------------------
   # * parametri d'istanza pubblici
@@ -1374,9 +1377,7 @@ class States_Shower
   #--------------------------------------------------------------------------
   # * eliminazione
   #--------------------------------------------------------------------------
-  def dispose
-    @states.each_value {|state_icon| state_icon.dispose}
-  end
+  def dispose; @states.each_value {|state_icon| state_icon.dispose}; end
   #--------------------------------------------------------------------------
   # * aggiornamento
   #--------------------------------------------------------------------------

@@ -190,10 +190,11 @@ class Window_ItemInfo < Window_DataInfo
     draw_parameter('Durata Sinergia', item.sin_durab, true) if item.sin_durab != 0
     draw_parameter('Sinergia', item.sin_bonus*100) if item.sin_bonus != 0
     if item.sin_on_kill
-    draw_parameter('Sinergia uccisione', item.sin_on_kill) if item.sin_on_kill > 0
+      draw_parameter('Sinergia uccisione', item.sin_on_kill) if item.sin_on_kill > 0
+    end
     if item.sin_defense > 0
       text = 'Aumenta la Sinergia di %s quando vieni colpito mentre ti difendi'
-      draw_long_feature(sprintf(text, item.sin_defense))
+      draw_long_feature(sprintf(text, item.sin_defense)) #TODO: Trovare il metodo o aggiungerlo
     end
   end
   #--------------------------------------------------------------------------
@@ -365,5 +366,4 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   # *
   #--------------------------------------------------------------------------
-
 end

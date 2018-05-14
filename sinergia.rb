@@ -786,11 +786,11 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   # * determina se visibile o meno
   #--------------------------------------------------------------------------
-  def visible; @s_view1.visible; end
+  def sinergy_bar_visible?; @s_view1.visible; end
   #--------------------------------------------------------------------------
   # * imposta la visibilità
   #--------------------------------------------------------------------------
-  def visible=(value)
+  def sinergy_bar_visible=(value)
     value ? show_sinergy_bar : hide_sinergy_bar
   end
   #--------------------------------------------------------------------------
@@ -837,7 +837,7 @@ class Scene_Battle < Scene_Base
   # * Aggiornamento della barra Sinergia
   #--------------------------------------------------------------------------
   def update_sin_bar
-    @sinergy_bar.update
+    @sinergy_bar.update if sinergy_bar_visible?
   end
   #--------------------------------------------------------------------------
   # * Eliminazione della barra Sinergia
@@ -886,7 +886,7 @@ class Sprite_Sinergy
   #--------------------------------------------------------------------------
   def add_pixel
     height = @fill.height
-    pixel = Sprite.new(@view2)
+    pixel = Sprite.new(@view2) #TODO: Rimuovere l'assegnazione del viewport per test
     pixel.bitmap = Cache.system(PIXEL_SIN)
     pixel.ox = pixel.width/2
     pixel.oy = pixel.height/2

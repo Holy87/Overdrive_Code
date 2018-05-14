@@ -80,6 +80,7 @@ require 'rm_vx_data'
 # ● <nome guardia: x> cambia il nome del comando Difendi
 # ● <nome attacca: x> cambia il nome del comando Attacca
 #   (non funziona perché c'è già quello di Yanfly)
+# ● <barriera: x%> il x% dei danni viene assorbito da una barriera (consuma PM)
 #▼ STATUS
 # ● <status attacco: x> aggiunge lo status X all'attacco
 # ● <status rimosso: x> rimuove lo status X all'attacco
@@ -115,6 +116,9 @@ module H87AttrSettings
   NUKERS = [2,13,10,7]
   RANGED_ELEMENTS = [5,6]
   VLINK_RATE = 0.15
+  BARRIER_MP_CONSUME = 0.2 # percentuale di consumo della barriera ai danni
+  # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
+  # quindi se assorbe un danno di 100, consuma 20MP
 
   PARAMS_CAN_ZERO = [:cri, :eva, :hit]
 end
@@ -213,9 +217,10 @@ module ExtraAttr
   SPOIL = /<spoil:[ ]*([+\-]\d+)([%％])>/i
   MEELE = /<meele>/i
   RANGED = /<ranged>/i
+  ZOMBIE = /<zombie>/i
+  BARRIER_RATE = /<barriera:[ ]*(\d+)([%％])>/i
   #--------------------------------------------------------------------------
   # * Variabili di istanza pubblici
-  #--------------------------------------------------------------------------
   # @attr[Hash<Integer>] param_gift
   # @attr[Hash<Integer>] party_bonus
   # @attr[Hash<Integer>] skill_type_cost
@@ -225,6 +230,7 @@ module ExtraAttr
   # @attr[Array<Integer>] attack_minus_states
   # @attr[Array<Integer>] allow_equip_type
   # @attr[Array<Integer>] counter_states
+  #--------------------------------------------------------------------------
   attr_reader :dom_bonus              # bonus dominazioni
   attr_reader :viril                  # stato virile
   attr_reader :artificis              # stato artificiere
@@ -296,6 +302,8 @@ module ExtraAttr
   attr_reader :spoil_bonus            #bonus drop del nemico (da status)
   attr_reader :ranged                 #tipo distanza
   attr_reader :counter_states         #array ID stati che infligge con la difesa
+  attr_reader :barrier_rate           #rateo di assorbimento barriera
+  attr_reader :zombie_state           #è uno status zombie, quindi non cura
   #--------------------------------------------------------------------------
   # * Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
   #--------------------------------------------------------------------------
@@ -373,8 +381,10 @@ module ExtraAttr
     @critical_damage = 0.0
     @spoil_bonus = 0.0
     @ranged = false
+    @zombie_state = false
     @allow_equip_type = []
     reading_help = false
+    @barrier_rate = 0
     self.note.split(/[\r\n]+/).each { |riga|
       if reading_help
         if riga =~ HELP_END
@@ -537,8 +547,12 @@ module ExtraAttr
           @spoil_bonus = $1.to_f/100
         when RANGED
           @ranged = true
+        when ZOMBIE
+          @zombie_state = true
         when COUNTER_ST
           @counter_states.push($1.to_i)
+        when BARRIER_RATE
+          @barrier_rate = $1.to_f/100.0
         else
           #nothing
       end
@@ -910,6 +924,7 @@ class Game_Battler
     alias h87attr_minus_state_set minus_state_set
     alias make_attack_damage_value_ht make_attack_damage_value
     alias make_obj_damage_value_ht make_obj_damage_value
+    alias h87attr_execute_damage execute_damage
     alias h87attr_item_effect item_effect
     alias run_cdf2 run_cdf
     alias tau_mp_cost calc_mp_cost
@@ -960,7 +975,7 @@ class Game_Battler
   # * Restituisce true se tra le caratteristiche ce n'è una con un attributo
   #--------------------------------------------------------------------------
   def has_feature?(feature_name, param = nil)
-    features.each{|ft| return true if eval("ft.#{feature_name}#{param}")}
+    features.each{|ft| return true if eval("ft.#{feature_name.to_s}#{param}")}
     false
   end
   #--------------------------------------------------------------------------
@@ -1002,6 +1017,14 @@ class Game_Battler
   # * Restituisce il rateo del danno
   #--------------------------------------------------------------------------
   def damage_rate; 1.0 + features_sum(:damage_rate); end
+  #--------------------------------------------------------------------------
+  # * Restituisce la percentuale di protezione della barriera
+  #--------------------------------------------------------------------------
+  def barrier_rate; 0.0 + features_sum(:barrier_rate); end
+  #--------------------------------------------------------------------------
+  # * Restituisce il rapporto di consumo HP/MP della barriera
+  #--------------------------------------------------------------------------
+  def barrier_consume_rate; H87AttrSettings::BARRIER_MP_CONSUME; end
   #--------------------------------------------------------------------------
   # * Restituisce il rateo del danno magico
   #--------------------------------------------------------------------------
@@ -1071,6 +1094,10 @@ class Game_Battler
   #--------------------------------------------------------------------------
   def ranged_attack?; has_feature?('ranged?'); end
   #--------------------------------------------------------------------------
+  # * Ha uno stato di zombie?
+  #--------------------------------------------------------------------------
+  def zombie?; has_feature?(:zombie_state); end
+  #--------------------------------------------------------------------------
   # * Restituisce il danno critico
   #--------------------------------------------------------------------------
   def cri_dmg; 3.0 + features_sum(:critical_damage); end
@@ -1115,6 +1142,7 @@ class Game_Battler
     @hp_damage = (@hp_damage * CPanel::TSWRate).to_i if attacker.has2w
     change_damage_rate
     if @hp_damage > 0
+      apply_barrier_protection
       modifica_danno if actor?
       @last_damage = @hp_damage
       self.cumuled_damage += @hp_damage
@@ -1128,11 +1156,39 @@ class Game_Battler
         attacker.anger += incr
       end
       self.anger += anger_incr if charge_gauge? && anger_on_damage?
+    elsif @hp_damage < 0
+      @hp_damage *= -1 if zombie?
     end
     if attacker.vampire_rate > 0 && !attacker.ranged_attack?
       attacker.hp += (@hp_damage*(attacker.vampire_rate+1)).to_i
     end
   end
+  #--------------------------------------------------------------------------
+  # * applica la protezione della barriera
+  #--------------------------------------------------------------------------
+  def apply_barrier_protection
+    return unless barrier_rate > 0
+    protection = @hp_damage * barrier_rate
+    @hp_damage = (@hp_damage - protection).to_i
+    @mp_damage = (protection * barrier_consume_rate).to_i
+  end
+
+  def execute_damage(user)
+    h87attr_execute_damage(user)
+    remove_barriers if self.mp <= 0
+  end
+
+  def remove_barriers
+    @states.each {|state_id|
+      state = $data_states[state_id]
+      if state.barrier_rate > 0
+        found = true
+        remove_state(state_id)
+      end
+    }
+    #TODO: Aggiungere animazione o FX di barriera rotta
+  end
+
   #--------------------------------------------------------------------------
   # * applica gli stati del danno
   # @param [Game_Battler] attacker
@@ -1266,6 +1322,7 @@ class Game_Battler
       check_party_absorb_heal(user, obj)
     end
     if @hp_damage > 0
+      apply_barrier_protection
       modifica_danno if actor?
       @last_damage = @hp_damage
       self.anger += anger_incr if charge_gauge? && anger_on_damage?
@@ -1275,6 +1332,8 @@ class Game_Battler
         user.mp -= (@mp_damage * physical_reflect).to_i
         user.animation_id = 440 unless user.animation_id > 0
       end
+    elsif @hp_damage < 0
+      @hp_damage *= -1 if zombie?
     end
     @skill_state_inflict = nil
     @user_state_inflict = nil
@@ -2206,9 +2265,10 @@ class Game_Party < Game_Unit
   alias h87attr_increase_steps increase_steps unless $@
   def increase_steps
     h87attr_increase_steps
-    members.each { |member|
-      member.reduce_anger if member.charge_gauge?
-    }
+    # Non riduce più la furia.
+    #members.each { |member|
+    #  member.reduce_anger if member.charge_gauge?
+    #}
   end
   #--------------------------------------------------------------------------
   # * Restituisce la probabilità di salvare l'oggetto
