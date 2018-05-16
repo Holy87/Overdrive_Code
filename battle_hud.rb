@@ -1,4 +1,4 @@
-require 'rm_vx_data'
+require File.expand_path 'rm_vx_data'
 #===============================================================================
 # Overdrive Battle HUD
 # Versione 1.0
@@ -447,7 +447,7 @@ class Actor_BattleStatus
       @anger_numbers.change_value(actor.anger, actor.max_anger)
     else
       @mp_bar.width = mp_width
-      @mp_bar.set_value(actor.mp_cost_rate*100)
+      @mp_bar.set_value(actor.mp_rate*100)
       @mp_numbers.change_value(actor.mp, actor.mmp)
     end
     if actor.is_esper?
@@ -462,7 +462,7 @@ class Actor_BattleStatus
   def refresh_bface
     @old_hp = actor.hp if @old_hp.nil?
     return if @old_hp == actor.hp
-    @bface.tone =  actor.hp == 0 ? H87HUD_SETTINGS::NORMAL_FACE_TONE : H87HUD_SETTINGS::DEAD_FACE_TONE
+    @bface.tone =  actor.hp > 0 ? H87HUD_SETTINGS::NORMAL_FACE_TONE : H87HUD_SETTINGS::DEAD_FACE_TONE
     duration = H87HUD_SETTINGS::FLASH_DURATION
     if actor.hp < @old_hp
       @bface.flash(H87HUD_SETTINGS::DAMAGE_FLASH_CL, duration)
@@ -508,7 +508,7 @@ class Actor_BattleStatus
   #--------------------------------------------------------------------------
   def create_mp_bar
     @mp_bar = Battle_MpBar.new(210, 18, mp_width)
-    @mp_bar.set_value(actor.mp_cost_rate*100)
+    @mp_bar.set_value(actor.mp_rate*100)
     register_object(@mp_bar)
   end
   #--------------------------------------------------------------------------
@@ -524,7 +524,7 @@ class Actor_BattleStatus
   #--------------------------------------------------------------------------
   def create_esper_bar
     width = $game_temp.domination_max_turns * 5
-    x = @mp_bar.x + @mp_bar.width + 20
+    x = @mp_bar.x + @mp_bar.width + 10
     @esper_bar = Battle_EsperBar.new(x, 18, width)
     @esper_bar.set_value($game_temp.domination_turns_rate * 100)
     register_object(@esper_bar)
@@ -1117,13 +1117,13 @@ class Battle_Numbers
   def set_value(value)
     return if value == @value
     @value = value
-    val_string = value.to_s
+    val_string = value.to_i.to_s
     @numbers.each_with_index { |number, i|
-      if val_string[i].nil?
+      if val_string[i].nil? or i >= val_string.size
         number.visible = false
       else
         number.visible = true
-        number.set_number(val_string[i].to_i - 48) #TODO: Cambiare questo metodo
+        number.set_number(val_string[i..i].to_i)
       end
     }
   end
@@ -1439,6 +1439,7 @@ end
 class Scene_Battle < Scene_Base
   alias h87hud_create_info_viewport create_info_viewport unless $@
   alias h87hud_terminate terminate unless $@
+  alias h87hud_process_v process_victory unless $@
   #--------------------------------------------------------------------------
   # * alias for Viewport creation
   #--------------------------------------------------------------------------
@@ -1456,6 +1457,13 @@ class Scene_Battle < Scene_Base
   def terminate
     h87hud_terminate
     @hud_viewport.dispose
+  end
+  #--------------------------------------------------------------------------
+  # * Nascondo la barra alla vittoria
+  #--------------------------------------------------------------------------
+  def process_victory
+    @status_window.visible = false
+    h87hud_process_v
   end
 end
 

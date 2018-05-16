@@ -1353,7 +1353,7 @@ class Window_OptionPopup < Window_Selectable
   # * Restituisce il numero di oggetti
   #--------------------------------------------------------------------------
   def item_max
-    return @data.nil? ? 0 : @data.size
+    @data.nil? ? 0 : @data.size
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'opzione selezionata
@@ -1364,7 +1364,7 @@ class Window_OptionPopup < Window_Selectable
   # * Restituisce la nuova opzione selezionata dall'utente
   #--------------------------------------------------------------------------
   def selected_value
-    return @keys ? @keys[self.index] : self.index
+    @keys ? @keys[self.index] : self.index
   end
 end
 
@@ -1403,13 +1403,13 @@ class Generic_PopupWindow < Window_OptionPopup
   # * Restituisce il valore selezionato
   #--------------------------------------------------------------------------
   def item(index = self.index)
-    return @data[index]
+    @data[index]
   end
   #--------------------------------------------------------------------------
   # * Restituisce la chiave
   #--------------------------------------------------------------------------
   def key(index = self.index)
-    return @keys[index]
+    @keys[index]
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'opzione selezionata
@@ -1426,9 +1426,9 @@ class Generic_PopupWindow < Window_OptionPopup
   #--------------------------------------------------------------------------
   def keys_from_hash
     if @keys.find_index(@option.value)
-      return @keys.find_index(@option.value)
+      @keys.find_index(@option.value)
     else
-      return @keys.first
+      @keys.first
     end
   end
 end

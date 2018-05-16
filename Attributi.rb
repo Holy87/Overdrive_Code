@@ -116,9 +116,10 @@ module H87AttrSettings
   NUKERS = [2,13,10,7]
   RANGED_ELEMENTS = [5,6]
   VLINK_RATE = 0.15
-  BARRIER_MP_CONSUME = 0.2 # percentuale di consumo della barriera ai danni
+  BARRIER_MP_CONSUME = 0.1 # percentuale di consumo della barriera ai danni
   # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
   # quindi se assorbe un danno di 100, consuma 20MP
+  BARRIER_BREAK_SE = 'Break'
 
   PARAMS_CAN_ZERO = [:cri, :eva, :hit]
 end
@@ -219,6 +220,7 @@ module ExtraAttr
   RANGED = /<ranged>/i
   ZOMBIE = /<zombie>/i
   BARRIER_RATE = /<barriera:[ ]*(\d+)([%％])>/i
+  BARRIER_OPTIM = /<risparmio barriera:[ ]*([+\-]\d+)([%％])>/i
   #--------------------------------------------------------------------------
   # * Variabili di istanza pubblici
   # @attr[Hash<Integer>] param_gift
@@ -303,6 +305,7 @@ module ExtraAttr
   attr_reader :ranged                 #tipo distanza
   attr_reader :counter_states         #array ID stati che infligge con la difesa
   attr_reader :barrier_rate           #rateo di assorbimento barriera
+  attr_reader :barrier_save           #rateo di risparmio PM della barriera
   attr_reader :zombie_state           #è uno status zombie, quindi non cura
   #--------------------------------------------------------------------------
   # * Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
@@ -385,6 +388,7 @@ module ExtraAttr
     @allow_equip_type = []
     reading_help = false
     @barrier_rate = 0
+    @barrier_save = 0
     self.note.split(/[\r\n]+/).each { |riga|
       if reading_help
         if riga =~ HELP_END
@@ -553,6 +557,8 @@ module ExtraAttr
           @counter_states.push($1.to_i)
         when BARRIER_RATE
           @barrier_rate = $1.to_f/100.0
+        when BARRIER_OPTIM
+          @barrier_save = $1.to_f/100.0
         else
           #nothing
       end
@@ -838,6 +844,7 @@ module RPG
     def traddable?
       return false if self.key_item   #non traddabile se è una chiave
       return false if self.price == 0 #non traddabile se il prezzo è 0
+      # noinspection RubyResolve
       return false if @trade_lock     #non traddabile se bloccato da tag
       true                            #traddabile
     end
@@ -931,6 +938,7 @@ class Game_Battler
     alias h87attr_item_test item_test
     alias h87_attr_state_prob state_probability
     alias h87status_as add_state
+    alias h87hp hp
     alias h87attr_hp hp=
   end
 
@@ -1020,11 +1028,14 @@ class Game_Battler
   #--------------------------------------------------------------------------
   # * Restituisce la percentuale di protezione della barriera
   #--------------------------------------------------------------------------
-  def barrier_rate; 0.0 + features_sum(:barrier_rate); end
+  def barrier_rate; [0.0 + features_sum(:barrier_rate), 1].min; end
   #--------------------------------------------------------------------------
   # * Restituisce il rapporto di consumo HP/MP della barriera
   #--------------------------------------------------------------------------
-  def barrier_consume_rate; H87AttrSettings::BARRIER_MP_CONSUME; end
+  def barrier_consume_rate
+    base = H87AttrSettings::BARRIER_MP_CONSUME
+    [base - features_sum(:barrier_consume_rate), 0].max
+  end
   #--------------------------------------------------------------------------
   # * Restituisce il rateo del danno magico
   #--------------------------------------------------------------------------
@@ -1172,23 +1183,30 @@ class Game_Battler
     @hp_damage = (@hp_damage - protection).to_i
     @mp_damage = (protection * barrier_consume_rate).to_i
   end
-
+  #--------------------------------------------------------------------------
+  # * processo di esecuzione del danno
+  # @param [Game_Battler] user
+  #--------------------------------------------------------------------------
   def execute_damage(user)
     h87attr_execute_damage(user)
     remove_barriers if self.mp <= 0
   end
-
+  #--------------------------------------------------------------------------
+  # * distrugge le barriere
+  # noinspection RubyArgCount
+  #--------------------------------------------------------------------------
   def remove_barriers
+    found = false
     @states.each {|state_id|
       state = $data_states[state_id]
       if state.barrier_rate > 0
         found = true
         remove_state(state_id)
-      end
+    end
     }
-    #TODO: Aggiungere animazione o FX di barriera rotta
+    RPG::SE.new(H87AttrSettings::BARRIER_BREAK_SE).play if found
+    found
   end
-
   #--------------------------------------------------------------------------
   # * applica gli stati del danno
   # @param [Game_Battler] attacker
@@ -1561,11 +1579,15 @@ class Game_Battler
   #--------------------------------------------------------------------------
   def last_chance?; @last_chance_on; end
   #--------------------------------------------------------------------------
+  # * Restituisce la parte intera degli HP
+  #--------------------------------------------------------------------------
+  #def hp; h87attr_hp.to_i; end
+  #--------------------------------------------------------------------------
   # * Alias del metodo hp= per controllo ultima chance
   #--------------------------------------------------------------------------
   def hp=(hp)
     alive = self.hp > 0
-    h87attr_hp(hp)
+    h87attr_hp(hp.to_i)
     if self.hp == 0 && alive && last_chance?
       h87attr_hp(1)
       @last_chance_on = false

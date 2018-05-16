@@ -29,7 +29,7 @@ module H87_SINERGIC
   # Decremento della Sinergia ad ogni turno quando attiva
   SINERGY_DECREASE = 100
   # Incremento predefinito con attacco/cura
-  DEFAULT_INCREASE = 30
+  DEFAULT_INCREASE = 50
   # Divisore per l'azione del nemico (incremento di base / divisore)
   ENEMY_DIVIDER = 0
   # Incremento per infliggere uno stato alterato
@@ -316,6 +316,7 @@ class Game_Battler
       $game_party.add_sinergy(sinergic_increase * sin_guard_bonus)
     end
     mult = get_multiplier(element_set, attacker)
+    mult *= 2 if @critical
     $game_party.add_sinergy(attacker.sinergic_increase * mult)
     $game_party.add_sinergy(skill.syn_bonus) if skill
   end
@@ -737,6 +738,7 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   def terminate
     h87sin_terminate
+    #hide_sinergy_bar
     dispose_sin_bar
     reset_sinergy
   end
@@ -786,7 +788,7 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   # * determina se visibile o meno
   #--------------------------------------------------------------------------
-  def sinergy_bar_visible?; @s_view1.visible; end
+  def sinergy_bar_visible?; !@s_view1.disposed? and @s_view1.visible; end
   #--------------------------------------------------------------------------
   # * imposta la visibilità
   #--------------------------------------------------------------------------
@@ -886,7 +888,7 @@ class Sprite_Sinergy
   #--------------------------------------------------------------------------
   def add_pixel
     height = @fill.height
-    pixel = Sprite.new(@view2) #TODO: Rimuovere l'assegnazione del viewport per test
+    pixel = Sprite.new(@view2)
     pixel.bitmap = Cache.system(PIXEL_SIN)
     pixel.ox = pixel.width/2
     pixel.oy = pixel.height/2
@@ -1021,6 +1023,11 @@ class Sprite_Sinergy
   # * Eliminazione
   #--------------------------------------------------------------------------
   def dispose
+    @background.viewport = nil
+    @corner.viewport = nil
+    @fill.viewport = nil
+    @power.viewport = nil
+    @light.viewport = nil
     @background.dispose
     @corner.dispose
     @fill.dispose

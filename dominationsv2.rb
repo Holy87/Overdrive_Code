@@ -124,6 +124,8 @@ class Scene_Dominations < Scene_MenuBase
     rec = subwindows_position
     y = Graphics.height
     @power_window = Window_DominationEmpowerments.new(rec.x, y, rec.width, rec.height)
+    @power_window.set_handler(:ok, method(:empower_param))
+    @power_window.set_handler(:cancel, method(:back_to_command))
     @detail_window.bind(@power_window)
   end
   #--------------------------------------------------------------------------
@@ -131,9 +133,10 @@ class Scene_Dominations < Scene_MenuBase
   #--------------------------------------------------------------------------
   def create_powerup_effect_window
     x = @power_window.x
-    width = @power_window.y
+    width = @power_window.width
     @emp_effect_window = Window_DominationJP.new(x, 0, width)
     @emp_effect_window.y = @command_window.y - @emp_effect_window.height
+    @detail_window.bind(@emp_effect_window)
   end
   #--------------------------------------------------------------------------
   # * evento di selezione dominazione (attivazione menu comandi)
@@ -162,6 +165,7 @@ class Scene_Dominations < Scene_MenuBase
     @boosts_window.index = -1
     @skills_window.index = -1
     @milks_window.index = -1
+    @power_window.index = -1
   end
   #--------------------------------------------------------------------------
   # * evento di selezione della finestra latte
@@ -184,6 +188,7 @@ class Scene_Dominations < Scene_MenuBase
   def empower_selection
     @power_window.activate
     @emp_effect_window.open
+    @power_window.index = 0
   end
   #--------------------------------------------------------------------------
   # * restituisce il rettangolo delle dimensioni delle finestre a lista
@@ -236,8 +241,10 @@ class Scene_Dominations < Scene_MenuBase
     domination = @power_window.domination
     domination.esper_up_param(@power_window.item[0])
     @power_window.redraw_current_item
+    @power_window.activate
     @emp_effect_window.refresh
     @detail_window.refresh
+    Sound.play_shop
   end
   #--------------------------------------------------------------------------
   # * torna alla selezione dei comandi
@@ -272,7 +279,7 @@ class Scene_Dominations < Scene_MenuBase
       when :elements
         @elements_window.visible = true
         @elements_window.smooth_move(x, y)
-      when :bonuses
+      when :empowers
         @power_window.visible = true
         @power_window.smooth_move(x, y)
       else
@@ -1136,7 +1143,8 @@ class Window_DominationEmpowerments < Window_Selectable
   #--------------------------------------------------------------------------
   def make_item_list
     @data = []
-    domination.esper_ups.each_pair { pair
+    return unless domination
+    domination.esper_ups.each_pair { |pair|
       @data.push(pair)
     }
   end
@@ -1242,18 +1250,25 @@ class Window_DominationJP < Window_Base
   def refresh
     contents.clear
     return if @domination.nil?
-    change_color(normal_color, enabled)
-    master = domination.esper_master
-    if master
-      text = sprintf(Vocab.esper_jp_help, master.name)
-      enabled = true
-    else
-      text = Vocab.esper_no_mast
-      enabled = false
-    end
-    draw_text(0, 0, contents_width, line_height, text)
-    change_color(crisis_color, enabled)
-    draw_text(0, 0, contents_width, line_height, domination.jp)
+    domination.jp > 0 ? draw_normal_jp : draw_no_master
+  end
+  #--------------------------------------------------------------------------
+  # * mostra i PA del proprietario
+  #--------------------------------------------------------------------------
+  def draw_normal_jp
+    change_color(normal_color)
+    draw_actor_little_face(domination.esper_master, 0, 0)
+    text = sprintf(Vocab::esper_jp_help, domination.esper_master.name)
+    draw_text(32, 0, contents_width - 32, line_height, text)
+    change_color(crisis_color)
+    draw_text(0, 0, contents_width, line_height, domination.jp, 2)
+  end
+  #--------------------------------------------------------------------------
+  # * messaggio quando non ha un proprietario
+  #--------------------------------------------------------------------------
+  def draw_no_master
+    change_color(normal_color, false)
+    draw_text(0, 0, contents_width, line_height, Vocab::esper_jp_no_m)
   end
   #--------------------------------------------------------------------------
   # * restituisce la dominazione
@@ -1264,7 +1279,7 @@ class Window_DominationJP < Window_Base
   # * imposta la dominazione
   # @param [Game_Actor] new_domination
   #--------------------------------------------------------------------------
-  def set_domination(new_domination)
+  def domination=(new_domination)
     return if @domination == new_domination
     @domination = new_domination
     refresh
