@@ -601,7 +601,7 @@ module Win
     system(string)
   end
   #-----------------------------------------------------------------------------
-  # * gets the system window rect
+  # * gets the system window rect.
   # @return [Rect]
   #-----------------------------------------------------------------------------
   def self.get_window_rect
@@ -768,7 +768,7 @@ module HTTP
   #API Calls
   SetPrClass = Win32API.new('kernel32','SetPriorityClass','pi','i').call(-1,128)
   InternetOpenA = Win32API.new("wininet",'InternetOpenA','plppl','l').call(
-      'RMVXA',INTERNET_OPEN_TYPE_PRECONFIG,'','',0)
+      H87_ModConfig::RMUSERAGENT,INTERNET_OPEN_TYPE_PRECONFIG,'','',0)
   InternetConnectA = Win32API.new("wininet",'InternetConnectA','lplpplll','l')
   InternetOpenUrl = Win32API.new("wininet",'InternetOpenUrl','lppllp','l')
   InternetReadFile = Win32API.new("wininet",'InternetReadFile','lpip','l')
@@ -786,7 +786,7 @@ module HTTP
   def self.send_post_request(url, params, https = false)
     https = true if url =~ /^https:\/\//
 
-    if on_vx_ace?
+    if on_vx_ace? or $imported['H87-ConsoleLogger']
       puts sprintf('POST request at %s\nParams:%s, HTTPS: %s', url, params, https)
     end
     #variable initialization
@@ -828,7 +828,7 @@ module HTTP
         break
       end
     end
-    if on_vx_ace?
+    if on_vx_ace? or $imported['H87-ConsoleLogger']
       puts sprintf('response: %s', response)
     end
     response
