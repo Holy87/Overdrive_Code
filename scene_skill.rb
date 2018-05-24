@@ -98,6 +98,14 @@ end
 #==============================================================================
 class Game_Actor < Game_Battler
   alias unsorted_skills skills unless $@
+  alias sk_init initialize unless $@
+  #--------------------------------------------------------------------------
+  # inizializzazione
+  #--------------------------------------------------------------------------
+  def initialize(actor_id)
+    sk_init(actor_id)
+    @skill_orders = {}
+  end
   #--------------------------------------------------------------------------
   # * ottiene tutte le skill (comprese quelle passive)
   #--------------------------------------------------------------------------
