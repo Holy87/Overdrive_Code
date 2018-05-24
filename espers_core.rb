@@ -97,15 +97,15 @@ module Espers
   }
 
   ESPER_UPS_INCREMENTS = {
-      :hp => 10,
-      :mp => 5,
+      :mhp => 10,
+      :mmp => 5,
       :atk => 1,
       :def => 1,
       :spi => 1,
       :agi => 1
   }
 
-  ESPER_UPS_INITIAL_COST = 50 # PA
+  ESPER_UPS_INITIAL_COST = 10 # PA
   ESPER_UPS_COST_INCREASE = 20 # %
 
   #===============================================================================
@@ -147,7 +147,8 @@ module Vocab
   def self.domination_ready;"%s è pronto a combattere.";end
   def self.power_up_incr;"Incrementa il parametro %s di %d punti";end
   def self.esper_jp_help;"PA di %s"; end
-  def self.esper_no_mast;"Nessun evocatore assegnato"; end
+  def self.esper_jp_no_m;"Nessun proprietario"; end
+
 end
 
 #===============================================================================
@@ -409,9 +410,8 @@ end
 # ** classe Game_Battler
 #===============================================================================
 class Game_Battler
-  alias uso_skill skill_can_use? unless $@
+  alias uso_skill skill_can_use?
   alias add_boost_states states unless $@
-  alias own_jp jp unless $@
   #--------------------------------------------------------------------------
   # * restituisce gli status attuali + bonus attivati
   #--------------------------------------------------------------------------
@@ -455,6 +455,7 @@ class Game_Actor < Game_Battler
     alias esp_bagi base_agi
     alias esp_bhp  base_maxhp
     alias esp_bmp  base_maxmp
+    alias esp_jp   jp
   end
   #--------------------------------------------------------------------------
   # * determina se è un'evocazione
@@ -620,6 +621,16 @@ class Game_Actor < Game_Battler
     nil
   end
   #--------------------------------------------------------------------------
+  # * Se è un'evocazione, restituisce i PA dell'evocatore assegnato.
+  #--------------------------------------------------------------------------
+  def jp(cl_id = 0)
+    if is_esper?
+      esper_master ? esper_master.jp(cl_id) : 0
+    else
+      esp_jp(cl_id)
+    end
+  end
+  #--------------------------------------------------------------------------
   # * restituisce il numero di volte che è stato evocato
   #--------------------------------------------------------------------------
   def summon_times; @summoned ||= 0; end
@@ -725,13 +736,6 @@ class Game_Actor < Game_Battler
     end
   end
   #--------------------------------------------------------------------------
-  # * Cambia il metodo che restituisce i PA puntando ai PA dell'evocatore.
-  # @return [Integer]
-  #--------------------------------------------------------------------------
-  def jp
-    esper_master ? esper_master.jp : 0
-  end
-  #--------------------------------------------------------------------------
   # * restituisce l'hash dei potenziamenti
   # @return [Hash]
   #--------------------------------------------------------------------------
@@ -771,7 +775,8 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   def check_init_esper_ups
     return if @esper_ups
-    @esper_ups = {:hp => 0, :mp => 0, :atk => 0, :def => 0, :spi => 0, :agi => 0}
+    @esper_ups = {}
+    ESPER_UPS_INCREMENTS.each_key {|key| @esper_ups[key] = 0}
   end
   #--------------------------------------------------------------------------
   # * ridetermina i parametri di base
@@ -780,8 +785,8 @@ class Game_Actor < Game_Battler
   def base_def; esp_bdef + esper_ups[:def] * ESPER_UPS_INCREMENTS[:def]; end
   def base_spi; esp_bspi + esper_ups[:spi] * ESPER_UPS_INCREMENTS[:spi]; end
   def base_agi; esp_bagi + esper_ups[:agi] * ESPER_UPS_INCREMENTS[:agi]; end
-  def base_maxhp; esp_bhp + esper_ups[:hp] * ESPER_UPS_INCREMENTS[:hp]; end
-  def base_maxmp; esp_bmp + esper_ups[:mp] * ESPER_UPS_INCREMENTS[:mp]; end
+  def base_maxhp; esp_bhp + esper_ups[:mhp] * ESPER_UPS_INCREMENTS[:mhp]; end
+  def base_maxmp; esp_bmp + esper_ups[:mmp] * ESPER_UPS_INCREMENTS[:mmp]; end
   #--------------------------------------------------------------------------
   # *
   #--------------------------------------------------------------------------
