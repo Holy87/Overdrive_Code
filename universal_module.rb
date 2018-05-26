@@ -428,8 +428,7 @@ module Win
   def self.homepath
     username = ' ' * 256 #userprofile
     GetEnvironmentVariable.call('userprofile', username, 256)
-    username.delete!("\0")
-    return username.gsub('\\','/')
+    username.unpack('A*')[0].gsub('\\','/')
   end
   # --------------------------------------------------------------------------
   # * Restituisce il percorso di una cartella del computer
@@ -450,7 +449,7 @@ module Win
     end
     path = "\0" * 128
     SHGetFolderPath.call(0, index, 0, 2, path)
-    return path.delete('\0').gsub('\\','/')
+    path.unpack('A*')[0].gsub('\\','/')
   end
   # --------------------------------------------------------------------------
   # * Deprecated, left for compatibility

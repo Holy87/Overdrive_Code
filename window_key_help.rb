@@ -14,6 +14,7 @@ class Window_KeyHelp < Window_Base
   def initialize(columns = 2, y = Graphics.height - line_height)
     super(0, y, Graphics.width, line_height)
     @commands = []
+    @controller_connected = Input.controller_connected?
   end
   #--------------------------------------------------------------------------
   # * restituisce il rettangolo del comando
@@ -26,6 +27,25 @@ class Window_KeyHelp < Window_Base
     y = 0
     Rect.new(x, y, r_width, r_height)
   end
+  #--------------------------------------------------------------------------
+  # * aggiunge il metodo per controllare la connessione del controller
+  #--------------------------------------------------------------------------
+  def update
+    super
+    refresh if controller_changed?
+  end
+  #--------------------------------------------------------------------------
+  # * determina se un controller è stato connesso o disconnesso
+  #--------------------------------------------------------------------------
+  def controller_changed?
+    if @controller_connected != Input.controller_connected?
+      @controller_connected = Input.controller_connected?
+      true
+    else
+      false
+    end
+  end
+
   #--------------------------------------------------------------------------
   # * restituisce il numero di colonne
   #--------------------------------------------------------------------------

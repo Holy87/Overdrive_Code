@@ -1305,10 +1305,8 @@ class States_Shower
   # @param [Bitmap] state
   #--------------------------------------------------------------------------
   def state_bitmap(state)
-    bitmap = Cache.system("Iconset")
     bitmap2 = Bitmap.new(24,24)
-    rect = Rect.new(state.icon_index % 16 * 24, state.icon_index / 16 * 24, 24, 24)
-    bitmap2.blt(0, 0, bitmap, rect)
+    bitmap2.draw_icon(state.icon_index, 0, 0)
     bitmap2
   end
   #--------------------------------------------------------------------------
@@ -1342,6 +1340,7 @@ class States_Shower
     states.each {|state|
       next if state.hold_turn == 0
       next if @states[state.id].nil?
+      next if actor.state_turns[state.id].nil?
       @states[state.id].pulse(50, 200, 5) if actor.state_turns[state.id] <= 1
     }
   end

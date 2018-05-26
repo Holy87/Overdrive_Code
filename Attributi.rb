@@ -51,6 +51,9 @@ require 'rm_vx_data'
 # ● <ultima chance> per una volta nella battaglia, se subisce un colpo mortale
 #   l'eroe resta con 1PV invece di morire.
 #▼ PARAMETRI
+# ● <attacco magico: x%> l'attacco diventa una magia con il x% dello spirito. Tieni
+#   conto che nel caso degli eroi solo se l'arma principale ha attacco magico, usa
+#   quello. Per status ed altri equipaggiamenti, non viene applicato.
 # ● <dona x: y%> dona il parametro x dell'y%, solo status
 # ● <pv vittoria: x%> cura il X% di pv alla vittoria
 # ● <pm vittoria: x%> cura il X% di pm alla vittoria
@@ -111,6 +114,8 @@ module H87AttrSettings
   CHARGE_ACTORS = [3, 4, 8, 9] #eroi che hanno la barra Furia invece di quella MP
   DEFAULT_MAX_CHARGE = 100
   DEFAULT_ANGER_INCR = 10
+  DAMAGE_REFLECT_ANIM_ID = 440
+  VAMPIRE_ANIM_ID = 439
   TANKS = [21,1,13,7]#i tank in ordine di priorità
   HEALERS = [6,19,11,1,6,15,7]#i guaritori in ordine di priorità
   NUKERS = [2,13,10,7]
@@ -221,6 +226,7 @@ module ExtraAttr
   ZOMBIE = /<zombie>/i
   BARRIER_RATE = /<barriera:[ ]*(\d+)([%％])>/i
   BARRIER_OPTIM = /<risparmio barriera:[ ]*([+\-]\d+)([%％])>/i
+  MAGIC_ATTACK = /<attacco magico:[ ]*(\d+)([%％])>/i
   #--------------------------------------------------------------------------
   # * Variabili di istanza pubblici
   # @attr[Hash<Integer>] param_gift
@@ -307,6 +313,7 @@ module ExtraAttr
   attr_reader :barrier_rate           #rateo di assorbimento barriera
   attr_reader :barrier_save           #rateo di risparmio PM della barriera
   attr_reader :zombie_state           #è uno status zombie, quindi non cura
+  attr_reader :magic_attack           #se è > 0, l'attacco usa lo Spirito.
   #--------------------------------------------------------------------------
   # * Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
   #--------------------------------------------------------------------------
@@ -389,6 +396,7 @@ module ExtraAttr
     reading_help = false
     @barrier_rate = 0
     @barrier_save = 0
+    @magic_attack = 0
     self.note.split(/[\r\n]+/).each { |riga|
       if reading_help
         if riga =~ HELP_END
@@ -559,6 +567,8 @@ module ExtraAttr
           @barrier_rate = $1.to_f/100.0
         when BARRIER_OPTIM
           @barrier_save = $1.to_f/100.0
+        when MAGIC_ATTACK
+          @magic_attack = $1.to_f/100.0
         else
           #nothing
       end
@@ -665,7 +675,7 @@ module RPG
   end
 
   #==============================================================================
-  # ** RPG::Skill
+  # ** RPG::UsableItem
   #---------------------------------------------------------------------------
   #  Imposta gli attributi per le abilità
   #==============================================================================
@@ -1103,7 +1113,7 @@ class Game_Battler
   #--------------------------------------------------------------------------
   # * Restituisce true se il battler attacca a distanza
   #--------------------------------------------------------------------------
-  def ranged_attack?; has_feature?('ranged?'); end
+  def ranged_attack?; has_feature?('ranged?') || attack_with_magic?; end
   #--------------------------------------------------------------------------
   # * Ha uno stato di zombie?
   #--------------------------------------------------------------------------
@@ -1120,6 +1130,15 @@ class Game_Battler
   # * Restituisce il bonus percentuale per infliggere stati alterati
   #--------------------------------------------------------------------------
   def stpw; (state_inf_per * 100).to_i; end
+  #--------------------------------------------------------------------------
+  # Restituisce la percentuale di influenza dello Spirito sull'attacco
+  # fisico.
+  #--------------------------------------------------------------------------
+  def attack_magic_rate; features_sum(:magic_attack); end
+  #--------------------------------------------------------------------------
+  # determina se l'attacco è basato dallo spirito
+  #--------------------------------------------------------------------------
+  def attack_with_magic?; false; end
   #--------------------------------------------------------------------------
   # * Nuova formula
   #--------------------------------------------------------------------------
@@ -1147,32 +1166,127 @@ class Game_Battler
   #--------------------------------------------------------------------------
   def make_attack_damage_value(attacker)
     set_last_action(attacker)
-    hit_states(attacker)
-    damage_states
-    make_attack_damage_value_ht(attacker)
+    if attacker.attack_with_magic?
+      make_magic_damage_value(attacker)
+    else
+      make_attack_damage_value_ht(attacker)
+    end
     @hp_damage = (@hp_damage * CPanel::TSWRate).to_i if attacker.has2w
     change_damage_rate
+    apply_barrier_protection if @hp_damage > 0
+  end
+  #--------------------------------------------------------------------------
+  # * calcolo il danno in base allo spirito
+  # @param [Game_Battler] attacker
+  #--------------------------------------------------------------------------
+  def make_magic_damage_value(attacker)
+    damage = (attacker.spi * attacker.attack_magic_rate * 2).to_i
+    damage -= self.def
+    if $imported["CustomElementAffinity"]
+      # noinspection RubyArgCount
+      damage *= elements_max_rate(attacker.element_set, attacker)
+    else
+      damage *= elements_max_rate(attacker.element_set)
+    end
+    damage /= 100
+
+    damage = apply_variance(damage, 20)
+    damage = apply_guard(damage)
+    damage = apply_magical_rate(attacker, damage, nil)
+    @hp_damage = damage
+  end
+  #--------------------------------------------------------------------------
+  # * Aggiunta di controlli a una skill
+  # @param [Game_Battler] user
+  # @param [RPG::UsableItem] obj
+  #--------------------------------------------------------------------------
+  def make_obj_damage_value(user,obj)
+    @skill_state_inflict = obj
+    @user_state_inflict = user
+    set_last_action(user, obj)
+    make_obj_damage_value_ht(user, obj)
+    @hp_damage = apply_magical_rate(user, @hp_damage, obj)
+    change_damage_rate
+    @mp_damage = apply_magical_rate(user, @mp_damage, obj)
     if @hp_damage > 0
       apply_barrier_protection
-      modifica_danno if actor?
+    elsif @hp_damage < 0 and obj.base_damage < 0 and zombie?
+      @hp_damage *= -1
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * processo di esecuzione del danno
+  # @param [Game_Battler] user
+  #--------------------------------------------------------------------------
+  def execute_damage(user)
+    obj = last_action_skill(user)
+    ranged = obj.nil? ? user.ranged_attack? : obj.ranged?
+    if obj
+      recharge_all if obj.skill_recharge?
+      $game_party.tank.gain_aggro(obj.tank_odd) if obj.tank_odd > 0
+    end
+    if damaged?
+      apply_transfer_damage
       @last_damage = @hp_damage
       self.cumuled_damage += @hp_damage
-      unless attacker.ranged_attack?
-        attacker.hp -= (@hp_damage * physical_reflect).to_i if physical_reflect > 0
-        apply_counter_states(attacker)
+      damage_states(obj)
+      hit_states(user, obj)
+      apply_counter_states(user)
+      apply_anger_change(user, obj)
+      unless ranged
+        apply_physical_reflect(user)
+        apply_counter_states(user)
+        apply_vampire(user)
       end
-      if attacker.charge_gauge?
-        incr = attacker.anger_incr
-        incr /= 2 if attacker.has2w
-        attacker.anger += incr
-      end
-      self.anger += anger_incr if charge_gauge? && anger_on_damage?
-    elsif @hp_damage < 0
-      @hp_damage *= -1 if zombie?
     end
-    if attacker.vampire_rate > 0 && !attacker.ranged_attack?
-      attacker.hp += (@hp_damage*(attacker.vampire_rate+1)).to_i
+    h87attr_execute_damage(user)
+    remove_barriers if self.mp <= 0
+    @skill_state_inflict = nil
+    @user_state_inflict = nil
+  end
+  #--------------------------------------------------------------------------
+  # * applica l'aumento di Furia
+  # @param [Game_Actor] user
+  # @param [RPG::UsableItem] obj
+  #--------------------------------------------------------------------------
+  def apply_anger_change(user, obj = nil)
+    return unless user.charge_gauge?
+    if obj.nil?
+      incr = user.anger_incr
+      incr /= 2 if user.has2w
+    else
+      incr = obj.anger_rate
     end
+    user.anger += incr
+  end
+  #--------------------------------------------------------------------------
+  # * applica il riflesso del danno fisico
+  # @param [Game_Battler] user
+  #--------------------------------------------------------------------------
+  def apply_physical_reflect(user)
+    return if physical_reflect <= 0
+    user.hp -= ((@hp_damage + @mp_damage) * physical_reflect).to_i
+    user.animation_id = H87AttrSettings::DAMAGE_REFLECT_ANIM_ID unless user.animation_id > 0
+  end
+  #--------------------------------------------------------------------------
+  # * applica l'assorbimento di PV a tutto il gruppo
+  # @param [Game_Battler] user
+  # @param [RPG::UsableItem] obj
+  #--------------------------------------------------------------------------
+  def apply_party_absorb(user, obj)
+    return unless obj.absorb_damage_party
+    return if obj.spi_f == 0
+    check_party_absorb_heal(user, obj)
+  end
+  #--------------------------------------------------------------------------
+  # * applica il risucchio PV se ha vamp_rate > 0
+  # @param [Game_Battler] user
+  #--------------------------------------------------------------------------
+  def apply_vampire(user)
+    return unless user.vampire_rate
+    user.hp += (@hp_damage * (user.vampire_rate + 1)).to_i
+    user.mp += (@mp_damage * (user.vampire_rate + 1)).to_i
+    user.animation_id = H87AttrSettings::VAMPIRE_ANIM_ID unless user.animation_id > 0
   end
   #--------------------------------------------------------------------------
   # * applica la protezione della barriera
@@ -1181,15 +1295,23 @@ class Game_Battler
     return unless barrier_rate > 0
     protection = @hp_damage * barrier_rate
     @hp_damage = (@hp_damage - protection).to_i
-    @mp_damage = (protection * barrier_consume_rate).to_i
+    @mp_damage += (protection * barrier_consume_rate).to_i
   end
   #--------------------------------------------------------------------------
-  # * processo di esecuzione del danno
+  # * ottiene l'ultima skill (nil se è un attacco)
   # @param [Game_Battler] user
+  # @return [RPG::UsableItem]
   #--------------------------------------------------------------------------
-  def execute_damage(user)
-    h87attr_execute_damage(user)
-    remove_barriers if self.mp <= 0
+  def last_action_skill(user)
+    last_action = user.last_action
+    if last_action > 0
+      skill = $data_skills[last_action]
+    elsif last_action < 0
+      skill = $data_items[last_action]
+    else
+      skill = nil
+    end
+    skill
   end
   #--------------------------------------------------------------------------
   # * distrugge le barriere
@@ -1207,6 +1329,11 @@ class Game_Battler
     RPG::SE.new(H87AttrSettings::BARRIER_BREAK_SE).play if found
     found
   end
+  #--------------------------------------------------------------------------
+  # * Restituisce true se viene danneggiato
+  # noinspection RubyResolve
+  #--------------------------------------------------------------------------
+  def damaged?; (@hp_damage > 0 || @mp_damage > 0) && !@missed; end
   #--------------------------------------------------------------------------
   # * applica gli stati del danno
   # @param [Game_Battler] attacker
@@ -1312,51 +1439,6 @@ class Game_Battler
     h87attr_item_test(user,item)
   end
   #--------------------------------------------------------------------------
-  # * Aggiunta di controlli a una skill
-  # @param [Game_Battler] user
-  # @param [RPG::UsableItem] obj
-  #--------------------------------------------------------------------------
-  def make_obj_damage_value(user,obj)
-    @skill_state_inflict = obj
-    @user_state_inflict = user
-    set_last_action(user, obj)
-    hit_states(user, obj)
-    damage_states(obj)
-    recharge_all if obj.skill_recharge?
-    make_obj_damage_value_ht(user, obj)
-    if (@hp_damage > 0 || @mp_damage > 0) && obj.meele?
-      if user.vampire_rate > 0 && !obj.absorb_damage
-        user.hp += (@hp_damage*(user.vampire_rate+1)).to_i
-        user.mp += (@mp_damage*(user.vampire_rate+1)).to_i
-        user.animation_id = 439 unless user.animation_id > 0
-      end
-      apply_counter_states(user)
-    end
-    @hp_damage = apply_magical_rate(user, @hp_damage, obj)
-    change_damage_rate
-    @mp_damage = apply_magical_rate(user, @mp_damage, obj)
-    $game_party.tank.gain_aggro(obj.tank_odd) if obj.tank_odd > 0
-    if obj.absorb_damage_party && obj.spi_f > 0
-      check_party_absorb_heal(user, obj)
-    end
-    if @hp_damage > 0
-      apply_barrier_protection
-      modifica_danno if actor?
-      @last_damage = @hp_damage
-      self.anger += anger_incr if charge_gauge? && anger_on_damage?
-      self.cumuled_damage += @hp_damage
-      if physical_reflect > 0 && obj.atk_f > 0 && !obj.absorb_damage && obj.meele?
-        user.hp -= (@hp_damage * physical_reflect).to_i
-        user.mp -= (@mp_damage * physical_reflect).to_i
-        user.animation_id = 440 unless user.animation_id > 0
-      end
-    elsif @hp_damage < 0
-      @hp_damage *= -1 if zombie?
-    end
-    @skill_state_inflict = nil
-    @user_state_inflict = nil
-  end
-  #--------------------------------------------------------------------------
   # * Restituisce la cura di gruppo di un assorbimento vampirico
   #--------------------------------------------------------------------------
   def check_party_absorb_heal(user, obj)
@@ -1391,7 +1473,7 @@ class Game_Battler
   # @param [RPG::Skill] skill
   def apply_magical_rate(user, damage, skill)
     return damage unless damage > 0
-    return damage unless skill.spi_f > 0
+    return damage unless skill != nil and skill.spi_f <= 0
     (damage * (1.0+(user.magic_damage_rate - self.magic_def).to_f)).to_i
   end
   #--------------------------------------------------------------------------
@@ -1579,10 +1661,6 @@ class Game_Battler
   #--------------------------------------------------------------------------
   def last_chance?; @last_chance_on; end
   #--------------------------------------------------------------------------
-  # * Restituisce la parte intera degli HP
-  #--------------------------------------------------------------------------
-  #def hp; h87attr_hp.to_i; end
-  #--------------------------------------------------------------------------
   # * Alias del metodo hp= per controllo ultima chance
   #--------------------------------------------------------------------------
   def hp=(hp)
@@ -1596,9 +1674,11 @@ class Game_Battler
   #--------------------------------------------------------------------------
   # * Ricarica tutte le abilità
   #--------------------------------------------------------------------------
-  def recharge_all
-    flush_turn_skills
-  end
+  def recharge_all; flush_turn_skills; end
+  #--------------------------------------------------------------------------
+  # * ricalcola il danno trasferito su un difensore
+  #--------------------------------------------------------------------------
+  def apply_transfer_damage; end
 end #game_battler
 
 #==============================================================================
@@ -1685,6 +1765,12 @@ class Game_Actor < Game_Battler
     armi >= 2
   end
   #--------------------------------------------------------------------------
+  # determina se l'attacco è basato dallo spirito
+  #--------------------------------------------------------------------------
+  def attack_with_magic?
+    super || self.weapons[0] != nil and self.weapons[0].magic_attack > 0
+  end
+  #--------------------------------------------------------------------------
   # * Restituisce il nuovo valore secondo il bonus del gruppo
   #   value: valore iniziale
   #   param: parametro (atk, def, spi, agi, eva, hit, cri)
@@ -1700,6 +1786,15 @@ class Game_Actor < Game_Battler
     else
       (value * (1.0 + $game_party.party_bonus(param))).to_i
     end
+  end
+  #--------------------------------------------------------------------------
+  # * aumenta l'ira se ne ha i requisiti, quando viene colpito
+  # @param [Game_Battler] user
+  # @param [RPG::UsableItem] obj
+  #--------------------------------------------------------------------------
+  def apply_anger_change(user, obj = nil)
+    super
+    self.anger += anger_incr if anger_on_damage?
   end
   #--------------------------------------------------------------------------
   # * restituisce il bonus dello spirito all'attacco
@@ -1956,7 +2051,7 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   # * Modifica il danno se c'è un difensore
   #--------------------------------------------------------------------------
-  def modifica_danno
+  def apply_transfer_damage
     riduci_danno_difensore
     riduci_danno_evocazione
   end
@@ -2148,6 +2243,10 @@ class Game_Enemy < Game_Battler
       h87attr_perform_collapse
     end
   end
+  #--------------------------------------------------------------------------
+  # determina se l'attacco è basato dallo spirito
+  #--------------------------------------------------------------------------
+  def attack_with_magic?; super || attack_magic_rate > 0; end
   #--------------------------------------------------------------------------
   # * Restituisce true se il battler è affetto da bombificazione
   #--------------------------------------------------------------------------

@@ -56,6 +56,10 @@ class Game_Party < Game_Unit
     @battlequotes = [] if @battlequotes == nil
     @battlequotes.push(quote)
   end
+
+  def sinergy_full?
+    # code here
+  end
 end
 
 #==============================================================================

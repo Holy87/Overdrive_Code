@@ -29,13 +29,13 @@ module H87_SINERGIC
   # Decremento della Sinergia ad ogni turno quando attiva
   SINERGY_DECREASE = 100
   # Incremento predefinito con attacco/cura
-  DEFAULT_INCREASE = 50
+  DEFAULT_INCREASE = 100
   # Divisore per l'azione del nemico (incremento di base / divisore)
-  ENEMY_DIVIDER = 0
+  ENEMY_DIVIDER = 0 # se 0, non decresce
   # Incremento per infliggere uno stato alterato
-  STATE_INFLICT = 15
+  STATE_INFLICT = 30
   # Bonus moltiplicatore se si sfrutta una debolezza
-  ELEMENT_WEAKNESS_BONUS = 1.0
+  ELEMENT_WEAKNESS_BONUS = 1.5 # 1.0: +100%, 1.5: +150%
   # Malus moltiplicatore se si attacca con una resistenza
   ELEMENT_RESIST_MALUS = 0.5
   # Decremento della sinergia se un nemico mette KO un eroe
@@ -44,6 +44,12 @@ module H87_SINERGIC
   SPECIAL_SKILL_REDUCTION = 200
   # Azzeramento della Sinergia dopo la battaglia?
   BATTLE_RESET = true
+  # Comando di attivazione della sinergia
+  SINERGY_BUTTON = :X
+  # Stato alterato aggiunto agli eroi quando la sinergia è attiva
+  SINERGY_STATE = 76
+  # Switch della sinergia auto-attiva. Se 0 nasconde l'opzione
+  SINERGY_OPT_SW = 610
   #--------------------------------------------------------------------------
   # * Configurazione grafica
   #--------------------------------------------------------------------------
@@ -71,6 +77,26 @@ module H87_SINERGIC
   B_DEFT_TONE = Tone.new(-30,-30,-20,255)
   # Suono di attivazione della Sinergia
   ACTIV_SOUND = "Up4"
+  # attivare effetti particellari? Disattivato perché influisce negativamente
+  # sulle prestazioni.
+  PARTICLE_EFFECTS = false
+
+  SINERGY_ANIM_ID = 457
+
+  CORNER_ANIM_ID = 458
+  CORNER_ACTIV_ANIM_IDS = [459, 460, 461, 462]
+  #--------------------------------------------------------------------------
+  # * Configurazione impostazione sinergia dal menu
+  #--------------------------------------------------------------------------
+  SIN_SETTINGS = {
+      :type => :switch,
+      :text => "Attivazione sinergia",
+      :help => "Scegli se attivare la sinergia con la pressione del tasto o|automaticamente quando raggiunge il massimo.",
+      :sw   => SINERGY_OPT_SW,
+      :on   => "Automatica",
+      :off  => "Manuale",
+      :default => false,
+  }
 end
 
 #===============================================================================
@@ -273,27 +299,50 @@ class Scene_Title < Scene_Base
 end #title
 
 #===============================================================================
+# ** Game_System
+#===============================================================================
+class Game_System
+  #--------------------------------------------------------------------------
+  # * determina se la sinergia si deve attivare automaticamente
+  #--------------------------------------------------------------------------
+  def auto_sinergy?; $game_switches[H87_SINERGIC::SINERGY_OPT_SW]; end
+end
+
+#===============================================================================
 # ** Game_Battler
 #-------------------------------------------------------------------------------
 # Aggiunti i controlli Sinergia
 #===============================================================================
 class Game_Battler
   include H87_SINERGIC
-  alias h87sinergia_madv make_attack_damage_value unless $@
-  alias h87sinergia_modv make_obj_damage_value unless $@
   alias h87sinergia_asc apply_state_changes unless $@
   alias h87sinergia_eff attack_effect unless $@
   alias h87sinergia_ski skill_effect unless $@
   alias h87sinergia_scu skill_can_use? unless $@
+  alias h87sinergia_exd execute_damage unless $@
+  alias h87sinergia_sts states unless $@
   #--------------------------------------------------------------------------
-  # * Calcolo del danno di un Attacco Normale
-  #     attacker : Attaccante
-  #    I risultati sono assegnati a @hp_damage
-  # @param [Game_Battler] attacker
+  # * Aumenta la sinergia al danno
+  # @param [Game_Battler] user
   #--------------------------------------------------------------------------
-  def make_attack_damage_value(attacker)
-    h87sinergia_madv(attacker)
-    check_sinergic_damage(attacker, attacker.element_set)
+  def execute_damage(user)
+    check_sinergic_damage(user)
+    check_sinergic_heal(user)
+    h87sinergia_exd(user)
+  end
+  #--------------------------------------------------------------------------
+  # * Controlla la sinergia data nella cura
+  # @param [Game_Actor] user
+  #--------------------------------------------------------------------------
+  def check_sinergic_heal(user)
+    return unless SceneManager.scene_is?(Scene_Battle)
+    if (@hp_damage < 0 or @mp_damage < 0) and actor?
+      if user.actor?
+        $game_party.add_sinergy(user.sinergic_increase)
+      else
+        $game_party.add_sinergy(sinergic_increase)
+      end
+    end
   end
   #--------------------------------------------------------------------------
   # * Controllo che se è un'abilità Sinergia, non può essere usata
@@ -305,25 +354,23 @@ class Game_Battler
   end
   #--------------------------------------------------------------------------
   # * Controlla l'aggiunta della sinergia al danno
-  # @param [Game_Battler] attacker
+  # @param [Game_Battler] user
   # @param [Array] element_set
   # @param [RPG::Skill] skill
   #--------------------------------------------------------------------------
-  def check_sinergic_damage(attacker, element_set, skill = nil)
+  def check_sinergic_damage(user)
     return unless $scene.is_a?(Scene_Battle)
     return if $game_party.sinergy_active?
-    if damaged? and guard? and actor?
+    skill = last_action_skill(user)
+    element_set = skill.nil? ? user.element_set : skill.element_set
+    $game_party.add_sinergy(skill.syn_bonus) if skill
+    return unless damaged?
+    if guard? and actor?
       $game_party.add_sinergy(sinergic_increase * sin_guard_bonus)
     end
-    mult = get_multiplier(element_set, attacker)
-    mult *= 2 if @critical
-    $game_party.add_sinergy(attacker.sinergic_increase * mult)
-    $game_party.add_sinergy(skill.syn_bonus) if skill
+    mult = get_multiplier(element_set, user)
+    $game_party.add_sinergy(user.sinergic_increase * mult)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se viene danneggiato
-  #--------------------------------------------------------------------------
-  def damaged?; @hp_damage > 0 || @mp_damage > 0; end
   #--------------------------------------------------------------------------
   # * Ottiene il moltiplicatore Sinergia
   # @param [Game_Battler] attacker
@@ -337,7 +384,7 @@ class Game_Battler
     elsif elements_max_rate(element_set) < 100
       mult -= ELEMENT_RESIST_MALUS
     end
-    mult += sinergic_defense if damaged?
+    mult -= sinergic_defense if actor?
     mult /= 2.0 if attacker.has2w
     mult
   end
@@ -380,15 +427,6 @@ class Game_Battler
     $game_party.add_sinergy(user.sin_kill_bonus) if dead?
   end
   #--------------------------------------------------------------------------
-  # * Causa danno
-  # @param [Game_Battler] user
-  # @param [RPG::Skill] obj
-  #--------------------------------------------------------------------------
-  def make_obj_damage_value(user, obj)
-    h87sinergia_modv(user, obj)
-    check_sinergic_skill(user, obj)
-  end
-  #--------------------------------------------------------------------------
   # * Controllo della Sinergia per un'abilità
   # @param [Game_Battler] user
   # @param [RPG::Skill] obj
@@ -399,7 +437,7 @@ class Game_Battler
     if @hp_damage < 0 || @mp_damage < 0
       sinergic_heal(obj)
     elsif @hp_damage > 0 || @mp_damage > 0
-      check_sinergic_damage(user, obj.element_set, obj)
+      check_sinergic_damage(user)
     end
   end
   #--------------------------------------------------------------------------
@@ -464,6 +502,17 @@ class Game_Battler
   # * Ha 2 armi?
   #--------------------------------------------------------------------------
   def has2w; false; end
+  #--------------------------------------------------------------------------
+  # * Restituisce gli stati alterati più quello del bonus sinergia se attivo
+  # @return [Array<RPG::State>]
+  #--------------------------------------------------------------------------
+  def states
+    _states = h87sinergia_sts
+    if SINERGY_STATE > 0 and actor? and $game_party.sinergy_active?
+      _states.push($data_states[SINERGY_STATE])
+    end
+    _states
+  end
 end #game_battler
 
 #===============================================================================
@@ -486,13 +535,14 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   def sin_state_increase; STATE_INFLICT; end
   #--------------------------------------------------------------------------
-  # * Restituisce
+  # * Restituisce il rapporto tra numero di nemici e membri del party
+  # non può essere più basso della metà
   #--------------------------------------------------------------------------
-  def troop_rate; $game_troop.members.size/$game_party.members.size.to_f; end
+  def troop_rate; [$game_troop.members.size/$game_party.members.size.to_f, 0.5].max; end
   #--------------------------------------------------------------------------
   # * Restituisce il bonus durata sinergia dell'eroe
   #--------------------------------------------------------------------------
-  def sin_duration_bonus; 1.0 + features_sum(:sin_durab); end
+  def sin_duration_bonus; 0.0 + features_sum(:sin_durab); end
   #--------------------------------------------------------------------------
   # * Restituisce il bonus sinergia dell'eroe
   #--------------------------------------------------------------------------
@@ -608,8 +658,19 @@ class Game_Party < Game_Unit
   # * Aggiunge sinergia
   #--------------------------------------------------------------------------
   def add_sinergy(value)
+    puts sprintf("Sinergia +%d", value)
     s1 = sinergic_state
     @sinergic_state = s1 + value
+    @sinergic_state = SIN_MAX if @sinergic_state > SIN_MAX
+  end
+  #--------------------------------------------------------------------------
+  # * consuma la sinergia
+  #--------------------------------------------------------------------------
+  def lose_sinergy(value)
+    puts sprintf("Sinergia -%d", value)
+    @sinergic_state -= value
+    @sinergic_state = 0 if @sinergic_state < 0
+    check_sinergy_activation
   end
   #--------------------------------------------------------------------------
   # * Riempie la sinergia al massimo
@@ -618,31 +679,30 @@ class Game_Party < Game_Unit
     self.sinergic_state = SIN_MAX
   end
   #--------------------------------------------------------------------------
-  # * Riduce forzatamente la sinergia anche quando è piena
-  #   value: valore di riduzione
+  # * azzera la sinergia
   #--------------------------------------------------------------------------
-  def force_scale(value)
-    @sinergic_state -= value
-    @sinergic_state = 0 if @sinergic_state < 0
-    check_sinergy_activation
+  def reset_sinergy
+    @sinergic_state = 0
+    @sinergy_active = false
   end
   #--------------------------------------------------------------------------
   # * Restituisce la sinergia del gruppo
   #--------------------------------------------------------------------------
-  def sinergic_state
-    @sinergic_state = 0 if @sinergic_state.nil?
-    @sinergic_state
-  end
+  def sinergic_state; @sinergic_state ||= 0; end
   #--------------------------------------------------------------------------
   # * Controllo attivazione Sinergia
   #--------------------------------------------------------------------------
   def check_sinergy_activation
     if sinergy_active?
       @sinergy_active = false if @sinergic_state <= 0
-    else
-      @sinergy_active = true if @sinergic_state >= SIN_MAX
+    elsif sinergy_full? and $game_system.auto_sinergy?
+      @sinergy_active = true
     end
   end
+  #--------------------------------------------------------------------------
+  # * determina se la sinergia è piena
+  #--------------------------------------------------------------------------
+  def sinergy_full?; sinergic_state >= SIN_MAX; end
   #--------------------------------------------------------------------------
   # * Restituisce se la Sinergia è attivata
   #--------------------------------------------------------------------------
@@ -673,18 +733,16 @@ class Game_Party < Game_Unit
   # * Aggiornamento della Sinergia alla fine del turno
   #--------------------------------------------------------------------------
   def update_sinergy_turn
-    if sinergy_active? && sinergic_state < SIN_MAX
-      val = SINERGY_DECREASE / sinergy_bonus_duration * -1
+    if sinergy_active?
+      lose_sinergy(SINERGY_DECREASE / sinergy_bonus_duration)
     else
-      val = sinergy_incentive
+      add_sinergy(sinergy_incentive)
     end
-    add_sinergy(val)
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'incentivo totale della Sinergia
   #--------------------------------------------------------------------------
   def sinergy_incentive
-    return 0 if sinergy_active?
     sum = 0
     battle_members.each {|member|
       next if member.nil?
@@ -703,7 +761,7 @@ class Game_Party < Game_Unit
     }
     sum
   end
-end #game_enemy
+end #game_party
 
 #===============================================================================
 # ** Scene_Battle
@@ -726,11 +784,24 @@ class Scene_Battle < Scene_Base
     $game_party.add_sinergy($game_party.initial_sinergy)
   end
   #--------------------------------------------------------------------------
+  # * Riduzione della Sinergia
+  #--------------------------------------------------------------------------
+  def execute_action_skill
+    h87sin_eas
+    skill = @active_battler.action.skill
+    return if skill.nil?
+    if skill.special_skill
+      puts 'usata skill speciale'
+      $game_party.lose_sinergy(H87_SINERGIC::SPECIAL_SKILL_REDUCTION)
+    end
+  end
+  #--------------------------------------------------------------------------
   # * Aggiornamento
   #--------------------------------------------------------------------------
   def update_basic(main = false)
     # noinspection RubyArgCount
     h87sin_update_basic(main)
+    update_sinergy_activation
     update_sin_bar
   end
   #--------------------------------------------------------------------------
@@ -743,23 +814,25 @@ class Scene_Battle < Scene_Base
     reset_sinergy
   end
   #--------------------------------------------------------------------------
+  # * controlla la pressione del tasto per attivare la sinergia
+  #--------------------------------------------------------------------------
+  def update_sinergy_activation
+    return if $game_system.auto_sinergy?
+    return if $game_party.sinergy_active?
+    return unless $game_party.sinergy_full?
+    if Input.trigger?(H87_SINERGIC::SINERGY_BUTTON)
+      $game_party.sinergy_active = true
+      end_item_selection
+      end_skill_selection
+    end
+  end
+  #--------------------------------------------------------------------------
   # * Fine del turno
   #--------------------------------------------------------------------------
   def turn_end(member = nil)
-    # noinspection RubyArgCount
     h87sin_tend(member)
     check_sinergy_change
-  end
-  #--------------------------------------------------------------------------
-  # * Riduzione della Sinergia
-  #--------------------------------------------------------------------------
-  def execute_action_skill
-    h87sin_eas
-    skill = @active_battler.action.skill
-    return if skill.nil?
-    if skill.special_skill
-      $game_party.force_scale(H87_SINERGIC::SPECIAL_SKILL_REDUCTION)
-    end
+    puts sprintf("Sinergia a %d", $game_party.sinergic_state)
   end
   #--------------------------------------------------------------------------
   # * Esecuzione di vittoria
@@ -802,7 +875,7 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   def reset_sinergy
     if $game_party.sinergy_active? or H87_SINERGIC::BATTLE_RESET
-      $game_party.sinergic_state = 0
+      $game_party.reset_sinergy
     end
   end
   #--------------------------------------------------------------------------
@@ -882,7 +955,18 @@ class Sprite_Sinergy
     create_background_rect
     create_fill_rect
     create_corner
+    create_sinergy_button
   end
+  #--------------------------------------------------------------------------
+  # * crea il pulsante di attivazione della Sinergia
+  #--------------------------------------------------------------------------
+  def create_sinergy_button
+    @sinergy_button = Sprite_SinergyButton.new(@view3)
+    @sinergy_button.x = @corner.x - 30
+    @sinergy_button.y = @corner.y + (@corner.height - @sinergy_button.height) / 2
+    @sinergy_button.visible = false
+  end
+
   #--------------------------------------------------------------------------
   # * Aggiunge un nuovo pixel
   #--------------------------------------------------------------------------
@@ -974,7 +1058,7 @@ class Sprite_Sinergy
   # * Crea la cornice della barra
   #--------------------------------------------------------------------------
   def create_corner
-    @corner = Sprite.new(@view3)
+    @corner = Sprite_SinergyBar.new(@view3)
     @corner.bitmap = Cache.system(CORNER_SIN)
     @corner.x = Graphics.width/2 - @corner.width / 2
     @corner.y = SINBAR_Y + (@background.height/2 - @corner.height/2)
@@ -1000,14 +1084,26 @@ class Sprite_Sinergy
     update_animation
     update_activation
     handle_pixels
+    update_button_placement
     @background.update
     @corner.update
     @fill.update
   end
   #--------------------------------------------------------------------------
+  # * aggiorna lo stato del pulsante
+  #--------------------------------------------------------------------------
+  def update_button_placement
+    return if $game_system.auto_sinergy?
+    @sinergy_button.update
+    unless $game_party.sinergy_active?
+      @sinergy_button.visible = $game_party.sinergy_full?
+    end
+  end
+  #--------------------------------------------------------------------------
   # * Gestione degli effetti particellari
   #--------------------------------------------------------------------------
   def handle_pixels
+    return unless H87_SINERGIC::PARTICLE_EFFECTS
     if @active
       update_superpixels
       flash_bar
@@ -1034,6 +1130,7 @@ class Sprite_Sinergy
     @power.dispose
     @pixels.each {|pixel| pixel.dispose}
     @light.dispose
+    @sinergy_button.dispose
   end
   #--------------------------------------------------------------------------
   # * Aggiornamento della grandezza
@@ -1058,10 +1155,17 @@ class Sprite_Sinergy
   # * Aggiornamento dell'animazione della barra
   #--------------------------------------------------------------------------
   def update_animation
-    @power.ox -= 2
-    @power.oy += 1
-    @power2.ox -= 1
-    @power2.oy -= 1
+    if $game_party.sinergy_active?
+      @power.ox -= 5
+      @power.oy += 2
+      @power2.ox -= 3
+      @power2.oy -= 2
+    else
+      @power.ox -= 2
+      @power.oy += 1
+      @power2.ox -= 1
+      @power2.oy -= 1
+    end
   end
   #--------------------------------------------------------------------------
   # * Controllo dell'attivazione
@@ -1082,7 +1186,9 @@ class Sprite_Sinergy
     @background.tone = B_ACTV_TONE
     @fill.tone = ACTIVE_TONE
     @light.tone = ACTIVE_TONE
+    @corner.animate
     @active = true
+    @sinergy_button.disappear if @sinergy_button.visible
   end
   #--------------------------------------------------------------------------
   # * Disattivazione della Sinergia
@@ -1090,8 +1196,95 @@ class Sprite_Sinergy
   def deactivate
     return unless @active
     default_tone = Tone.new(0,0,0,0)
+    @sinergy_button.opacity = 255
     @background.tone = B_DEFT_TONE
     @fill.tone = default_tone
     @light.tone = default_tone
+    @active = false
   end
 end #sinergysprite
+
+class Sprite_SinergyBar < Sprite_Base
+  #--------------------------------------------------------------------------
+  # * aggiornamento
+  #--------------------------------------------------------------------------
+  def update
+    super
+    @animation_duration -= 1 if @animation != nil
+    animate_random
+  end
+  #--------------------------------------------------------------------------
+  # * inizia l'animazione
+  #--------------------------------------------------------------------------
+  def animate
+    start_animation($data_animations[H87_SINERGIC::CORNER_ANIM_ID])
+  end
+  #--------------------------------------------------------------------------
+  # * inizia un'animazione a caso
+  #--------------------------------------------------------------------------
+  def animate_random
+    return if animation?
+    return unless $game_party.sinergy_active?
+    if Graphics.frame_count % 180 == 0
+      anim_ids = H87_SINERGIC::CORNER_ACTIV_ANIM_IDS
+      id = anim_ids[rand(anim_ids.size - 1)]
+      start_animation($data_animations[id])
+    end
+  end
+end
+
+class Sprite_SinergyButton < Sprite_Base
+  #--------------------------------------------------------------------------
+  # * inizializzazione
+  #--------------------------------------------------------------------------
+  def initialize(viewport = nil)
+    super
+    create_button_bitmap
+  end
+  #--------------------------------------------------------------------------
+  # * crea la bitmap del pulsante
+  #--------------------------------------------------------------------------
+  def create_button_bitmap
+    bmp = Bitmap.new(24,24)
+    bmp.draw_key_icon(H87_SINERGIC::SINERGY_BUTTON, 0, 0)
+    self.bitmap = bmp
+    @contr_connected = Input.controller_connected?
+  end
+  #--------------------------------------------------------------------------
+  # * aggiornamento
+  #--------------------------------------------------------------------------
+  def update
+    super
+    return unless self.visible
+    update_controller_plug
+    update_move
+  end
+  #--------------------------------------------------------------------------
+  # * aggiorna la grafica del pulsante se viene sconnesso o connesso il pad
+  #--------------------------------------------------------------------------
+  def update_controller_plug
+    return if Input.controller_connected? == @contr_connected
+    create_button_bitmap
+  end
+  #--------------------------------------------------------------------------
+  # * aggiorna l'animazione di pressione
+  #--------------------------------------------------------------------------
+  def update_move
+    if Graphics.frame_count % 30 == 0
+      self.oy = - 4
+      self.flash(Color::SKYBLUE, 10)
+    elsif self.oy < 0
+      self.oy += 1
+    end
+  end
+  #--------------------------------------------------------------------------
+  # * scompari
+  #--------------------------------------------------------------------------
+  def disappear
+    start_animation($data_animations[H87_SINERGIC::SINERGY_ANIM_ID])
+    fade(0, 10)
+  end
+end
+
+# aggiunta dell'impostazione nel menu
+H87Options.push_game_option(H87_SINERGIC::SIN_SETTINGS) if H87_SINERGIC::SINERGY_OPT_SW > 0
