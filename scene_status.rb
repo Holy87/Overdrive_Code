@@ -718,6 +718,9 @@ class Window_ActorStatus < Window_Base
   # @param [Integer] width
   #--------------------------------------------------------------------------
   def draw_param(x, row, param, width = (contents_width / 2))
+    if actor.charge_gauge? and param == 'maxmp'
+      param = 'max_anger'
+    end
     param_value = eval("actor.#{param}")
     y = row * line_height
     draw_param_gauge(x, y, width, param_value, param)

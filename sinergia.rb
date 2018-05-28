@@ -446,6 +446,7 @@ class Game_Battler
   # @param [RPG::Skill] obj
   #--------------------------------------------------------------------------
   def sinergic_heal(obj)
+    return if !actor? and ENEMY_DIVIDER == 0
     m = actor? ? 1 : -1
     value = obj.custom_sinergy.nil? ? sinergic_increase : obj.custom_sinergy*m
     $game_party.sinergic_state += value * sin_heal_bonus

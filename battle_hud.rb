@@ -523,7 +523,7 @@ class Actor_BattleStatus
   # * Esper Gauge Creation
   #--------------------------------------------------------------------------
   def create_esper_bar
-    width = $game_temp.domination_max_turns * 5
+    width = esper_width
     x = @mp_bar.x + @mp_bar.width + 10
     @esper_bar = Battle_EsperBar.new(x, 18, width)
     @esper_bar.set_value($game_temp.domination_turns_rate * 100)
@@ -549,6 +549,12 @@ class Actor_BattleStatus
   def anger_width
     max_width = Graphics.width - 230
     [actor.max_anger * anger_divisor(max_width), max_width].min
+  end
+  #--------------------------------------------------------------------------
+  # * restituisce la larghezza della barra di carica della dominazione
+  #--------------------------------------------------------------------------
+  def esper_width
+    $game_temp.domination_max_turns * 3
   end
   #--------------------------------------------------------------------------
   # * returns the proper HP divisor for bar max width
