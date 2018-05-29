@@ -55,8 +55,8 @@ module H87HUD_SETTINGS
   NORMAL_FACE_TONE = Tone.new(0, 0, 0)
   DEAD_FACE_TONE = Tone.new(0, 0, 0, 255)
   # Colori del flash volto eroe
-  DAMAGE_FLASH_CL = Color.new(255,0,0)
-  HEAL_FLASH_CL = Color.new(0,255,0)
+  DAMAGE_FLASH_CL = Color::RED
+  HEAL_FLASH_CL = Color::GREEN
   FLASH_DURATION = 30
   # Altezza barra PV
   HP_HEIGHT = 12
@@ -199,10 +199,19 @@ class Battle_Hud
   #   value: HUD visibility true/false
   #--------------------------------------------------------------------------
   def visible=(value)
-    @battle_status_elements.each {|battlestatus|
-      battlestatus.visible = value
-    }
+    value ? show : hide
+    #@battle_status_elements.each {|battlestatus|
+    #  battlestatus.visible = value
+    #}
   end
+  #--------------------------------------------------------------------------
+  # * hides the batle status with animation
+  #--------------------------------------------------------------------------
+  def hide; @viewport.smooth_move(0, self.height); end
+  #--------------------------------------------------------------------------
+  # * shows the battle status with animation
+  #--------------------------------------------------------------------------
+  def show; @viewport.smooth_move(0, 0); end
   #--------------------------------------------------------------------------
   # * Sets the selected actor
   #   value: actor index
@@ -1445,6 +1454,7 @@ class Scene_Battle < Scene_Base
   alias h87hud_create_info_viewport create_info_viewport unless $@
   alias h87hud_terminate terminate unless $@
   alias h87hud_process_v process_victory unless $@
+  alias h87hud_update_basic update_basic unless $@
   #--------------------------------------------------------------------------
   # * alias for Viewport creation
   #--------------------------------------------------------------------------
@@ -1469,6 +1479,13 @@ class Scene_Battle < Scene_Base
   def process_victory
     @status_window.visible = false
     h87hud_process_v
+  end
+  #--------------------------------------------------------------------------
+  # * aggiorna il viewport per lo smooth move
+  #--------------------------------------------------------------------------
+  def update_basic
+    h87hud_update_basic
+    @hud_viewport.update
   end
 end
 

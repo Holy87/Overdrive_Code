@@ -7,17 +7,6 @@ module Settings
   NO_PLAYER_VOCAB = 'Giocatore non trovato.'
   WRONG_DATA_VOCAB = 'Errore del server.'
   CONN_ERROR_VOCAB = 'Errore di connessione. Potrebbe essere un problema di server o della tua linea.'
-
-  TITLES = {
-      :rookie => ['Pivello','Per chi è alle prime armi'],
-      :adventurer => ['Avventuriero','Titolo conferito a chi esplora almeno un dungeon'],
-      :slimekiller => ['Ammazzaslime','Titolo conferito a chi uccide almeno 200 Slime'],
-      :dragonslayer => ['Cacciatore di draghi','Titolo conferito a chi uccide almeno 50 draghi'],
-      :protector => ['Protettore','Titolo conferito a chi ha protetto la città da un\'invasione'],
-      :summoner => ['Evocatore','Titolo conferito a chi ha ottenuto la sua prima Dominazione'],
-      :seeker => ['Cercatore','Titolo conferito a chi ha aperto più di 100 scrigni'],
-      :nerd => ['Nerd','Titolo conferito a chi ha giocato per almeno 50 ore. Bravo!'],
-  }
 end
 
 #===============================================================================
@@ -48,6 +37,7 @@ class Online_Player
   attr_accessor :quests     #Missioni secondarie
   attr_accessor :fame       #fama
   attr_accessor :infame     #infamia
+  attr_accessor :title_id   #ID del titolo
   #--------------------------------------------------------------------------
   # * Inizializzazione
   # @param [String] name
@@ -67,6 +57,39 @@ class Online_Player
   # * Restituisce se è stato bannato
   #--------------------------------------------------------------------------
   def banned?; @banned; end
+  #--------------------------------------------------------------------------
+  # I titoli sbloccati dal giocatore
+  # @return [Array]
+  #--------------------------------------------------------------------------
+  def unlocked_titles
+    @unlocked_titles ||= []
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def unlock_title(title_id)
+    return if unlocked_titles.include?(title_id)
+    unlocked_titles.push(title_id)
+    unless $game_system.cached_titles.include?(title_id)
+      $game_system.cached_titles.push(title_id)
+    end
+  end
+  #--------------------------------------------------------------------------
+  # *
+  # @return [Player_Title]
+  #--------------------------------------------------------------------------
+  def title; Titles.get_title(@title_id); end
+  #--------------------------------------------------------------------------
+  # * Sblocca i titoli in batch. Non cacha perché si suppone che venga fatto
+  # appena sincronizzato.
+  # @param [Array] array_ids
+  #--------------------------------------------------------------------------
+  def unlock_titles(array_ids)
+    array_ids.each {|id|
+      return if unlocked_titles.include?(title_id)
+      unlocked_titles.push(id)
+    }
+  end
 end
 
 #===============================================================================
@@ -83,6 +106,10 @@ module Online
   # * Percorso directory contenenti le chiamate alle azioni
   #--------------------------------------------------------------------------
   def self.api_path; HTTP.domain + '/gameapi'; end
+  #--------------------------------------------------------------------------
+  # * determina se la componente online è abilitata
+  #--------------------------------------------------------------------------
+  def self.enabled?; $game_variables[0]; end
   #--------------------------------------------------------------------------
   # * Procedura di registrazione giocatore. True se l'operazione ha successo
   # @param [String] name
@@ -121,10 +148,17 @@ module Online
     PlayerParser.str_to_player(result)
   end
   #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def self.sync_all
+    sync_player_infos
+    sync_unlocked_titles
+  end
+  #--------------------------------------------------------------------------
   # * Sincronizza i dati della partita con il server
   # @return [Boolean]
   #--------------------------------------------------------------------------
-  def self.sync_player
+  def self.sync_player_infos
     player = $game_system.player
     playtime = $game_system.playtime_time
     params = {
@@ -134,7 +168,8 @@ module Online
         :hours => playtime.hour,
         :minutes => playtime.min,
         :story => $game_system.story_progress,
-        :quests => $game_system.completed_quests
+        :quests => $game_system.completed_quests,
+        :title => player.title
     }
     submit_post_request(api_path + '/profile_update.php', params) rescue false
     true
@@ -150,6 +185,35 @@ module Online
     r = submit_post_request(api_path + '/avatar_update.php', params)
     r == SUCCESS
   end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def self.sync_unlocked_titles
+    send_cached_titles
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def self.send_cached_titles
+    return if $game_system.cached_titles.empty?
+    request = {
+        :game_id => $game_system.player.id,
+        :title_ids => $game_system.cached_titles * ','
+    }
+    url = HTTP.domain + '/push_titles.php'
+    result = submit_post_request(url, request)
+    $game_system.cached_titles.clear if result == SUCCESS
+  end
+
+  def self.get_online_titles
+    params = {:game_id => $game_system.player.id}
+    url = HTTP.domain + '/get_titles.php'
+    response = submit_post_request(url, params)
+    if response =~ /ok:(.+)/i
+      ids = $1.split(',')
+      $game_system.player.unlock_titles(ids)
+    end
+  end
 end
 
 class ConnectionException < Exception; end
@@ -162,15 +226,14 @@ class PlayerParseError < Exception; end
 #===============================================================================
 class Game_System
   #--------------------------------------------------------------------------
-  # * Restituisce le informazioni sul giocatore registrato
-  #   ● Se è già presente, lo restituisce
-  #   ● Se non è presente, lo scarica online e lo restituisce
-  #   ● Se non è presente neanche online, restituisce nil
+  # Restituisce le informazioni sul giocatore registrato
+  # * Se è già presente, lo restituisce
+  # * Se non è presente, lo scarica online e lo restituisce
+  # * Se non è presente neanche online, restituisce nil
   # @return [Online_Player]
   #--------------------------------------------------------------------------
   def player
-    @player = safe_player_from_web if @player.nil?
-    @player
+    @player ||= safe_player_from_web
   end
   #--------------------------------------------------------------------------
   # * Imposta il giocatore
@@ -183,7 +246,8 @@ class Game_System
   #--------------------------------------------------------------------------
   def safe_player_from_web
     i = 0
-    while @player == nil && i < 3
+    tries = 3 # numero di tentativi prima di smettere
+    while @player == nil && i < tries
       @player = player_from_web
       i += 1
     end
@@ -217,6 +281,12 @@ class Game_System
   # * Restituisce l'ID della partita
   #--------------------------------------------------------------------------
   def game_id; $game_party.id_partita; end
+  #--------------------------------------------------------------------------
+  # * Restituisce i titoli sbloccati dal giocatore che non sono ancora stati
+  # sincronizzati online
+  # @return [Array]
+  #--------------------------------------------------------------------------
+  def cached_titles; @cached_titles ||= []; end
 end
 
 #===============================================================================
@@ -241,6 +311,7 @@ module PlayerParser
     player.quests = pdata(str, 'quests').to_i
     player.fame = pdata(str, 'fame').to_i
     player.infame = pdata(str, 'infame').to_i
+    player.title_id = pdata(str, 'title').to_i
     player
   end
   #--------------------------------------------------------------------------
