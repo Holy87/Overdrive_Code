@@ -42,33 +42,94 @@ class Scene_Player < Scene_MenuBase
     y = @command_window.bottom_corner
     @player_window = Window_PlayerInfo.new(0, y, Graphics.width)
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_command_window
     y = @help_window.bottom_corner
     @command_window = Window_PInfoCommand.new(0, y)
     @command_window.activate
     @command_window.index = 0
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_edit_window
 
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_avatars_window
-
+    y = @command_window.bottom_corner
+    h = Graphics.height - y
+    @avatar_window = Window_Avatar.new(0, y, Graphics.width, h)
+    @avatar_window.visible = false
+    @avatar_window.index = player.avatar
+    @avatar_window.set_handler(:ok, method(:choose_avatar))
+    @avatar_window.set_handler(:cancel, method(:hide_avatar_window))
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_titles_window
 
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_code_command_window
 
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_code_insert_window
 
   end
+  #--------------------------------------------------------------------------
+  # *
+  # @return [Online_Player]
+  #--------------------------------------------------------------------------
+  def player; $game_system.player; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def show_edit_window
+    @command_window.close
+    #TODO: Continuare
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def show_avatar_window
+    @player_window.smooth_move(@avatar_window.width, @player_window.y)
+    @avatar_window.x = 0 - @avatar_window.width
+    @avatar_window.visible = true
+    @avatar_window.smooth_move(0, @avatar_window.y)
+    @avatar_window.activate
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def hide_avatar_window
+    @player_window.smooth_move(0, @player_window.y)
+    @avatar_window.smooth_move(0 - @avatar_window.width, @avatar_window.y)
+    @avatar_window.deactivate
+    #TODO: Attivare edit command window
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def choose_avatar
+    player.avatar = @avatar_window.index
+    @player_window.refresh
+    hide_avatar_window
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+
 end
 
 class Window_PInfoCommand < Window_HorzCommand

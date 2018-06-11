@@ -628,38 +628,31 @@ class Window_Avatar < Window_Selectable
   # @param [Integer] height
   #--------------------------------------------------------------------------
   def initialize(x, y, width, height)
+    make_item_list
     super
     self.index = 0
-    get_data
-    create_contents
     refresh
   end
   #--------------------------------------------------------------------------
-  # * Crea i contenuti della finestra
+  # * numero massimo di colonne
   #--------------------------------------------------------------------------
-  def create_contents
-    contents.dispose
-    if contents_width > 0 && contents_height > 0
-      self.contents = Bitmap.new(contents_width, contents_height)
-    else
-      self.contents = Bitmap.new(1, 1)
-    end
-  end
+  def col_max; [self.width / item_width, 1].max; end
   #--------------------------------------------------------------------------
   # * numero massimo di oggetti
   #--------------------------------------------------------------------------
-  def item_max
-    return 0 unless @data
-    @data.size
-  end
+  def item_max; @data ? @data.size : 0; end
   #--------------------------------------------------------------------------
-  # * Altezza della finestra
+  # * Altezza del blocco
   #--------------------------------------------------------------------------
   def item_height; 96; end
   #--------------------------------------------------------------------------
+  # * Larghezza del blocco
+  #--------------------------------------------------------------------------
+  def item_width; 96; end
+  #--------------------------------------------------------------------------
   # * Ottiene i dati dei volti avatar
   #--------------------------------------------------------------------------
-  def get_data; @data = $game_temp.avatars.all_faces; end
+  def make_item_list; @data = $game_temp.avatars.all_faces; end
   #--------------------------------------------------------------------------
   # * Disegna l'oggetto all'indice
   #--------------------------------------------------------------------------

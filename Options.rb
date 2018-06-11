@@ -533,7 +533,8 @@ class Scene_Title < Scene_Base
       if H87Options::SHOW_ON_TITLE
         add_cursor(:options,"command_options",H87Options::TITLE_ICON,H87Options::TITLE_BALOON)
       end
-    end;end
+    end
+  end
 end
 
 #==============================================================================
@@ -615,6 +616,7 @@ class Option
     @default = hash[:default]
     @id = hash[:id]
     @min = 0
+    # noinspection RubyCaseWithoutElseBlockInspection
     case @type
       when :switch; init_switch(hash)
       when :variable; init_variable(hash)
@@ -659,10 +661,7 @@ class Option
   #--------------------------------------------------------------------------
   # * Restituisce il valore minimo
   #--------------------------------------------------------------------------
-  def min
-    return 0 if @min.nil?
-    return @min
-  end
+  def min; @min || 0; end
   #--------------------------------------------------------------------------
   # * Inizializza gli attributi del separatore
   #--------------------------------------------------------------------------
@@ -1119,7 +1118,9 @@ class Window_GameOptions < Window_Selectable
   #--------------------------------------------------------------------------
   def cursor_up(wrap = false)
     super
-    super if item.separator?
+    if item.separator?
+      self.index == 0 ? cursor_down : super
+    end
   end
   #--------------------------------------------------------------------------
   # * Disegna lo switch
@@ -1137,10 +1138,10 @@ class Window_GameOptions < Window_Selectable
   # * Disegna la variabile
   #--------------------------------------------------------------------------
   def draw_variable(rect, item)
-    unless item.open_popup?
-      draw_values_variable(rect, item)
-    else
+    if item.open_popup?
       draw_popup_variable(rect, item)
+    else
+      draw_values_variable(rect, item)
     end
   end
   #--------------------------------------------------------------------------
@@ -1251,7 +1252,15 @@ class Window_GameOptions < Window_Selectable
         process_method
       when :variable
         open_popup
+    else
+      process_custom_method
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Esegui un metodo personalizzato
+  #--------------------------------------------------------------------------
+  def process_custom_method
+    # da implementare per eventuali estensioni
   end
   #--------------------------------------------------------------------------
   # * Cambia lo stato della switch dell'opzione

@@ -69,6 +69,16 @@ H87Options.push_graphic_option({
     :default => false
                                })
 
+# suono PV bassi
+H87Options.push_sound_option({
+    :type => :switch,
+    :text => 'Avviso PV bassi',
+    :help => 'Esegui un segnale acustico quando i PV degli eroi sono bassi|durante la battaglia.',
+    :on => 'Attiva', :off => 'Disattiva',
+    :sw => 354,
+    :default => true
+                             })
+
 
 #===============================================================================
 # ** Classe Option
