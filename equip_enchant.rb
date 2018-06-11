@@ -174,7 +174,8 @@ module H87Enchant
       116=>['Aimbot','hit +10','Aumenta la Mira del 10%',981],
       117=>['Frag','sta 289','Trasforma un nemico in bomba che esplode alla morte.',479],
       118=>['Cheater','sid 2','Aumenta di 2 turni la durata degli stati',1108],
-      119=>['Lag','sta 16','Rallenta i nemici con l\'attacco',995]
+      119=>['Lag','sta 16','Rallenta i nemici con l\'attacco',995],
+      120=>['Efficace','mat 25','L\'attacco semplice fa il 25% in più di danni.', 142]
 
       # ------------
   }
@@ -451,6 +452,7 @@ module EquipEnchant
       when :ref; @physical_reflect += value
       when :pls; @state_inflict_perc += value
       when :sid; @state_inflict_durability += value
+      when :mat; @magic_attack += value
       else; # niente
     end
   end

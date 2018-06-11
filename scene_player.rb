@@ -9,35 +9,51 @@ module Player_Settings
 
   C_INSERT = 'Scrivi'
   C_PASTE = 'Incolla'
+  C_AVATAR = 'Cambia Avatar'
+  C_TITLE = 'Cambia Titolo'
 
 
 end
 
 module Vocab
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def self.pi_overview_command; Player_Settings::V_OVERVIEW; end
   def self.pi_edit_command; Player_Settings::V_EDIT; end
   def self.pi_code_command; Player_Settings::V_CODE; end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def self.pi_overview_help; Player_Settings::H_OVERVIEW; end
   def self.pi_edit_help; Player_Settings::H_EDIT; end
   def self.pi_code_help; Player_Settings::H_CODE; end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def self.paste_command; Player_Settings::C_PASTE; end
   def self.write_command; Player_Settings::C_INSERT; end
+  def self.avatar_command; Player_Settings::C_AVATAR; end
+  def self.p_title_command; Player_Settings::C_TITLE; end
 end
 
 class Scene_Player < Scene_MenuBase
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def start
     create_help_window
     create_command_window
     create_player_info_window
-    create_edit_window
+    create_edit_command_window
     create_avatars_window
     create_titles_window
     create_code_command_window
     create_code_insert_window
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def create_player_info_window
     y = @command_window.bottom_corner
     @player_window = Window_PlayerInfo.new(0, y, Graphics.width)
@@ -54,8 +70,11 @@ class Scene_Player < Scene_MenuBase
   #--------------------------------------------------------------------------
   # *
   #--------------------------------------------------------------------------
-  def create_edit_window
-
+  def create_edit_command_window
+    y = @command_window.y
+    x = @command_window.x
+    @command_edit_window = Window_PlayerEdit.new(x, y)
+    @command_edit_window.openness = 0
   end
   #--------------------------------------------------------------------------
   # *
@@ -97,7 +116,16 @@ class Scene_Player < Scene_MenuBase
   #--------------------------------------------------------------------------
   def show_edit_window
     @command_window.close
-    #TODO: Continuare
+    @command_edit_window.open
+    @command_edit_window.activate
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def hide_edit_window
+    @command_edit_window.close
+    @command_window.open
+    @command_window.activate
   end
   #--------------------------------------------------------------------------
   # *
@@ -116,7 +144,7 @@ class Scene_Player < Scene_MenuBase
     @player_window.smooth_move(0, @player_window.y)
     @avatar_window.smooth_move(0 - @avatar_window.width, @avatar_window.y)
     @avatar_window.deactivate
-    #TODO: Attivare edit command window
+    @command_edit_window.activate
   end
   #--------------------------------------------------------------------------
   # *
@@ -126,15 +154,20 @@ class Scene_Player < Scene_MenuBase
     @player_window.refresh
     hide_avatar_window
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
-
 end
 
 class Window_PInfoCommand < Window_HorzCommand
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def window_width; Graphics.width - self.x; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def window_height; line_height; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def make_command_list
     add_command(Vocab::pi_overview_command, :overview)
     add_command(Vocab::pi_edit_command, :edit)
@@ -142,23 +175,20 @@ class Window_PInfoCommand < Window_HorzCommand
   end
 end
 
-class Window_PlayerEdit < Window_Selectable
-  def initialize(x, y, width, height)
-    super
-
-  end
-
-  def refresh
-    contents.clear
-    draw_avatar
-    draw_title
-  end
-
-  def draw_avatar
-
-  end
-
-  def draw_item
-
+class Window_PlayerEdit < Window_HorzCommand
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def window_width; Graphics.width - self.x; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def window_height; line_height; end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def make_command_list
+    add_command(Vocab::avatar_command, :avatar_change)
+    add_command(Vocab::p_title_command, :title_change)
   end
 end

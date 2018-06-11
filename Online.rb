@@ -109,7 +109,7 @@ module Online
   #--------------------------------------------------------------------------
   # * determina se la componente online è abilitata
   #--------------------------------------------------------------------------
-  def self.enabled?; $game_variables[0]; end
+  def self.enabled?; $game_variables[426]; end
   #--------------------------------------------------------------------------
   # * Procedura di registrazione giocatore. True se l'operazione ha successo
   # @param [String] name
@@ -127,6 +127,7 @@ module Online
     rescue InternetConnectionException
       return false
     end
+    # noinspection RubyScope
     res == SUCCESS
   end
   #--------------------------------------------------------------------------
@@ -137,6 +138,7 @@ module Online
   def self.get_player_info(player_name)
     params = base64_encode(player_name)
     response = await_response(HTTP.domain+"/player_info.php?name=#{params}")
+    result = ''
     begin
       result = base64_decode(response)
     rescue Exception
@@ -204,7 +206,9 @@ module Online
     result = submit_post_request(url, request)
     $game_system.cached_titles.clear if result == SUCCESS
   end
-
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
   def self.get_online_titles
     params = {:game_id => $game_system.player.id}
     url = HTTP.domain + '/get_titles.php'
@@ -325,4 +329,3 @@ module PlayerParser
     raise PlayerParseError.new, 'Chiave invalida: ' + key
   end
 end
-

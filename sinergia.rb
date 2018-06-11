@@ -12,7 +12,18 @@ require 'rm_vx_data'
 # Istruzioni:
 # Inserire i seguenti tag di status ed equipaggiamenti
 # <incentivo: +/-x%>
-#
+# aumenta
+# <durata sinergia: +/-x%>
+# <bonus sinergia: +/-x>
+# <difesa sinergia: +/-x%>
+# <sinergia difendi: +/-x%>
+# <sinergia attacca: +/-x%>
+# <sinergia status: +/-x%>
+# <sinergia debole: +/-x%>
+# <sinergia cura: +/-x%>
+# <sinergia uccisione: x>
+# <sinergia vittoria: x>
+# <sinergia evasione: x>
 #===============================================================================
 
 #===============================================================================
@@ -29,7 +40,7 @@ module H87_SINERGIC
   # Decremento della Sinergia ad ogni turno quando attiva
   SINERGY_DECREASE = 100
   # Incremento predefinito con attacco/cura
-  DEFAULT_INCREASE = 100
+  DEFAULT_INCREASE = 80
   # Divisore per l'azione del nemico (incremento di base / divisore)
   ENEMY_DIVIDER = 0 # se 0, non decresce
   # Incremento per infliggere uno stato alterato
@@ -44,6 +55,10 @@ module H87_SINERGIC
   SPECIAL_SKILL_REDUCTION = 200
   # Azzeramento della Sinergia dopo la battaglia?
   BATTLE_RESET = true
+  # Bilancia automaticamente l'ammonto di sinergia con il rapporto
+  # numero di nemici / numero di eroi sul campo. Più ci sono nemici,
+  # più la sinergia si carica rapidamente (e viceversa)
+  AUTO_BALANCE = true
   # Comando di attivazione della sinergia
   SINERGY_BUTTON = :X
   # Stato alterato aggiunto agli eroi quando la sinergia è attiva
@@ -105,7 +120,7 @@ end
 # Attributi per la Sinergia
 #===============================================================================
 module Sinergy_Stats
-  INCENTIVE = /<incentivo:[ ]*([+\-]\d+)([%％])>/i
+  INCENTIVE = /<incentivo:[ ]*([+\-]\d+)>/i
   SIN_DURAB = /<durata sinergia:[ ]*([+\-]\d+)([%％])>/i
   SIN_BONUS = /<bonus sinergia:[ ]*([+\-]\d+)([%％])>/i
   SIN_DEFEN = /<difesa sinergia:[ ]*([+\-]\d+)([%％])>/i
@@ -117,6 +132,7 @@ module Sinergy_Stats
   SIN_ON_KIL= /<sinergia uccisione:[ ]*(\d+)>/i
   SIN_ON_VIC= /<sinergia vittoria:[ ]*(\d+)>/i
   SIN_ON_EVA= /<sinergia evasione:[ ]*(\d+)>/i
+  SIN_ON_STR= /sinergia iniziale:[ ]*(\d+)>/i
   #--------------------------------------------------------------------------
   attr_reader :incentive        #incentivo: incremento minimo sinergia a turni
   attr_reader :sin_durab        #bonus di durata della Sinergia quando è attiva
@@ -130,6 +146,7 @@ module Sinergy_Stats
   attr_reader :sin_on_weak      #aumenta la sinergia se debolezza elementale
   attr_reader :sin_on_state     #aumenta la sinergia se si causa stati alter.
   attr_reader :sin_on_eva       #aumenta la sinergia se si schiva il colpo
+  attr_reader :sin_on_start     #sinergia all'inizio della battaglia
   #--------------------------------------------------------------------------
   # * Caricamento degli attributi sinergia
   #--------------------------------------------------------------------------
@@ -148,6 +165,7 @@ module Sinergy_Stats
     @sin_on_weak = 0
     @sin_on_state = 0
     @sin_on_eva = 0
+    @sin_on_start = 0
     self.note.split(/[\r\n]+/).each { |riga|
       case riga
         when INCENTIVE
@@ -174,6 +192,8 @@ module Sinergy_Stats
           @sin_on_victory = $1.to_i
         when SIN_ON_EVA
           @sin_on_eva = $1.to_i
+        when SIN_ON_STA
+          @sin_on_start = $1.to_i
         else
           # type code here
       end
@@ -536,18 +556,13 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   def sin_state_increase; STATE_INFLICT; end
   #--------------------------------------------------------------------------
-  # * Restituisce il rapporto tra numero di nemici e membri del party
-  # non può essere più basso della metà
-  #--------------------------------------------------------------------------
-  def troop_rate; [$game_troop.members.size/$game_party.members.size.to_f, 0.5].max; end
-  #--------------------------------------------------------------------------
   # * Restituisce il bonus durata sinergia dell'eroe
   #--------------------------------------------------------------------------
   def sin_duration_bonus; 0.0 + features_sum(:sin_durab); end
   #--------------------------------------------------------------------------
   # * Restituisce il bonus sinergia dell'eroe
   #--------------------------------------------------------------------------
-  def sin_bonus; troop_rate + features_sum(:sin_bonus); end
+  def sin_bonus; features_sum(:sin_bonus); end
   #--------------------------------------------------------------------------
   # * Restituisce il bonus di riduzione sinergia se attaccati
   #--------------------------------------------------------------------------
@@ -596,6 +611,10 @@ class Game_Actor < Game_Battler
   # * Restituisce il bonus Incentivo dell'eroe
   #--------------------------------------------------------------------------
   def sin_incentive; features_sum(:incentive); end
+  #--------------------------------------------------------------------------
+  # * Sinergia iniziale
+  #--------------------------------------------------------------------------
+  def start_sinergy; features_sum(:sin_on_start); end
 end #game_actor
 
 #===============================================================================
@@ -661,7 +680,10 @@ class Game_Party < Game_Unit
   def add_sinergy(value)
     puts sprintf("Sinergia +%d", value)
     s1 = sinergic_state
-    @sinergic_state = s1 + value
+    if in_battle? and H87_SINERGIC::AUTO_BALANCE
+      value *= troop_rate
+    end
+    @sinergic_state = s1 + value.to_i
     @sinergic_state = SIN_MAX if @sinergic_state > SIN_MAX
   end
   #--------------------------------------------------------------------------
@@ -762,6 +784,22 @@ class Game_Party < Game_Unit
     }
     sum
   end
+  #--------------------------------------------------------------------------
+  # * restituisce la somma della sinergia iniziale di tutti i membri
+  #--------------------------------------------------------------------------
+  def sinergy_on_start
+    sum = 0
+    battle_members.each {|member|
+      next if member.nil?
+      sum += member.start_sinergy
+    }
+    sum
+  end
+  #--------------------------------------------------------------------------
+  # * Restituisce il rapporto tra numero di nemici e membri del party
+  # non può essere più basso della metà
+  #--------------------------------------------------------------------------
+  def troop_rate; [members.size/$game_party.members.size.to_f, 0.5].max; end
 end #game_party
 
 #===============================================================================
@@ -782,7 +820,7 @@ class Scene_Battle < Scene_Base
   def start
     h87sin_start
     create_sin_bar
-    $game_party.add_sinergy($game_party.initial_sinergy)
+    $game_party.add_sinergy($game_party.sinergy_on_start) if H87_SINERGIC::BATTLE_RESET
   end
   #--------------------------------------------------------------------------
   # * Riduzione della Sinergia
@@ -833,7 +871,6 @@ class Scene_Battle < Scene_Base
   def turn_end(member = nil)
     h87sin_tend(member)
     check_sinergy_change
-    puts sprintf("Sinergia a %d", $game_party.sinergic_state)
   end
   #--------------------------------------------------------------------------
   # * Esecuzione di vittoria
