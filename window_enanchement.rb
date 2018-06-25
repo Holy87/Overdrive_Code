@@ -223,6 +223,7 @@ end
 #===============================================================================
 class Window_Selectable < Window_Base
   alias h87_ph process_handling unless $@
+  alias h87_uc update_cursor unless $@
   #--------------------------------------------------------------------------
   # * Ottiene il rettangolo in coordinate dello schermo dell'oggetto
   # @param [Integer] index
@@ -329,6 +330,10 @@ class Window_Selectable < Window_Base
     @last_cursor = self.index
     call_handler(:cursor_move)
   end
+  #--------------------------------------------------------------------------
+  # * Ridefinizione del metodo select per aggiornare la schermata
+  #--------------------------------------------------------------------------
+  def update_cursor; h87_uc; check_cursor_handler; end
   #--------------------------------------------------------------------------
   # * Processo di movimento a sinistra quando è impostato un handler
   #--------------------------------------------------------------------------

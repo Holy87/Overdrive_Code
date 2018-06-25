@@ -42,9 +42,14 @@ module H87Logger
   #--------------------------------------------------------------------------
   def self.log(*args)
     return unless $TEST
-    file = File.open(FILENAME, 'a')
-    file.write(args)
-    file.close
+    begin
+      file = File.open(FILENAME, 'a')
+      file.write(args)
+    rescue
+      #nulla
+    ensure
+      file.close
+    end
   end
   #--------------------------------------------------------------------------
   # * apre la PowerShell
@@ -91,6 +96,9 @@ class Object
   # * aggiunge il metodo println
   #--------------------------------------------------------------------------
   def println(*args); H87Logger.log(args, "\n"); end
+  def puts_e(*args); puts('[ERROR]   ', args); end
+  def puts_i(*args); puts('[INFO]    ', args); end
+  def puts_w(*args); puts('[WARNING] ', args); end
   #--------------------------------------------------------------------------
   # * modifica i metodi print e puts su VX
   #--------------------------------------------------------------------------

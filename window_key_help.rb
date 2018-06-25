@@ -11,9 +11,10 @@ class Window_KeyHelp < Window_Base
   # columns: numero di colonne
   # y: coordinata y (in fondo allo schermo se non usato)
   #--------------------------------------------------------------------------
-  def initialize(columns = 2, y = Graphics.height - line_height)
+  def initialize(columns = 2, y = Graphics.height - fitting_height(1))
     super(0, y, Graphics.width, line_height)
     @commands = []
+    @columns = columns
     @controller_connected = Input.controller_connected?
   end
   #--------------------------------------------------------------------------
@@ -45,7 +46,6 @@ class Window_KeyHelp < Window_Base
       false
     end
   end
-
   #--------------------------------------------------------------------------
   # * restituisce il numero di colonne
   #--------------------------------------------------------------------------
