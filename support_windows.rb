@@ -44,7 +44,7 @@ class Window_PopUp < Window_Selectable
       width = contents.text_size(paragraph).width
       max = width if width > max
     end
-    return max
+    max
   end
 
   def refresh
@@ -191,7 +191,7 @@ class Window_Category < Window_Selectable
   #     y: pos y iniziale
   #--------------------------------------------------------------------------
   def initialize(x, y, spacing = 32)
-    super(x,y, Graphics.width, WLH + 32, spacing)
+    super(x,y, Graphics.width, fitting_height(1), spacing)
     @index = 0
     self.active = false
     self.openness = 0
@@ -387,20 +387,16 @@ class Window_DataInfo < Window_Base
   # * Restituisce il massimo numero di righe nella finestra
   #--------------------------------------------------------------------------
   def max_lines
-    return (contents.width / line_height) - 1
+    (contents.width / line_height) - 1
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'indice di pagina
   #--------------------------------------------------------------------------
-  def index
-    return @index
-  end
+  def index; @index; end
   #--------------------------------------------------------------------------
   # * Restituisce il nemico impostato
   #--------------------------------------------------------------------------
-  def item
-    return @item
-  end
+  def item; @item; end
   #--------------------------------------------------------------------------
   # * Imposta l'oggetto da visualizzare
   #     item: oggetto
@@ -423,17 +419,12 @@ class Window_DataInfo < Window_Base
   #--------------------------------------------------------------------------
   # * Restituisce la pagina selezionata
   #--------------------------------------------------------------------------
-  def selected_page
-    return @pages[index]
-  end
+  def selected_page; @pages[index]; end
   #--------------------------------------------------------------------------
   # * Restituisce lo stato di attivazione di una pagina
   #     symbol: simbolo della pagina
   #--------------------------------------------------------------------------
-  def page_active?(symbol)
-    return true if selected_page == symbol
-    return false
-  end
+  def page_active?(symbol); selected_page == symbol; end
   #--------------------------------------------------------------------------
   # * Colore di sfondo 1
   #--------------------------------------------------------------------------
@@ -464,15 +455,11 @@ class Window_DataInfo < Window_Base
   #--------------------------------------------------------------------------
   # * Restituisce true se è la prima pagina
   #--------------------------------------------------------------------------
-  def fp?
-    return @index == 0
-  end
+  def fp?; @index == 0; end
   #--------------------------------------------------------------------------
   # * Restituisce true se è l'ultima pagina
   #--------------------------------------------------------------------------
-  def lp?
-    return @index == @pages.size-1
-  end
+  def lp?; @index == @pages.size-1; end
   #--------------------------------------------------------------------------
   # * Disegna l'indice della pagina
   #--------------------------------------------------------------------------
@@ -504,7 +491,7 @@ class Window_DataInfo < Window_Base
       contents.font.color.alpha = 128
     end
     self.draw_text(x, 0, contents.width/2, WLH, name)
-    return contents.text_size(name).width + 5
+    contents.text_size(name).width + 5
   end
   #--------------------------------------------------------------------------
   # * Ottiene il nome della pagina

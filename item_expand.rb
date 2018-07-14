@@ -35,7 +35,9 @@ class Window_ItemInfo < Window_DataInfo
     @actor = new_actor
     refresh
   end
-
+  #--------------------------------------------------------------------------
+  # * Disegna la rarità dell'oggetto
+  #--------------------------------------------------------------------------
   def draw_rarity
     draw_feature(Vocab.rarity(item.rarity), rarity_color(item.rarity)) if item.not_common?
   end

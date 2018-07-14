@@ -14,8 +14,8 @@ module H87Item
     DRAW_PRICE = true
     # Impostare la formula di vendita
     SELLPRICE_FORMULA = 'item.price/2'
-    # Dettagli da disegnare negli oggetti
-    ITEM_DETAILS = [
+    # Dettagli da disegnare per oggetti e skill
+    USABLE_DETAILS = [
         :scope,
         :occasion,
         :damage,
@@ -23,10 +23,19 @@ module H87Item
         :element,
         :state_plus,
         :state_minus,
+    ]
+    # Dettagli da disegnare negli oggetti
+    ITEM_DETAILS = [
         :hp_recover,
         :mp_recover,
         :param_growth,
     ]
+    # Dettagli da disegnare nelle skill
+    SKILL_DETAILS = [
+        :spi_f, :atk_f, :agi_f, :def_f,
+        :mp_cost, :hp_cost, :item_cost, :recharge, :aggro, :sinergy,
+        :tank_odd, :state_inf_bonus, :state_inf_per,
+        :state_inf_dur]
     #--------------------------------------------------------------------------
     # * quali dettagli mostrare per le categorie
     #--------------------------------------------------------------------------
@@ -81,6 +90,10 @@ module Vocab
   ITEM_ABSORB = 'Assorbe il danno'
   ITEM_RECOVER = 'Recupero %s'
   ITEM_POSSESS = 'Posseduti'
+  SKILL_ATK_F = 'Inf. Attacco'
+  SKILL_SPI_F = 'Inf. Spirito'
+  SKILL_DEF_F = 'Inf. Difesa'
+  SKILL_AGI_F = 'Inf. Velocità'
   EQUIP_KIND = 'Tipo'
   WEAPON_STATE = 'Infligge'
   ARMOR_STATE = 'Conferisce immunità'
@@ -545,11 +558,13 @@ class Window_ItemInfo < Window_DataInfo
     unless item.no_description
       case item
         when RPG::Item
-          draw_item_detail
+          draw_usableItem_detail; draw_item_detail
         when RPG::Weapon
           draw_equip_detail; draw_weapon_detail
         when RPG::Armor
           draw_equip_detail; draw_armor_detail
+        when RPG::Skill
+          draw_skill_detail
         else
           # niente
       end
@@ -652,6 +667,33 @@ class Window_ItemInfo < Window_DataInfo
   def draw_item_price
     draw_detail(Vocab::ITEM_VALUE, sprintf("%d %s", item.selling_price, Vocab.gold))
   end
+
+  def draw_usableItem_detail
+    (0..H87Item::Settings::USABLE_DETAILS.size-1).each {|i|
+      draw_usable_property(H87Item::Settings::USABLE_DETAILS[i])
+    }
+  end
+
+  def draw_usable_property(sym)
+    case sym
+    when :scope
+      draw_scope
+    when :occasion
+      draw_occasion
+    when :damage
+      draw_damage
+    when :absorb
+      draw_absorb
+    when :element
+      draw_element_set
+    when :state_plus
+      draw_state_set
+    when :state_minus
+      draw_minus_state_set
+    else
+      # niente
+    end
+  end
   #--------------------------------------------------------------------------
   # * Disegna i dettagli di un oggetto
   #--------------------------------------------------------------------------
@@ -666,20 +708,6 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   def draw_item_property(sym)
     case sym
-      when :scope
-        draw_scope
-      when :occasion
-        draw_occasion
-      when :damage
-        draw_damage
-      when :absorb
-        draw_absorb
-      when :element
-        draw_element_set
-      when :state_plus
-        draw_state_set
-      when :state_minus
-        draw_minus_state_set
       when :hp_recover
         draw_hp_recover
       when :mp_recover
@@ -771,6 +799,65 @@ class Window_ItemInfo < Window_DataInfo
         # niente
     end
   end
+
+  def draw_skill_detail
+    (0..H87Item::Settings::SKILL_DETAILS.size-1).each{|s|
+      draw_skill_property(H87Item::Settings::ARMOR_DETAILS[i])
+    }
+  end
+
+  def draw_skill_property(sym)
+    case sym
+    when :scope
+      draw_scope
+    when :occasion
+      draw_occasion
+    when :damage
+      draw_damage
+    when :absorb
+      draw_absorb
+    when :element
+      draw_element_set
+    when :state_plus
+      draw_state_set
+    when :state_minus
+      draw_minus_state_set
+    when :damage
+      draw_base_damage
+    when :atk_f
+      draw_atk_f
+    when :spi_f
+      draw_spi_f
+    when :def_f
+      draw_def_f
+    when :agi_f
+      draw_agi_f
+    when :mp_cost
+      draw_mp_cost
+    when :hp_cost
+      draw_hp_cost
+    when :anger_cost
+      draw_anger_cost
+    when :item_cost
+      draw_item_cost
+    when :recharge
+      draw_recharge_req
+    when :aggro
+      draw_aggro_bonus
+    when :sinergy
+      draw_sinergy_adder
+    when :tank_odd
+      draw_tank_odd
+    when :state_inf_bonus
+      draw_state_inf_bonus
+    when :state_inf_per
+      draw_state_inflict_perc
+    when :state_inf_dur
+      draw_state_inf_durability
+    else
+      # niente
+    end
+  end
   #--------------------------------------------------------------------------
   # * Mostra il bersaglio
   #--------------------------------------------------------------------------
@@ -791,8 +878,68 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   def draw_damage
     return if item.base_damage == 0
-    param = item.damage_to_mp ? Vocab.mp_a : Vocab.mp_a
-    draw_detail(sprintf(Vocab::ITEM_DAMAGE, param), item.base_damage)
+    param = item.damage_to_mp ? Vocab.mp_a : Vocab.hp_a
+    if item.base_damage > 0
+      draw_detail(sprintf(Vocab::ITEM_DAMAGE, param), item.base_damage)
+    else
+      draw_detail(sprintf(Vocab::ITEM_RECOVER, param), item.base_damage)
+    end
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_atk_f
+    return if item.atk_f == 0
+    draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_spi_f
+    return if item.spi_f == 0
+    draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_def_f
+    return if item.def_f == 0
+    draw_detail(Vocab::SKILL_DEF_F, item.def_f)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_agi_f
+    return if item.agi_f == 0
+    draw_detail(Vocab::SKILL_AGI_F, item.agi_f)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_mp_cost
+    return if item.mp_cost == 0
+    draw_detail(Vocab.skill_param_vocab(:mp_cost), item.mp_cost)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_hp_cost
+    return if item.hp_cost == 0
+    draw_detail(Vocab.skill_param_vocab(:hp_cost), item.hp_cost)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_anger_cost
+    return if item.anger_cost == 0
+    draw_detail(Vocab.skill_param_vocab(:anger_cost), item.anger_cost)
+  end
+  #--------------------------------------------------------------------------
+  # *
+  #--------------------------------------------------------------------------
+  def draw_item_cost
+    return if item.costoi == 0
+    draw_detail(Vocab.skill_param_vocab(:mp_cost), item.mp_cost)
   end
   #--------------------------------------------------------------------------
   # * Mostra se assorbe danni
