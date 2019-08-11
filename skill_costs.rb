@@ -29,8 +29,7 @@ $imported["H87-SkillCost"] = 1.3
 # <cost var: x> o <cost var: x%> per il cost di una variabile (vedere giù)
 # <usa oggetto: x> per fare in modo che il potere consumi un oggetto (x=id)
 # <cost oggetto x: y> per y oggetti x.
-# <molt oggetto x nemico> moltiplica il numero di oggetti per nemici in campo
-# <molt oggetto x alleato> moltiplica il numero di oggetti per alleati in campo
+# <molt oggetto x bersaglio> moltiplica il numero di oggetti per i bersagli
 # è possibile far costare un'abilità un numero di MP superiore a 999
 # è possibile inserire più tipi di costi (es. una abilità che consuma HP e MP)
 # è possibile inserire sia un valore fisso che percentuale. In questo caso i
