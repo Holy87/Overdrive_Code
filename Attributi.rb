@@ -81,6 +81,7 @@
 # ● <incrementa x: +/-y> aumenta il parametro x di y per la durata della battaglia
 # ● <nome guardia: x> cambia il nome del comando Difendi
 # ● <nome attacca: x> cambia il nome del comando Attacca
+# ● <rune> tutte le magie che danneggiano/curano HP si trasformano in cura MP
 # (non funziona perché c'è già quello di Yanfly)
 # ● <barriera: x%> il x% dei danni viene assorbito da una barriera (consuma PM)
 # ● <att spirito: x%> aumenta l'Attacco del x% dello spirito
@@ -90,7 +91,7 @@
 # ● <x% hp difesa> gli HP vengono curati del x% quando ci si difende
 # ● <x% mp difesa> uguale ma con gli MP
 # ● <x% furia difesa> uguale ma con la Furia
-# ● <ranged> l'arma è a distanza
+# ● <ranged> l'arma/skill è a distanza
 # ▼ STATUS
 # ● <status attacco: x> aggiunge lo status X all'attacco
 # ● <status rimosso: x> rimuove lo status X all'attacco
@@ -98,6 +99,7 @@
 # ● <bonus stati: +/-x> aumenta la potenza di riuscita dello status di x
 # ● <bonus stati: +/-x%> aumenta la potenza di riuscita dello status del x%
 # ● <durata stati inflitti: +/-x> aumenta la durata degli status che l'eroe
+# ● <durata fissa> non viene influenzato da bonus/malus durata stati
 # infligge ad alleati o nemici (in turni).
 # ● <durata buff: +/-x> modifica la durata dei buff acquisiti (in turni)
 # ● <durata debuff: +/-x> modifica la durata dei debuff acquisiti (in turni)
@@ -215,6 +217,7 @@ module ExtraAttr
   ST_BON_PER = /<bonus stati:[ ]*([+\-]\d+)%>/i
   ST_BON_IGN = /<ignora bonus stati>/i
   ST_INF_DUR = /<durata stati inflitti:[ ]*([+\-]\d+)>/i
+  FIXED_DUR = /<durata fissa>/i
   SK_COST_TP = /<costo[ ]*(.):[ ]*([+\-]\d+)%>/i
   SK_TYPE_CS = /<sk_type:[ ]*(.)>/i
   MASTERY = /<mastery (.+):[ ]*([+\-]\d+)%[ ]*(.+)>/i
@@ -249,6 +252,8 @@ module ExtraAttr
   ATTACK_ATTR = /<tipo attacco:[ ]*(\d+)>/i
   DEBUFF_PASS = /<trasferisci debuff>/i
   RESET_DAMAGE = /<reset cumuled damage>/i
+  BLOCK_LAST_SKILL = /<blocca ultima skill>/i
+  RUNE_STATE = /<rune>/i
   # Variabili di istanza pubblici
   attr_reader :dom_bonus # bonus dominazioni
   attr_reader :viril # stato virile
@@ -337,6 +342,9 @@ module ExtraAttr
   attr_reader :mp_on_guard #rateo di cura MP con comando Difendi
   attr_reader :fu_on_guard #rateo di carica Furia con Difendi
   attr_reader :attack_attr #attributo d'attacco (per i nemici anche)
+  attr_reader :block_last_skill # attributo per gli status che bloccano l'ultima skill
+  attr_reader :rune # flag assorbi tutte le magie
+  attr_reader :fixed_duration # flag per durata fissa stati alterati
   # Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
   # noinspection RubyScope
   def load_extra_attr
@@ -425,8 +433,11 @@ module ExtraAttr
     @is_placeholder = false
     @hp_on_guard = 0
     @mp_on_guard = 0
+    @block_last_skill = false
     @fu_on_guard = 0
     @attack_attr = nil
+    @rune = false
+    @fixed_duration = false
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help
         if row =~ HELP_END
@@ -615,6 +626,12 @@ module ExtraAttr
         @mp_on_guard = $1.to_f / 100
       when ATTACK_ATTR
         @attack_attr = $1.to_i
+      when BLOCK_LAST_SKILL
+        @block_last_skill = true
+      when RUNE_STATE
+        @rune = true
+      when FIXED_DUR
+        @fixed_duration = true
       else
         #nothing
       end
@@ -739,6 +756,13 @@ module RPG
     attr_reader :description
     attr_reader :attack_attr
     include ExtraAttr
+
+    # restituisce l'attributo principale al danno
+    # @return [RPG::Element_Data]
+    def attack_attribute
+      return nil if @attack_attr.nil?
+      $data_system.weapon_attributes.select { |attr| attr.id == attack_attr }.first
+    end
   end
 
   #==============================================================================
@@ -1045,6 +1069,8 @@ class Game_Battler
   attr_accessor :last_damage
   # @return [Integer] ammontare di tutti i danni ricevuti fino ad ora
   attr_accessor :cumuled_damage
+  # @return [Integer] l'ultima skill usata (per bloccarla)
+  attr_reader :last_skill_used
 
   # Attributi statici (modificati poi nelle sottoclassi)
   def taumaturgic?
@@ -1066,6 +1092,14 @@ class Game_Battler
     false
   end
 
+  # imposta l'ID dell'ultima abilità usata
+  # @param [Integer] skill_id
+  # @return [Integer]
+  def set_last_skill_used(skill_id)
+    return if last_skill_blocked?
+    @last_skill_used = skill_id
+  end
+
   # Inizializza le variabili ad inizio battaglia
   def init_for_battle
     check_last_chance
@@ -1079,25 +1113,27 @@ class Game_Battler
   end
 
   # Restituisce la somma di un attributo delle caratteristiche
+  # @param [Symbol] feature_name
+  # @param [Object] param
   def features_sum(feature_name, param = nil)
-    sum = 0
-    features.each { |ft| sum += eval("ft.#{feature_name}#{param}") }
-    sum
+    return features_sum_with_param(feature_name, param) if param
+    features.inject(0) {|s, ft| s + ft.send(feature_name)}
+  end
+
+  def features_sum_with_param(feature_name, param)
+    features.inject(0.0) {|s, ft| s + ft.send(feature_name, param)}
   end
 
   # Restituisce un valore da un array
   # @param [Symbol] feature_name
-  # @param [Object] param
   # @return [Array]
-  def feature_array(feature_name, param = nil)
-    sum = []
-    features.each { |ft| sum += eval("ft.#{feature_name.to_s}#{param}") }
-    sum
+  def feature_array(feature_name)
+    features.inject([]) {|ary, ft| ary + ft.send(feature_name)}
   end
 
   # Restituisce true se tra le caratteristiche ce n'è una con un attributo
-  def has_feature?(feature_name, param = nil)
-    features.each { |ft| return true if eval("ft.#{feature_name.to_s}#{param}") }
+  def has_feature?(feature_name)
+    features.each { |ft| return true if ft.send(feature_name) }
     false
   end
 
@@ -1208,12 +1244,12 @@ class Game_Battler
 
   # Restituisce il bonus mastery riferito ad un parametro
   def mastery(param)
-    ; 0
+    0
   end
 
   # Modificatore del costo di un tipo di abilità
   def cost_type(type)
-    ; features_sum(:cost_skill, "(#{type})")
+    features_sum(:cost_skill, type)
   end
 
   # Restituisce gli stati che rimuove
@@ -1228,17 +1264,21 @@ class Game_Battler
 
   # Restituisce true se il battler ha ultima chance
   def has_last_chance?
-    has_feature?('last_chance')
+    has_feature?(:last_chance)
   end
 
   # Restituisce true se il battler attacca a distanza
   def ranged_attack?
-    has_feature?('ranged?') || attack_with_magic?
+    has_feature?(:ranged?) || attack_with_magic?
   end
 
   # Ha uno stato di zombie?
   def zombie?
     has_feature?(:zombie_state)
+  end
+
+  def rune?
+    has_feature?(:rune)
   end
 
   # Restituisce il danno critico
@@ -1280,6 +1320,10 @@ class Game_Battler
   # determina se l'attacco è basato dallo spirito
   def attack_with_magic?
     false
+  end
+
+  def last_skill_blocked?
+    has_feature? :block_last_skill
   end
 
   # Nuova formula
@@ -1347,6 +1391,10 @@ class Game_Battler
     @mp_damage = apply_magical_rate(user, @mp_damage, obj)
     if @hp_damage < 0 and obj.base_damage < 0 and zombie?
       @hp_damage *= -1
+    end
+    if rune? && @hp_damage != 0 #se è in rune, assorbi i danni
+      @mp_damage = @hp_damage.abs / -200
+      @hp_damage = 0
     end
   end
 
@@ -1418,7 +1466,7 @@ class Game_Battler
   end
 
   # applica l'aumento di Furia
-  # @param [Game_Actor] user
+  # @param [Game_Battler] user
   # @param [RPG::UsableItem] obj
   def apply_anger_change(user, obj = nil)
     return unless user.charge_gauge?
@@ -1641,7 +1689,7 @@ class Game_Battler
   # @param [String] param
   # @return [Integer]
   def party_bonus(value, param = nil)
-    ; value
+    value
   end
 
   # Applica il rateo del danno magico
@@ -1692,8 +1740,11 @@ class Game_Battler
   end
 
   # Controlla il bonus durata
+  # @param [RPG::State] state
+  # @param [RPG::Skill] skill
   def check_durability_bonus(state, skill)
     return unless state.auto_release_prob > 0 and state.hold_turn >= 0
+    return if state.fixed_duration
     if $game_temp.in_battle
       user = $scene.active_battler
     else
@@ -1797,7 +1848,7 @@ class Game_Battler
 
   # Restituisce gli status virali
   def viral_states
-    self.states.compact.select {|state| state.viral}
+    self.states.compact.select { |state| state.viral }
   end
 
   # Restituisce lo status virale
@@ -1877,7 +1928,12 @@ class Game_Actor < Game_Battler
 
   # determina se l'eroe ha 2 armi
   def has2w
-    equips.count {|equip| equip.is_a?(RPG::Weapon)} >= 2
+    #equips.count { |equip| equip.is_a?(RPG::Weapon) } >= 2
+    armi = 0
+    equips.each { |equipment|
+      armi += 1 if equipment.is_a?(RPG::Weapon)
+    }
+    armi >= 2
   end
 
   # determina se l'attacco è basato dallo spirito
@@ -2184,11 +2240,12 @@ class Game_Actor < Game_Battler
     self.anger -= 1 if steps % step_divisor == 0 && self.anger > initial_anger
   end
 
-  # Alias di skill_can_use?
+  # determina se si può utilizzare l'abilità
   # @param [RPG::Skill] skill
   def skill_can_use?(skill)
     return false if skill.can_tau? && !taumaturgic? && !$game_temp.in_battle
     return false if charge_gauge? && calc_anger_cost(skill) > self.anger
+    return false if last_skill_blocked? && skill.id == @last_skill_used
     tau_skill_can_use?(skill)
   end
 
@@ -2686,7 +2743,7 @@ class Scene_Battle < Scene_Base
     consume_item_skill_attr(item_id, item_number)
   end
 
-  # Alias esecuzione dell'azione
+  # Esecuzione dell'azione
   def execute_action
     execute_action_attr
     ab = @active_battler
@@ -2694,7 +2751,7 @@ class Scene_Battle < Scene_Base
   end
 
   # Aggiorna il conteggio delle canzoni
-  # noinspection RubyResolve
+  # noinspection RubyResolve,RubyNilAnalysis
   def update_actor_song(skill_type)
     return unless @active_battler.has_rhytm?
     if !skill_type || @active_battler.action.skill.skill_type == 'Canto'
@@ -2712,13 +2769,14 @@ class Scene_Battle < Scene_Base
     }
   end
 
-  # Svuota la barra Ira quando si usa una skill
+  # esecuzione della skill del battler
   def execute_action_skill
     h87attr_eas
     ab = @active_battler
     return if ab.nil?
     skill = ab.action.skill
-    return if skill == nil
+    return if skill.nil?
+    ab.set_last_skill_used skill.id
     ab.anger -= ab.calc_anger_cost(skill) if ab.charge_gauge?
   end
 
