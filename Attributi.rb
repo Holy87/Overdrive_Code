@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------------
 # Descrizione:
 # Questo script i serve per aggiungere effetti speciali ad armi, skill e stati.
+# BARRA FURIA: Gli eroi che non hanno MP avranno la barra Furia.
 # -----------------------------------------------------------------------------
 # Codici:
 #▼ EVOCAZIONI
@@ -38,6 +39,7 @@
 # ● <ira kill: x> Aumenta l'ira di x quando uccidi un nemico
 # ● <mantieni ira: +/-x> l'ira si scarica di meno camminando
 # ● <ira turno: +/-x> Aggiunge o rimuove Ira ad ogni turno.
+# ● <usa furia> APPLICABILE SUL NEMICO: utilizza la Furia
 #▼ QUALITÀ
 # ● <difensore> chi ha questo status subisce il 20% dei danni di un alleato
 # ● <vlink> l'evocazione con questo status prende il 15% dei danni degli alleati
@@ -74,7 +76,7 @@
 # ● <danno magico: +/-x%> Danno magico inflitto
 # ● <danno fisico: +/-x%> Danno fisico inflitto
 # ● <difesa critici: +/-x%> aumenta o diminuisce le probabilità di subire
-# danni critici dell'x% (NON FUNZIONA)
+#   danni critici dell'x% (NON FUNZIONA)
 # ● <mod danno: +/-x%> aumenta o diminuisce il danno ricevuto in percentuale.
 # ● <cura: +/-x%> aumenta o diminuisce la quantità di cure subite
 # ● <danno critico: +/-x%> aumenta o diminuisce il danno degli attacchi critici
@@ -82,16 +84,18 @@
 # ● <nome guardia: x> cambia il nome del comando Difendi
 # ● <nome attacca: x> cambia il nome del comando Attacca
 # ● <rune> tutte le magie che danneggiano/curano HP si trasformano in cura MP
-# (non funziona perché c'è già quello di Yanfly)
 # ● <barriera: x%> il x% dei danni viene assorbito da una barriera (consuma PM)
-# ● <att spirito: x%> aumenta l'Attacco del x% dello spirito
 # ● <spirattacco: x%> aggiunge all'attacco il x% del proprio spirito
 # ● <spiridifesa: x%> aggiunge alla difesa il x% del proprio spirito
 # ● <spirivelocità: x%> aggiunge alla difesa il x% del proprio spirito
 # ● <x% hp difesa> gli HP vengono curati del x% quando ci si difende
 # ● <x% mp difesa> uguale ma con gli MP
 # ● <x% furia difesa> uguale ma con la Furia
+# ● <x mp attacco> guadagna x MP colpendo i nemici con l'attacco
+# ● <max assimilate: +x> aumenta le abilità assimilabili di x
+# ● <assimilate rounds: +x> aumenta il numero di utilizzi delle abilità assimilate
 # ● <ranged> l'arma/skill è a distanza
+# ● <autoscan> su equip e stati: mostra ulteriori informazioni puntando i nemici
 # ▼ STATUS
 # ● <status attacco: x> aggiunge lo status X all'attacco
 # ● <status rimosso: x> rimuove lo status X all'attacco
@@ -100,9 +104,10 @@
 # ● <bonus stati: +/-x%> aumenta la potenza di riuscita dello status del x%
 # ● <durata stati inflitti: +/-x> aumenta la durata degli status che l'eroe
 # ● <durata fissa> non viene influenzato da bonus/malus durata stati
-# infligge ad alleati o nemici (in turni).
+#   infligge ad alleati o nemici (in turni).
 # ● <durata buff: +/-x> modifica la durata dei buff acquisiti (in turni)
 # ● <durata debuff: +/-x> modifica la durata dei debuff acquisiti (in turni)
+# ● <blocca ultima skill> applicato allo status, blocca l'ultima skill usata
 # ▼ POTERI E OGGETTI
 # ● <h+x> l'help aggiunge x
 # ● <virale> lo status è virale e viene trasmesso.
@@ -118,10 +123,11 @@
 # ● <ranged> l'oggetto o l'abilità è a distanza
 # ● <ruba buff> l'abilità ruba tutti gli status (positivi e negativi)
 # ● <reset cumuled damage> azzera il danno accumulato
+# ● <assimilate> è un'abilità che può assimilare le altre abilità
+# ● <mp damage: x%> dannegia anche i PM del x% del danno PV
 #==============================================================================
 
 module H87AttrSettings
-  CHARGE_ACTORS = [3, 4, 8, 9] #eroi che hanno la barra Furia invece di quella MP
   DEFAULT_MAX_CHARGE = 100
   DEFAULT_ANGER_INCR = 10
   DAMAGE_REFLECT_ANIM_ID = 440
@@ -139,6 +145,10 @@ module H87AttrSettings
   BARRIER_BREAK_SE = 'Break'
 
   PARAMS_CAN_ZERO = [:cri, :eva, :hit]
+
+  ASSIMILATED_MESSAGE = '%s ha ottenuto %s da %s!'
+  CANNOT_ASSIMILATE = 'Nessuna abilità assimilabile!'
+  ASSIMILATE_ICON = 562
 end
 
 #==============================================================================
@@ -254,6 +264,14 @@ module ExtraAttr
   RESET_DAMAGE = /<reset cumuled damage>/i
   BLOCK_LAST_SKILL = /<blocca ultima skill>/i
   RUNE_STATE = /<rune>/i
+  MP_ON_ATTACK = /<(\d+) mp attacco>/i
+  AUTOSCAN = /<autoscan>/i
+  ASSIMILATE = /<assimilate>/i
+  ASSIMILABLE = /<assimilable>/i
+  MAX_ASSIMILABLE = /<max assimilate: ([+\-]\d+)>/i
+  ASSIMILATE_ROUNDS = /<assimilate rounds: ([+\-]\d+)>/i
+  SKILL_MP_DAMAGE_PER = /<mp damage:[ ]*(\d+)([%％])>/i
+  USE_ANGER = /<usa furia>/i
   # Variabili di istanza pubblici
   attr_reader :dom_bonus # bonus dominazioni
   attr_reader :viril # stato virile
@@ -345,6 +363,10 @@ module ExtraAttr
   attr_reader :block_last_skill # attributo per gli status che bloccano l'ultima skill
   attr_reader :rune # flag assorbi tutte le magie
   attr_reader :fixed_duration # flag per durata fissa stati alterati
+  attr_reader :mp_on_attack # guadagna MP attaccando
+  attr_reader :autoscan # auto scan
+  attr_reader :max_assimilable # numro massimo di abilità assimilabili insieme
+  attr_reader :assimilate_rounds # numero di colpi disponibili per l'abilità assimilata
   # Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
   # noinspection RubyScope
   def load_extra_attr
@@ -372,6 +394,7 @@ module ExtraAttr
     @esper_recharger = false
     @defender = false
     @vampire_rate = 0
+    @autoscan = false
     @item_save = 0
     @anger_bonus = 0
     @anger_mantain = 0
@@ -385,6 +408,7 @@ module ExtraAttr
     @magic_def = 0.0
     @phisic_dmg = 0.0
     @magic_dmg = 0.0
+    @mp_on_attack = 0
     @atb_bonus = 0
     @atb_song = 0
     @skill_set = []
@@ -438,6 +462,7 @@ module ExtraAttr
     @attack_attr = nil
     @rune = false
     @fixed_duration = false
+    @max_assimilable = 0
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help
         if row =~ HELP_END
@@ -632,6 +657,14 @@ module ExtraAttr
         @rune = true
       when FIXED_DUR
         @fixed_duration = true
+      when MP_ON_ATTACK
+        @mp_on_attack = $1.to_i
+      when AUTOSCAN
+        @autoscan = true
+      when MAX_ASSIMILABLE
+        @max_assimilable = $1.to_i
+      when USE_ANGER
+        @use_anger = true
       else
         #nothing
       end
@@ -755,6 +788,7 @@ module RPG
   class Enemy
     attr_reader :description
     attr_reader :attack_attr
+    attr_reader :use_anger
     include ExtraAttr
 
     # restituisce l'attributo principale al danno
@@ -787,6 +821,7 @@ module RPG
     attr_reader :buff_steal #flag per rubare i buff
     attr_reader :debuff_pass #flag per trasferire i debuff al bersaglio
     attr_reader :reset_damage
+    attr_reader :mp_damage_per #percentuale di danni MP con i danni HP
     # Inizializza il livello della classe dell'oggetto
     def load_extra_attr
       return if @cache_caricata_attr
@@ -814,6 +849,9 @@ module RPG
       @buff_steal = false
       @debuff_pass = false
       @reset_damage = false
+      @assimilate = false
+      @assimilable = false
+      @mp_damage_per = 0
       self.note.split(/[\r\n]+/).each { |riga|
         case riga
         when ExtraAttr::SIN_INCR
@@ -864,6 +902,12 @@ module RPG
           @debuff_pass = true
         when ExtraAttr::RESET_DAMAGE
           @reset_damage = true
+        when ExtraAttr::ASSIMILABLE
+          @assimilable = true
+        when ExtraAttr::ASSIMILATE
+          @assimilate = true
+        when ExtraAttr::SKILL_MP_DAMAGE_PER
+          @mp_damage_per = $1.to_f / 100.0
         else
           nil
         end
@@ -877,7 +921,7 @@ module RPG
 
     # Restituisce true se la skill ha un certo tipo
     def type?(type)
-      ; @sk_types.include?(type)
+      @sk_types.include?(type)
     end
 
     # Restituisce l'incremento di un determinato parametro
@@ -933,6 +977,14 @@ module RPG
       end
       return true if (self.element_set & H87AttrSettings::RANGED_ELEMENTS).size > 0
       self.atk_f <= 0
+    end
+
+    def assimilable?
+      @assimilable
+    end
+
+    def assimilate?
+      @assimilate
     end
 
     # Restituisce il nome dell'abilità
@@ -1073,21 +1125,24 @@ class Game_Battler
   attr_reader :last_skill_used
 
   # Attributi statici (modificati poi nelle sottoclassi)
+
+
+  #taumaturgico?
   def taumaturgic?
     false
   end
 
-  #taumaturgico?
+  # usa la furia?
   def charge_gauge?
     false
   end
 
-  #usa la furia?
+  #ha due armi?
   def has2w
     false
   end
 
-  #ha due armi?
+  #bombificato?
   def bombified?
     false
   end
@@ -1108,6 +1163,7 @@ class Game_Battler
   end
 
   # Restituisce le feature
+  # @return [Array<RPG::State>]
   def features
     states
   end
@@ -1194,12 +1250,17 @@ class Game_Battler
 
   # Restituisce la difesa magica
   def magic_def
-    1.0 + features_sum(:magic_def)
+    [1.0 + features_sum(:magic_def), 0].max
   end
 
   # Restituisce il rateo del riflesso danno fisico
   def physical_reflect
     features_sum(:physical_reflect)
+  end
+
+  # restituisce la quanità di MP che ricarica attaccando
+  def mp_on_attack
+    features_sum(:mp_on_attack)
   end
 
   # restituisce il rateo vampiro
@@ -1322,6 +1383,71 @@ class Game_Battler
     false
   end
 
+  # Restituisce la rabbia accumulata
+  def anger
+    @anger = 0 if @anger.nil?; @anger
+  end
+
+  # Imposta l'ira
+  def anger=(value)
+    @anger = [[0, value].max, max_anger].min
+  end
+
+  # Restituisce il rate dell'ira
+  def anger_rate
+    anger.to_f / max_anger
+  end
+
+  # Restituisce l'ira massima
+  def max_anger
+    H87AttrSettings::DEFAULT_MAX_CHARGE + max_anger_bonus
+  end
+
+  # Restituisce il valore d'incremento dell'ira
+  def anger_incr
+    H87AttrSettings::DEFAULT_ANGER_INCR + anger_bonus
+  end
+
+  # Restituisce il bonus dell'ira massima
+  def max_anger_bonus
+    features_sum(:max_anger_bonus)
+  end
+
+  # Restituisce il bonus d'ira
+  def anger_bonus
+    features_sum(:anger_bonus)
+  end
+
+  # Ira iniziale
+  def initial_anger
+    rand(10) + initial_anger_bonus
+  end
+
+  # Restituisce il bonus di ira iniziale
+  def initial_anger_bonus
+    features_sum(:anger_init)
+  end
+
+  # Inizializza la barra Ira
+  def initialize_anger
+    self.anger = [self.anger, initial_anger].max if charge_gauge?
+  end
+
+  # Restituisce true se ha un'abilità o un equip che gli ricarica l'ira
+  def anger_on_damage?
+    has_feature?(:anger_damage)
+  end
+
+  # Restituisce l'ammontare di ira ricevuta per uccidere un nemico
+  def anger_kill
+    features_sum(:anger_kill)
+  end
+
+  # Restituisce la furia che si accumula ad ogni turno
+  def anger_turn
+    features_sum(:anger_turn)
+  end
+
   def last_skill_blocked?
     has_feature? :block_last_skill
   end
@@ -1330,6 +1456,15 @@ class Game_Battler
   def run_cdf(user, obj, formula)
     @ignore_mpd = false
     run_cdf2(user, obj, formula)
+  end
+
+  # @return [Array<RPG::Skill>]
+  def assimilable_skills
+    []
+  end
+
+  def assimilated?(skill)
+    false
   end
 
   # Effetto attacco
@@ -1356,6 +1491,7 @@ class Game_Battler
     @hp_damage = (@hp_damage * CPanel::TSWRate).to_i if attacker.has2w
     change_damage_rate
     apply_barrier_protection if @hp_damage > 0
+    apply_mp_on_attack(attacker)
   end
 
   # calcolo il danno in base allo spirito
@@ -1396,6 +1532,9 @@ class Game_Battler
       @mp_damage = @hp_damage.abs / -200
       @hp_damage = 0
     end
+    if obj.mp_damage_per > 0 and @hp_damage > 0
+      @mp_damage = (@hp_damage * obj.mp_damage_per).to_i
+    end
   end
 
   # processo di esecuzione del danno
@@ -1426,6 +1565,7 @@ class Game_Battler
     end
     h87attr_execute_damage(user)
     remove_barriers if self.mp <= 0
+
     @skill_state_inflict = nil
     @user_state_inflict = nil
   end
@@ -1443,14 +1583,34 @@ class Game_Battler
     end
   end
 
+  # @param [Game_Actor] user
+  # @param [RPG::Skill] skill
+  def apply_assimilate_effect(user, skill)
+    return unless skill.assimilate?
+    skills = assimilable_skills.select {|skill| user.assimilable?(skill)}
+    if skills.any?
+      chosen_skill = skills.sample
+      if $game_temp.in_battle
+        text = sprintf(H87AttrSettings::ASSIMILATED_MESSAGE, user.name,
+                       chosen_skill.name, self.name)
+        $scene.push_popup(text, chosen_skill.icon_index)
+        user.assimilate(chosen_skill)
+      else
+        $scene.push_popup(H87AttrSettings::CANNOT_ASSIMILATE)
+      end
+    end
+  end
+
   # applica i cambiamenti di stato
   # @param [RPG::Skill] obj
   def apply_state_changes(obj)
     h87attr_apply_state_changes(obj)
-    if $game_temp.in_battle
-      user = $scene.active_battler
-      apply_buff_steal(obj, user) if obj.buff_steal
-    end
+    return unless $game_temp.in_battle
+    return unless obj
+    return if obj.is_a?(Game_Battler)
+    return unless obj.buff_steal
+    user = $scene.active_battler
+    apply_buff_steal(obj, user)
   end
 
   # applica il furto di stati. Non funziona con status che hanno priorità 0 o 10.
@@ -1483,7 +1643,7 @@ class Game_Battler
   # @param [Game_Battler] user
   def apply_physical_reflect(user)
     return if physical_reflect <= 0
-    user.hp -= ((@hp_damage + @mp_damage) * physical_reflect).to_i
+    user.hp_damage += ((@hp_damage + @mp_damage) * physical_reflect).to_i
     user.animation_id = H87AttrSettings::DAMAGE_REFLECT_ANIM_ID unless user.animation_id > 0
   end
 
@@ -1500,9 +1660,16 @@ class Game_Battler
   # @param [Game_Battler] user
   def apply_vampire(user)
     return unless user.vampire_rate
-    user.hp += (@hp_damage * (user.vampire_rate + 1)).to_i
-    user.mp += (@mp_damage * (user.vampire_rate + 1)).to_i
+    user.hp_damage -= (@hp_damage * (user.vampire_rate + 1)).to_i
+    user.mp_damage -= (@mp_damage * (user.vampire_rate + 1)).to_i
     user.animation_id = H87AttrSettings::VAMPIRE_ANIM_ID unless user.animation_id > 0
+  end
+
+  # @param [Game_Battler] user
+  def apply_mp_on_attack(user)
+    return if @hp_damage <= 0
+    return if user.mp_on_attack <= 0
+    user.mp_damage -= user.mp_on_attack
   end
 
   # applica la protezione della barriera
@@ -1907,6 +2074,7 @@ class Game_Actor < Game_Battler
     alias ex_attr_eva eva
     alias ex_attr_hit hit
     alias ex_attr_cri cri
+    alias ex_attr_skills skills
   end
   # Inizializza i valori prima di una battaglia
   def init_for_battle
@@ -1923,7 +2091,7 @@ class Game_Actor < Game_Battler
 
   # Restituisce se l'eroe usa la barra charge
   def charge_gauge?
-    super || H87AttrSettings::CHARGE_ACTORS.include?(self.id)
+    super || actor.parameters[1, 1] == 0
   end
 
   # determina se l'eroe ha 2 armi
@@ -1955,6 +2123,53 @@ class Game_Actor < Game_Battler
     else
       (value * (1.0 + $game_party.party_bonus(param))).to_i
     end
+  end
+
+  # @return [Array<RPG::Skill>]
+  def assimilated_skills
+    @assimilated_skills ||= []
+    @assimilated_skills.compact.map {|skill_id| $data_skills[skill_id]}
+  end
+
+  def max_assimilable_skills
+    2 + features_sum(:max_assimilable)
+  end
+
+  # @param [RPG::Skill] skill
+  def assimilated?(skill)
+    @assimilated_skills.include?(skill.id)
+  end
+
+  # determina se l'abilità è assimilabile dall'eroe
+  # @param [RPG::Skill] skill
+  def assimilable?(skill)
+    skill.assimilable? and !skills.include?(skill)
+  end
+
+  # determina se l'eroe ha una skill di assimilazione
+  def can_assimilate?
+    skills.select {|skill| skill.assimilate?}.any?
+  end
+
+  # @param [RPG::Skill] skill
+  def assimilate(skill)
+    @assimilated_skills ||= []
+    if @assimilated_skills.size >= max_assimilable_skills
+      skills_to_remove = @assimilated_skills.size + 1 - max_assimilable_skills
+      @assimilated_skills.shift(skills_to_remove)
+    end
+    @assimilated_skills.push(skill.id)
+  end
+
+  # @param [RPG::Skill] skill
+  def consume_assimilated_skill(skill)
+    @assimilated_skills ||= []
+    @assimilated_skills.delete(skill.id)
+  end
+
+  # @return [Array<RPG::Skill]
+  def skills
+    ex_attr_skills + assimilated_skills
   end
 
   # aumenta l'ira se ne ha i requisiti, quando viene colpito
@@ -2072,71 +2287,6 @@ class Game_Actor < Game_Battler
   # Restituisce true se l'eroe possiede taumaturgia
   def taumaturgic?
     has_feature?(:taumaturgic)
-  end
-
-  # Restituisce la rabbia accumulata
-  def anger
-    @anger = 0 if @anger.nil?; @anger
-  end
-
-  # Imposta l'ira
-  def anger=(value)
-    @anger = [[0, value].max, max_anger].min
-  end
-
-  # Restituisce il rate dell'ira
-  def anger_rate
-    anger.to_f / max_anger
-  end
-
-  # Restituisce l'ira massima
-  def max_anger
-    H87AttrSettings::DEFAULT_MAX_CHARGE + max_anger_bonus
-  end
-
-  # Restituisce il valore d'incremento dell'ira
-  def anger_incr
-    H87AttrSettings::DEFAULT_ANGER_INCR + anger_bonus
-  end
-
-  # Restituisce il bonus dell'ira massima
-  def max_anger_bonus
-    features_sum(:max_anger_bonus)
-  end
-
-  # Restituisce il bonus d'ira
-  def anger_bonus
-    features_sum(:anger_bonus)
-  end
-
-  # Ira iniziale
-  def initial_anger
-    rand(10) + initial_anger_bonus
-  end
-
-  # Restituisce il bonus di ira iniziale
-  def initial_anger_bonus
-    features_sum(:anger_init)
-  end
-
-  # Inizializza la barra Ira
-  def initialize_anger
-    self.anger = [self.anger, initial_anger].max if charge_gauge?
-  end
-
-  # Restituisce true se ha un'abilità o un equip che gli ricarica l'ira
-  def anger_on_damage?
-    has_feature?(:anger_damage)
-  end
-
-  # Restituisce l'ammontare di ira ricevuta per uccidere un nemico
-  def anger_kill
-    features_sum(:anger_kill)
-  end
-
-  # Restituisce la furia che si accumula ad ogni turno
-  def anger_turn
-    features_sum(:anger_turn)
   end
 
   # Restituisce il bonus del salvataggio oggetto
@@ -2437,6 +2587,12 @@ end #game_actor
 #==============================================================================
 class Game_Enemy < Game_Battler
   alias h87attr_perform_collapse perform_collapse unless $@
+  alias h87attr_initialize initialize unless $@
+
+  def initialize(index, enemy_id)
+    h87attr_initialize(index, enemy_id)
+    #TODO: inizializzare
+  end
   # Restituisce le features
   # @return [Array<RPG::State>]
   def features
@@ -2484,6 +2640,20 @@ class Game_Enemy < Game_Battler
   # @return [Array<Integer>]
   def element_set
     super + [enemy.attack_attr].compact
+  end
+
+  # @return [Array<RPG::Skill>]
+  # @param [Game_Actor] actor
+  def assimilable_skills(actor = nil)
+    sks = skills.select {|skill| skill.assimilable?}
+    if actor
+      sks = sks.select {|skill| actor.assimilable?(skill)}
+    end
+    sks
+  end
+
+  def charge_gauge?
+    enemy.use_anger
   end
 end
 
@@ -2773,11 +2943,15 @@ class Scene_Battle < Scene_Base
   def execute_action_skill
     h87attr_eas
     ab = @active_battler
+    # @param [Game_Battler] ab
     return if ab.nil?
     skill = ab.action.skill
     return if skill.nil?
     ab.set_last_skill_used skill.id
     ab.anger -= ab.calc_anger_cost(skill) if ab.charge_gauge?
+    if ab.assimilated?(skill)
+      ab.consume_assimilated_skill(skill)
+    end
   end
 
   # Esplosione di un nemico colpito da Bombifica
@@ -2849,34 +3023,42 @@ end
 
 class Window_Skill < Window_Selectable
   alias h87attr_draw_mpc draw_mp_cost unless $@
+  alias h87attr_draw_item draw_item unless $@
   # alias del metodo draw_mp_cost per mostrare la furia se l'eroe usa la skill
   # noinspection RubyUnusedLocalVariable
   # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
+  # @param [Rect] rect
   # @param [Game_Actor] actor eroe che possiede l'abilità
   # @param [true, false] enabled se abilitato o diasabilitato
   # @return [Integer] la nuova larghezza sottratta
-  def draw_mp_cost(skill, width, y, actor, enabled)
+  def draw_mp_cost(skill, rect, actor, enabled)
     if actor.charge_gauge?
-      draw_anger_cost(skill, width, y, actor, enabled)
+      draw_anger_cost(skill, rect, actor, enabled)
     else
-      h87attr_draw_mpc(skill, width, y, actor, enabled)
+      h87attr_draw_mpc(skill, rect, actor, enabled)
     end
   end
 
   # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
+  # @param [Rect] rect rettangolo
   # @param [Game_Actor] actor eroe che possiede l'abilità
   # @param [true, false] enabled se abilitato o diasabilitato
   # @return [Integer] la nuova larghezza sottratta
-  def draw_anger_cost(skill, width, y, actor, enabled)
+  def draw_anger_cost(skill, rect, actor, enabled)
     return width if actor.calc_anger_cost(skill) == 0
     change_color anger_color, enabled
     cost = sprintf('%d%s', actor.calc_anger_cost(skill), Vocab.anger)
-    draw_text(0, y, width, line_height, cost, 2)
-    width - text_size(cost).width - H87_SKILL_COSTS::SPACING
+    draw_text(rect, cost, 2)
+    rect.width -= text_size(cost).width + H87_SKILL_COSTS::SPACING
+  end
+
+  def draw_item(index)
+    h87attr_draw_item(index)
+    skill = @data[index]
+    rect = item_rect(index)
+    if @actor.assimilated?(skill)
+      draw_icon(H87AttrSettings::ASSIMILATE_ICON, rect.x, rect.y)
+    end
   end
 end
 
@@ -2914,7 +3096,7 @@ class Window_Base < Window
 
   # Alias del metodo draw_actor_mp. Disegna Furia se il personaggio ne è
   # dotato.
-  # @param [Game_Actor] actor
+  # @param [Game_Battler] actor
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
@@ -2927,7 +3109,7 @@ class Window_Base < Window
   end
 
   # Disegna la furia dell'eroe
-  # @param [Game_Actor] actor
+  # @param [Game_Battler] actor
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
@@ -2946,7 +3128,7 @@ class Window_Base < Window
   end
 
   # Disegna la furia dell'eroe
-  # @param [Game_Actor] actor
+  # @param [Game_Battler] actor
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
