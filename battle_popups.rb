@@ -257,12 +257,19 @@ class Scene_Battle < Scene_Base
 
   def create_info_viewport
     h87_pop_create_info_viewport
-    @popup_container = Popup_Container.new(@info_viewport)
+    create_popup_viewport
+    @popup_container = Popup_Container.new(@popup_viewport)
+  end
+
+  def create_popup_viewport
+    @popup_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+    @popup_viewport.z = @info_viewport.z + 1
   end
 
   def dispose_info_viewport
     h87_pop_dispose_info_viewport
     @popup_container.dispose
+    @popup_viewport.dispose
   end
 
   def update_basic(main = false)
@@ -327,7 +334,8 @@ class Scene_Battle < Scene_Base
     h87_pop_execute_action_skill
     skill = @active_battler.action.skill
     targets = @active_battler.action.make_targets
-    targets.each { |target|
+    return if targets.nil?
+    targets.compact.each { |target|
       display_action_effects(target, skill)
     }
   end
