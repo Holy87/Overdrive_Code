@@ -73,6 +73,7 @@ module EnemyStatusSettings
 
   WINDOWSKIN = 'enemy_hp'
 
+  ACTOR_PARAMS = [:atk, :def, :spi, :agi, :hit, :eva, :cri, :odds]
 end
 
 module CUSTOM_TIPS_OBJ
@@ -181,19 +182,24 @@ class Window_Enemy_BattleInfo < Window_Base
     @hp_rect = Rect.new(EnemyStatusSettings::STATES_MAX_WIDTH, 0, EnemyStatusSettings::HP_WIDTH, line_height)
     @mp_rect = Rect.new(@hp_rect.x + @hp_rect.width, 0, EnemyStatusSettings::MP_WIDTH, line_height)
     @hint_rect = Rect.new(@mp_rect.x + @mp_rect.width + 2, 0, contents_width - (@mp_rect.x + @mp_rect.width) - 2, line_height)
+    @stats_rect = Rect.new(@name_rect.width + 5, 0, contents_width - @name_rect.width - 5, line_height)
   end
 
   def refresh
     contents.clear
     return if enemy.nil?
     draw_target_name(@name_rect.x, @name_rect.y, @name_rect.width)
-    draw_target_states(@states_rect.x, @states_rect.y, @states_rect.width)
-    return if !enemy.actor? && enemy.hide_hp?
-    draw_target_hp
-    enemy.charge_gauge? ? draw_target_anger : draw_target_mp
-    return unless show_info?
-    @hints = enemy.hints
-    draw_target_hints(@hint_rect.x, @hint_rect.y, @hint_rect.width)
+    if enemy.actor?
+      draw_target_params(@stats_rect.x, @stats_rect.y)
+    else
+      draw_target_states(@states_rect.x, @states_rect.y, @states_rect.width)
+      return if enemy.hide_hp?
+      draw_target_hp
+      enemy.charge_gauge? ? draw_target_anger : draw_target_mp
+      return unless show_info?
+      @hints = enemy.hints
+      draw_target_hints(@hint_rect.x, @hint_rect.y, @hint_rect.width)
+    end
   end
 
   # imposta la finestra per un nuovo nemico
@@ -215,8 +221,9 @@ class Window_Enemy_BattleInfo < Window_Base
   def update
     super
     return unless self.visible
+    return if enemy.actor?
     update_states
-    return if !enemy.actor? && enemy.hide_hp?
+    return if enemy.hide_hp?
     update_hints
     update_hp_mp
   end
@@ -266,6 +273,7 @@ class Window_Enemy_BattleInfo < Window_Base
   end
 
   def draw_assimilable_skills_icon(x, y)
+    return if enemy.actor?
     return unless commander.can_assimilate?
     assimilable_skills = enemy.assimilable_skills(commander)
     if assimilable_skills.any?
@@ -273,9 +281,25 @@ class Window_Enemy_BattleInfo < Window_Base
     end
   end
 
+  def draw_target_params(x, y)
+    return unless commander.autoscan?
+    change_color normal_color
+    EnemyStatusSettings::ACTOR_PARAMS.each do |param|
+      x += draw_target_param(param, x, y)
+    end
+  end
+
+  def draw_target_param(param, x, y)
+    icon = EquipSettings::ICONS[param]
+    text = enemy.send(param).to_s
+    draw_icon(icon, x, y)
+    draw_text(x + 24, y, 100, line_height, text)
+    24 + text_size(text).width + 5
+  end
+
   # @return [Color]
   def target_color_level
-    return normal_color if enemy.actor?
+    return power_up_color if enemy.actor?
     colors = EnemyStatusSettings::DIFFICULTY_COLORS
     lvl_diff = commander.level - enemy.level
     return colors[:very_hard] if lvl_diff < -15
@@ -303,7 +327,7 @@ class Window_Enemy_BattleInfo < Window_Base
   end
 
   def show_info?
-    enemy.actor? || commander.autoscan?
+    !enemy.actor? && commander.autoscan?
   end
 
   def draw_target_hints(x, y, width)
@@ -561,14 +585,14 @@ class Scene_Battle < Scene_Base
 
   def start_target_selection(actor = false)
     h87_ew_select_member(actor)
-    update_enemy_window unless actor
+    update_enemy_window
   end
 
   # noinspection RubyResolve
   def update_enemy_window
     return if @target_members.nil?
     battler = @target_members[@index]
-    if battler && !battler.actor?
+    if battler
       @enemy_window.setup battler, @commander
     else
       @enemy_window.visible = false
