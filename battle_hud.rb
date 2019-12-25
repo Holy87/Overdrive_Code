@@ -1,4 +1,3 @@
-require File.expand_path 'rm_vx_data'
 #===============================================================================
 # Overdrive Battle HUD
 # Versione 1.0
@@ -50,7 +49,7 @@ module H87HUD_SETTINGS
   }
 
   # Tonalità dell'eroe attivo
-  SELECTED_TONE = Tone.new(100, 255, 0)
+  SELECTED_TONE = Tone.from_color Color::CYAN
   # Tonalità del riquadro volto eroe
   NORMAL_FACE_TONE = Tone.new(0, 0, 0)
   DEAD_FACE_TONE = Tone.new(0, 0, 0, 255)
@@ -82,6 +81,19 @@ module H87HUD_SETTINGS
   HUD_BACKGROUND = 'HudBackground'
   # Suono d'allarme quando un personaggio sta per morire
   ALARM_SE = ["Ice1", 100, 150]
+
+  # Per le opzioni di gioco
+  # Switch per attivare o disattivare il suono di HP critici
+  BEEP_ON_CRITICAL_SW = 611
+  BEEP_ON_CRITICAL_TEXT = 'Allarme PV critici'
+  BEEP_ON_CRITICAL_DESC = 'Scegli se attivare o disattivare il suono di avviso PV critici|su un personaggio.'
+
+  HP_WIDTH_VAR = 208
+  HP_WIDTH_TEXT = 'Larghezza barra PV'
+  HP_WIDTH_DESC = 'Imposta la larghezza in proporzioni delle barre PV.|Utile allargarla a livelli bassi quando i PV sono pochi.'
+  HP_WIDTH_VALUES = [0.05, 0.1, 0.2, 0.3]
+  MP_WIDTH_VALUES = [0.25, 0.5, 1.0, 1.5]
+  HP_WIDTH_VDESC = %w(S M L XL)
 end
 
 #==============================================================================
@@ -159,11 +171,12 @@ class Battle_Hud
   attr_reader :width
   attr_reader :index
   # Initialization
-  def initialize
-    @x = 0
+  def initialize(x = 0, y = Graphics.height - (5 * H87HUD_SETTINGS::BSH),
+                 width = Graphics.width)
+    @x = x
     @index = -1
-    @y = Graphics.height - (5 * H87HUD_SETTINGS::BSH)
-    @width = Graphics.width
+    @y = y
+    @width = width
     create_background
     create_contents
   end
@@ -178,19 +191,19 @@ class Battle_Hud
 
   # Useless methods
   def x=(value)
-    ; @x = value;
+    @x = value
   end
 
   def y=(value)
-    ; @y = value;
+    @y = value
   end
 
   def active=(value)
-    ; @active = value;
+    @active = value
   end
 
-  def active;
-    true;
+  def active
+    true
   end
 
   # Sets the HUD visibility
@@ -216,6 +229,7 @@ class Battle_Hud
   # value: actor index
   def index=(value)
     return if @index == value
+    @index = value
     @battle_status_elements.each { |battlestatus|
       battlestatus.selected = false
     }
@@ -438,7 +452,7 @@ class Actor_BattleStatus
     if actor.is_esper?
       @esper_bar.set_value($game_temp.domination_turns_rate * 100)
     end
-    @bface.z = 999
+    #@bface.z = 999
     refresh_bface
   end
 
@@ -458,7 +472,8 @@ class Actor_BattleStatus
 
   # Status container creation
   def create_status
-    @status_container = States_Shower.new(0, 0, 120, actor)
+    width = full_width? ? 120 : 96
+    @status_container = States_Shower.new(0, 0, width, actor)
     register_object(@status_container)
   end
 
@@ -466,7 +481,7 @@ class Actor_BattleStatus
   def create_faces
     @bface = Sprite.new
     @bface.bitmap = Cache.battle_face(actor.id)
-    @bface.x = 122
+    @bface.x = full_width? ? 120 : 90
     register_object(@bface)
   end
 
@@ -477,23 +492,31 @@ class Actor_BattleStatus
     create_esper_bar if actor.is_esper?
   end
 
+  def bar_x
+    full_width? ? 200 : 160
+  end
+
+  def bar_max_width
+    self.width - bar_x - 20
+  end
+
   # HP bar creation
   def create_hp_bar
-    @hp_bar = Battle_HpBar.new(210, 4, hp_width)
+    @hp_bar = Battle_HpBar.new(bar_x, 4, hp_width)
     @hp_bar.set_value(actor.hp_rate * 100)
     register_object(@hp_bar)
   end
 
   # MP bar creation
   def create_mp_bar
-    @mp_bar = Battle_MpBar.new(210, 18, mp_width)
+    @mp_bar = Battle_MpBar.new(bar_x, 18, mp_width)
     @mp_bar.set_value(actor.mp_rate * 100)
     register_object(@mp_bar)
   end
 
   # Anger gauge creation
   def create_anger_bar
-    @anger_bar = Battle_Charge_Bar.new(210, 18, anger_width)
+    @anger_bar = Battle_Charge_Bar.new(bar_x, 18, anger_width)
     @anger_bar.set_value(actor.anger_rate * 100)
     register_object(@anger_bar)
   end
@@ -509,19 +532,19 @@ class Actor_BattleStatus
 
   # returns HP bar width
   def hp_width
-    max_width = Graphics.width - 230
+    max_width = bar_max_width
     [actor.mhp * hp_divisor(max_width), max_width].min
   end
 
   # returns MP bar width
   def mp_width
-    max_width = Graphics.width - 230
+    max_width = bar_max_width
     [actor.mmp * mp_divisor(max_width), max_width].min
   end
 
   # Returns anger gauge width
   def anger_width
-    max_width = Graphics.width - 230
+    max_width = bar_max_width
     [actor.max_anger * anger_divisor(max_width), max_width].min
   end
 
@@ -533,20 +556,30 @@ class Actor_BattleStatus
   # returns the proper HP divisor for bar max width
   def hp_divisor(max_width)
     pmhp = $game_party.mhp
-    if pmhp * 0.1 > max_width
+    if H87HUD_SETTINGS::HP_WIDTH_VAR > 0
+      rate = H87HUD_SETTINGS::HP_WIDTH_VALUES[$game_variables[H87HUD_SETTINGS::HP_WIDTH_VAR]]
+    else
+      rate = 0.1
+    end
+    if pmhp * rate > max_width
       max_width.to_f / $game_party.mhp
     else
-      0.1
+      rate
     end
   end
 
   # returns the proper MP divisor for bar max width
   def mp_divisor(max_width)
     pmmp = $game_party.mmp
-    if pmmp * 0.5 > max_width
+    if H87HUD_SETTINGS::HP_WIDTH_VAR > 0
+      rate = H87HUD_SETTINGS::MP_WIDTH_VALUES[$game_variables[H87HUD_SETTINGS::HP_WIDTH_VAR]]
+    else
+      rate = 0.5
+    end
+    if pmmp * rate > max_width
       max_width.to_f / $game_party.mmp
     else
-      0.5
+      rate
     end
   end
 
@@ -570,7 +603,8 @@ class Actor_BattleStatus
     y = H87HUD_SETTINGS::NUMBER_Y
     graph = H87HUD_SETTINGS::NUMBERGRAPH
     spacing = H87HUD_SETTINGS::NUMBER_SPACING
-    @hp_numbers = Battle_Numbers.new(208, y, graph, spacing)
+    x = @hp_bar.x - 2
+    @hp_numbers = Battle_Numbers.new(x, y, graph, spacing)
     @hp_numbers.set_value(actor.hp)
     @hp_numbers.z = 999
     register_object(@hp_numbers)
@@ -581,7 +615,8 @@ class Actor_BattleStatus
     y = H87HUD_SETTINGS::MPNUMBER_Y
     graph = H87HUD_SETTINGS::MPNUMBERGRAPH
     spacing = H87HUD_SETTINGS::MPNUMBER_SPACING
-    @mp_numbers = Battle_Numbers.new(208, y, graph, spacing)
+    x = @mp_bar.x - 2
+    @mp_numbers = Battle_Numbers.new(x, y, graph, spacing)
     @mp_numbers.set_value(actor.mp)
     @mp_numbers.z = 999
     register_object(@mp_numbers)
@@ -592,7 +627,8 @@ class Actor_BattleStatus
     y = H87HUD_SETTINGS::MPNUMBER_Y
     graph = H87HUD_SETTINGS::MPNUMBERGRAPH
     spacing = H87HUD_SETTINGS::MPNUMBER_SPACING
-    @anger_numbers = Battle_Numbers.new(208, y, graph, spacing)
+    x = @anger_bar.x - 2
+    @anger_numbers = Battle_Numbers.new(x, y, graph, spacing)
     @anger_numbers.set_value(actor.anger)
     @anger_numbers.z = 999
     register_object(@anger_numbers)
@@ -640,6 +676,10 @@ class Actor_BattleStatus
   def register_object(object)
     @attached_objects_x[object] = object.x
     @attached_objects_y[object] = object.y
+  end
+
+  def full_width?
+    self.width == Graphics.width
   end
 end
 
@@ -850,8 +890,13 @@ class Battle_HpBar < Battle_Bar
       @background.flash(Color.new(255, 0, 0, (250 - @value * 4)), 60)
       @foreground.flash(Color.new(255, 255, 255), 60)
       se = H87HUD_SETTINGS::ALARM_SE
-      RPG::SE.new(se[0], se[1], se[2]).play
+      RPG::SE.new(se[0], se[1], se[2]).play if can_play_critical_sound?
     end
+  end
+
+  def can_play_critical_sound?
+    return true if H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW == 0
+    $game_switches[H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW]
   end
 end
 
@@ -1161,7 +1206,7 @@ class States_Shower
     @visible = true
     @states_id = []
     @viewport = nil
-    refresh(actor.states)
+    refresh
   end
 
   # ottiene la larghezza della barra
@@ -1222,9 +1267,9 @@ class States_Shower
     state_icon = Sprite.new(@viewport)
     state_icon.bitmap = state_bitmap(state)
     state_icon.y = @y
-    state_icon.x = right_side - 24
+    state_icon.x = right_side - states_spacing
     state_icon.viewport = @viewport
-    state_icon.z = 1
+    #state_icon.z = 1
     @states[state.id] = state_icon
   end
 
@@ -1234,6 +1279,18 @@ class States_Shower
     bitmap2 = Bitmap.new(24, 24)
     bitmap2.draw_icon(state.icon_index, 0, 0)
     bitmap2
+  end
+
+  # @return [Array<RPG::State>]
+  def visible_states
+    @actor.states.select{|s|s.priority >= 2}
+  end
+
+  # @return [Integer]
+  def states_spacing
+    states_number = visible_states.size
+    return 24 if @states.empty? or states_number * 24 <= self.width
+    [24, (self.width - 12) / [states_number, 1].max].min
   end
 
   # la coordinata del lato destro
@@ -1253,7 +1310,7 @@ class States_Shower
     else
       @states_id = states_id(states)
       delete_all_states
-      refresh(states)
+      refresh
       check_removing_states(states)
     end
   end
@@ -1261,6 +1318,7 @@ class States_Shower
   # controlla gli stati che stanno scomparendo
   def check_removing_states(states)
     states.each { |state|
+      # noinspection RubyResolve -> RGSS2 only
       next if state.hold_turn == 0
       next if @states[state.id].nil?
       next if actor.state_turns[state.id].nil?
@@ -1288,9 +1346,8 @@ class States_Shower
   end
 
   # refresh
-  def refresh(states)
-    states.each do |state|
-      next if state.priority < 2
+  def refresh
+    visible_states.sort{|state| state.priority}.each do |state|
       add_state(state)
     end
   end
@@ -1302,9 +1359,9 @@ class States_Shower
 
   # aggiornamento
   def update
-    if @states.size > 5
-      update_scrolling
-    end
+    #if @states.size * 24 > self.width
+    #  update_scrolling
+    #end
     @states.each_value { |state_icon| state_icon.update }
   end
 
@@ -1361,8 +1418,16 @@ class Scene_Battle < Scene_Base
     @hud_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
     @status_window.visible = false
     @status_window.dispose
-    @status_window = Battle_Hud.new
+    hud_width = Graphics.width - (command_window_bottom? ? @actor_command_window.width : 0)
+    @status_window = Battle_Hud.new(0, Graphics.height, hud_width)
     @status_window.viewport = @hud_viewport
+  end
+
+
+  def command_window_bottom?
+    return true unless $imported['H87_ActorCommand']
+    return false if ActorCommandOptions::POSITION_SW == 0
+    $game_switches[ActorCommandOptions::POSITION_SW] == false
   end
 
   # Terminate
@@ -1378,8 +1443,8 @@ class Scene_Battle < Scene_Base
   end
 
   # aggiorna il viewport per lo smooth move
-  def update_basic
-    h87hud_update_basic
+  def update_basic(main = false)
+    h87hud_update_basic(main)
     @hud_viewport.update
   end
 end
@@ -1426,3 +1491,32 @@ class Window_BattleStatus < Window_Selectable
     @battle_hud.index = value if @battle_hud != nil
   end
 end
+
+if H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW > 0
+  hash = {
+      :type => :switch,
+      :text => H87HUD_SETTINGS::BEEP_ON_CRITICAL_TEXT,
+      :help => H87HUD_SETTINGS::BEEP_ON_CRITICAL_DESC,
+      :sw => H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW,
+      :on => 'ON',
+      :off => 'OFF',
+      :default => true
+  }
+  H87Options.push_sound_option(hash)
+end
+
+if H87HUD_SETTINGS::HP_WIDTH_VAR > 0
+  hash = {
+      :type => :variable,
+      :text => H87HUD_SETTINGS::HP_WIDTH_TEXT,
+      :help => H87HUD_SETTINGS::HP_WIDTH_DESC,
+      :var => H87HUD_SETTINGS::HP_WIDTH_VAR,
+      :default => 1,
+      :max => 3,
+      :values => H87HUD_SETTINGS::HP_WIDTH_VDESC
+  }
+
+  H87Options.push_game_option(hash)
+end
+
+hash = nil
