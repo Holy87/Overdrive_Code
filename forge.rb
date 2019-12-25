@@ -372,7 +372,7 @@ end
 # contiene le informazioni su tutti i fabbri e sul fabbro selezionato.
 #===============================================================================
 class Game_Temp
-  # @attr [Forge_Shop] forge_shop
+  # @return [Forge_Shop] forge_shop
   attr_accessor :forge_shop #negozio forgia
   #--------------------------------------------------------------------------
   # * ottiene l'array dei fabbri
@@ -432,12 +432,12 @@ end
 class Forge_Product
   #--------------------------------------------------------------------------
   # * variabili di istanza pubblici
-  # @attr [Fixnum] item_id
-  # @attr [Fixnum] item_type
-  # @attr [Fixnum] result_n
-  # @attr [Array<Forge_Material>] materials
-  # @attr [Fxnum] gold
-  # @attr [Fixnum] masterwork_r
+  # @return [Fixnum] item_id
+  # @return [Fixnum] item_type
+  # @return [Fixnum] result_n
+  # @return [Array<Forge_Material>] materials
+  # @return [Fxnum] gold
+  # @return [Fixnum] masterwork_r
   #--------------------------------------------------------------------------
   attr_reader :item_id      #id del prodotto
   attr_reader :item_type    #tipo del prodotto
@@ -529,10 +529,10 @@ end
 class Forge_Shop
   #--------------------------------------------------------------------------
   # * Variabili d'istanza pubbliche
-  # @attr [Array<Forge_Product>] products
-  # @attr [String] name
-  # @attr [Float] price_rate
-  # @attr [Float] m_rate
+  # @return [Array<Forge_Product>] products
+  # @return [String] name
+  # @return [Float] price_rate
+  # @return [Float] m_rate
   #--------------------------------------------------------------------------
   attr_reader :products
   attr_reader :name
@@ -846,7 +846,7 @@ class Window_ForgeMaterials < Window_Base
   end
   #--------------------------------------------------------------------------
   # * imposta l'oggetto da cui prendere i materiali richiesti
-  # @param [Forge_Product] item
+  # @param [Forge_Product, Alchemy_Product] item
   #--------------------------------------------------------------------------
   def set_item(item)
     return if @item == item

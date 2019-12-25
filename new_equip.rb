@@ -1,4 +1,3 @@
-require 'rm_vx_data'
 #==============================================================================
 # ** Vocab
 #==============================================================================
@@ -10,6 +9,7 @@ module Vocab
   def self.equip_none(symbol)
     EquipSettings::NONE_VOCABS[symbol]
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce la stringa del tipo equipaggiamento
   # @return [String]
@@ -17,6 +17,7 @@ module Vocab
   def self.equip_type(symbol)
     EquipSettings::TYPE_RULES[symbol][0]
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce la stringa dell'aiuto per rimuovere oggetti
   # @return [String]
@@ -24,6 +25,7 @@ module Vocab
   def self.help_remove
     ' rimuovi'
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce la stringa dell'aiuto per cambiare personaggio
   # @return [String]
@@ -58,8 +60,8 @@ module EquipSettings
   #--------------------------------------------------------------------------
   # * Altri parametri
   #--------------------------------------------------------------------------
-  UNEQUIP_ICON = 238  #icona disequipaggia
-  EQUIP_WIDTH = 360   #larghezza della finestra equipaggiamento
+  UNEQUIP_ICON = 238 #icona disequipaggia
+  EQUIP_WIDTH = 360 #larghezza della finestra equipaggiamento
   #--------------------------------------------------------------------------
   # * Vocaboli per equipaggiamento
   #--------------------------------------------------------------------------
@@ -76,40 +78,42 @@ module EquipSettings
   #--------------------------------------------------------------------------
   # * Regole (preso da YEM Equip)
   #--------------------------------------------------------------------------
-  TYPE_RULES ={
+  TYPE_RULES = {
       # Equip  => [ Nome,       Tipo, Vuoto?],
-      :weapon  => [ 'Arma',     nil,  true],
-      :shield  => [ 'Scudo',    0,    true],
-      :helmet  => [ 'Testa',    1,    true],
-      :armour  => [ 'Corpo',    2,    true],
-      :other   => [ 'Acc.',     3,    true],
-      :gloves  => [ 'Mani',     5,    true],
-      :boots   => [ 'Gambe',    6,    true],
-      :esper   => [ 'Pietra',   7,    true]
+      :weapon => ['Arma', nil, true],
+      :shield => ['Scudo', 0, true],
+      :helmet => ['Testa', 1, true],
+      :armour => ['Corpo', 2, true],
+      :other => ['Acc.', 3, true],
+      :gloves => ['Mani', 5, true],
+      :boots => ['Gambe', 6, true],
+      :esper => ['Pietra', 7, true]
   } # Do not remove this.
-  #--------------------------------------------------------------------------
-  # * Restituisce se può essere disequipaggiato
+
+  SUPPORT_CHANGE_WEAPON_GROUPS = {
+      #gruppo => nome supporto
+      :gun => ['Munizioni', 'No muniz. speciali'],
+      :bow => ['Faretra','Nessuna faretra']
+  }
+
+  # Restituisce se può essere disequipaggiato
   # @param [Symbol] type
   # @return [Boolean]
-  #--------------------------------------------------------------------------
   def self.can_unequip?(type)
     TYPE_RULES[type][2]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il tipo slot equipaggiamento
-  #--------------------------------------------------------------------------
+
+  # Restituisce il tipo slot equipaggiamento
   def self.equip_type(symbol)
     TYPE_RULES[symbol][1]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce se il parametro è a doppia dimensione
-  #--------------------------------------------------------------------------
+
+  # Restituisce se il parametro è a doppia dimensione
   def self.param_dsized?(symbol)
     DOUBLE_SIZED_PARAMS.include?(symbol)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'array dei nomi degli equip
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'array dei nomi degli equip
   def self.type_vocabs
     vocabs = []
     TYPE_RULES.each_value do |value|
@@ -117,11 +121,12 @@ module EquipSettings
     end
     vocabs
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il vocabolo più lungo
   #--------------------------------------------------------------------------
   def self.longest_vocab
-    type_vocabs.max{|x| x.size}
+    type_vocabs.max {|x| x.size}
   end
 end
 
@@ -129,16 +134,35 @@ end
 # ** Game_Player
 #==============================================================================
 class Game_Actor < Game_Battler
+  alias class_equippable? equippable? unless $@
   #--------------------------------------------------------------------------
   # * Restituisce l'arma principale
   # @return [RPG::Weapon]
   #--------------------------------------------------------------------------
-  def first_weapon; self.weapons[0]; end
+  def first_weapon;
+    self.weapons[0];
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce la furia massima
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def mag; max_anger; end
+  def mag;
+    max_anger;
+  end
+
+  # @param [RPG::Weapon,RPG::Armor] item
+  def equippable?(item)
+    if item.is_a?(RPG::Armor) and item.another_support_type?
+      return false if two_swords_style
+      return false if first_weapon.nil?
+      return false unless first_weapon.changes_support_type?
+      first_weapon.use_support == item.support_type
+    else
+      return false if item.is_a?(RPG::Armor) and first_weapon != nil and first_weapon.changes_support_type? and item.kind == 0
+      class_equippable?(item)
+    end
+  end
 end
 
 #==============================================================================
@@ -160,11 +184,15 @@ class Window_ActorStats < Window_Base
     create_contents
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * L'eroe selezionato
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor; @actor; end
+  def actor;
+    @actor;
+  end
+
   #--------------------------------------------------------------------------
   # * Imposta l'eroe e aggiorna la finestra
   # @param [Game_Actor] actor
@@ -174,40 +202,51 @@ class Window_ActorStats < Window_Base
     @clone = nil
     refresh
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'elenco dei parametri da visualizzare
+
+  # Restituisce l'elenco dei parametri da visualizzare
   # @return [Array<Symbol>]
-  #--------------------------------------------------------------------------
   def params
     EquipSettings::PARAMS
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'icona del parametro
+
+  # Restituisce l'icona del parametro
   # @param [Symbol] param
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def param_icon(param)
     EquipSettings::ICONS[param]
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero massimo di righe
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def max_lines; 4; end
+  def max_lines;
+    4;
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce la posizione x dove cominciano i parametri
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def params_rect_x; 250; end
+  def params_rect_x;
+    250;
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero massimo di colonne visualizzabili
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def max_columns; (params.size / max_lines.to_f).ceil; end
+  def max_columns;
+    (params.size / max_lines.to_f).ceil;
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'eroe clonato
   #--------------------------------------------------------------------------
-  def actor_clone; @clone; end
+  def actor_clone;
+    @clone;
+  end
+
   #--------------------------------------------------------------------------
   # * Imposta l'oggetto da equiparare
   # @param [RPG::BaseItem] item
@@ -224,6 +263,7 @@ class Window_ActorStats < Window_Base
     end
     refresh_params_rect
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce un clone scollegato dell'eroe (per evitare bug)
   # @return [Game_Actor]
@@ -232,12 +272,14 @@ class Window_ActorStats < Window_Base
   def clone_actor
     Marshal.load(Marshal.dump(actor))
   end
+
   #--------------------------------------------------------------------------
   # * Pulisce gli oggetti
   #--------------------------------------------------------------------------
   def clear_items
     set_item(nil, nil, true)
   end
+
   #--------------------------------------------------------------------------
   # * Reimposta la bitmap
   #--------------------------------------------------------------------------
@@ -246,6 +288,7 @@ class Window_ActorStats < Window_Base
     contents.clear_rect(x, 0, contents_width - x, contents_height)
     draw_actor_params
   end
+
   #--------------------------------------------------------------------------
   # * Aggiorna la finestra
   #--------------------------------------------------------------------------
@@ -255,6 +298,7 @@ class Window_ActorStats < Window_Base
     draw_actor_basic_info
     draw_actor_params
   end
+
   #--------------------------------------------------------------------------
   # * Disegna le informazioni base dell'eroe
   #--------------------------------------------------------------------------
@@ -264,12 +308,13 @@ class Window_ActorStats < Window_Base
     draw_actor_level(actor, 100, line_height)
     draw_actor_class(actor, 100, line_height * 2)
   end
+
   #--------------------------------------------------------------------------
   # * Disegna i parametri dell'eroe
   #--------------------------------------------------------------------------
   def draw_actor_params
     width = (contents_width - params_rect_x) / max_columns
-    (0..params.size-1).each { |i|
+    (0..params.size - 1).each {|i|
       next if params[i].nil?
       x = (i % max_columns) * width
       y = (i / max_columns) * line_height
@@ -278,6 +323,7 @@ class Window_ActorStats < Window_Base
       draw_param(x + params_rect_x, y, params[i], w)
     }
   end
+
   #--------------------------------------------------------------------------
   # * Disegna il parametro fissato
   # @param [Integer] x
@@ -293,30 +339,31 @@ class Window_ActorStats < Window_Base
     draw_bg_rect(x, y, width)
     param = actor_parameter(actor, param_type)
     draw_icon(param_icon(param_type), x, y)
-    drawing_width = (width - 48)/2
+    drawing_width = (width - 48) / 2
     change_color(normal_color)
     text = param.to_s
-    text = sprintf('%d%%',param) if param_perc?(param_type)
-    draw_text(x+24, y, drawing_width, line_height, text)
+    text = sprintf('%d%%', param) if param_perc?(param_type)
+    draw_text(x + 24, y, drawing_width, line_height, text)
     if actor_clone != nil
       x2 = x + 48 + drawing_width
       param2 = actor_parameter(actor_clone, param_type)
       case param <=> param2
-        when 0
-          change_color(normal_color)
-        when -1 #migliore
-          change_color(power_up_color)
-        when 1 #peggiore
-          change_color(power_down_color)
-        else
-          change_color(anger_color)
+      when 0
+        change_color(normal_color)
+      when -1 #migliore
+        change_color(power_up_color)
+      when 1 #peggiore
+        change_color(power_down_color)
+      else
+        change_color(anger_color)
       end
       text = param2
-      text = sprintf('%d%%',param2) if param_perc?(param_type)
+      text = sprintf('%d%%', param2) if param_perc?(param_type)
       draw_text(x2, y, drawing_width, line_height, text)
-      draw_text(x + 24, y, width-24, line_height, '>', 1)
+      draw_text(x + 24, y, width - 24, line_height, '>', 1)
     end
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il parametro dell'eroe
   # @param [Game_Actor] actor
@@ -327,6 +374,7 @@ class Window_ActorStats < Window_Base
     return unless actor
     eval("actor.#{param_type}")
   end
+
   #--------------------------------------------------------------------------
   # * Determina se il parametro viene mostrato in percentuale
   # @param [Symbol] param
@@ -335,6 +383,7 @@ class Window_ActorStats < Window_Base
   def param_perc?(param)
     EquipSettings::PARAM_PERCENTAGES.include?(param)
   end
+
   #--------------------------------------------------------------------------
   # * Rimuove l'equip dalla valutazione
   #--------------------------------------------------------------------------
@@ -364,6 +413,7 @@ class Window_ActorEquips < Window_Selectable
     @data = 0
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Aggiorna il contenuto della finestra
   #--------------------------------------------------------------------------
@@ -373,6 +423,7 @@ class Window_ActorEquips < Window_Selectable
     draw_equip_categories
     draw_equipment_items
   end
+
   #--------------------------------------------------------------------------
   # * Imposta l'eroe
   # @param [Game_Actor] actor
@@ -381,16 +432,23 @@ class Window_ActorEquips < Window_Selectable
     @actor = actor
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero massimo di oggetti
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def item_max; actor.nil? ? 0 : actor.equip_type.size + 1; end
+  def item_max;
+    actor.nil? ? 0 : actor.equip_type.size + 1;
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero massimo di colonne
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def col_max; 1; end
+  def col_max;
+    1;
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'oggetto
   # @param [Integer] index
@@ -399,6 +457,7 @@ class Window_ActorEquips < Window_Selectable
     return nil if actor.nil?
     actor.equips[slot_type(index)]
   end
+
   #--------------------------------------------------------------------------
   # * Determina se l'oggetto selezionato è attivo
   # @return [Boolean]
@@ -406,6 +465,7 @@ class Window_ActorEquips < Window_Selectable
   def current_item_enabled?
     enable?(item)
   end
+
   #--------------------------------------------------------------------------
   # * Aggiorna la finestra d'aiuto
   #--------------------------------------------------------------------------
@@ -419,6 +479,7 @@ class Window_ActorEquips < Window_Selectable
       end
     end
   end
+
   #--------------------------------------------------------------------------
   # * Aggiunge una finestra per aggiornarsi
   # @param [Window_Base] window
@@ -426,11 +487,15 @@ class Window_ActorEquips < Window_Selectable
   def attach_window(window)
     @attached_windows.push(window)
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'eroe della finestra
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor; @actor; end
+  def actor;
+    @actor;
+  end
+
   #--------------------------------------------------------------------------
   # * La larghezza del testo della categoria equip
   # @return [Integer]
@@ -438,16 +503,17 @@ class Window_ActorEquips < Window_Selectable
   def category_width
     if @cat_width.nil?
       vocabs = EquipSettings.type_vocabs
-      @cat_width = vocabs.collect{|x|contents.text_size(x).width}.max + 5
+      @cat_width = vocabs.collect {|x| contents.text_size(x).width}.max + 5
     end
     @cat_width
   end
+
   #--------------------------------------------------------------------------
   # * Disegna le categorie d'equipaggiamento
   #--------------------------------------------------------------------------
   def draw_equip_categories
     change_color(system_color)
-    (0..actor.equip_type.size).each { |i|
+    (0..actor.equip_type.size).each {|i|
       if i == 0 and actor.first_weapon != nil and actor.first_weapon.two_handed
         text = actor.first_weapon.two_hand_text
       elsif i == 0
@@ -456,21 +522,23 @@ class Window_ActorEquips < Window_Selectable
         text = Vocab.equip_type(:weapon)
       elsif i == 1 and actor.first_weapon != nil and actor.first_weapon.two_handed
         text = ''
+      elsif i ==1 and actor.first_weapon != nil and actor.first_weapon.changes_support_type?
+        text = EquipSettings::SUPPORT_CHANGE_WEAPON_GROUPS[actor.first_weapon.use_support][0]
       else
         text = Vocab.equip_type(equip_category(i))
       end
       draw_text(0, line_height * i, category_width, line_height, text, 2)
     }
   end
+
   #--------------------------------------------------------------------------
   # * Disegna gli oggetti equipaggiati
   #--------------------------------------------------------------------------
   def draw_equipment_items
     change_color(normal_color)
-    (0..actor.equip_type.size).each {|i|
-      draw_item(i)
-    }
+    (0..actor.equip_type.size).each {|i| draw_item(i) }
   end
+
   #--------------------------------------------------------------------------
   # * Disegna lo slot vuoto
   # @param [Integer] x
@@ -481,6 +549,7 @@ class Window_ActorEquips < Window_Selectable
   def draw_empty_slot(x, y, width, index)
     draw_text(x, y, width, line_height, Vocab.equip_none(slot_type(index)))
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il tipo dato dall'indice
   # @param [Integer] index
@@ -488,31 +557,40 @@ class Window_ActorEquips < Window_Selectable
   def slot_type(index = self.index)
     index
   end
-  #--------------------------------------------------------------------------
-  # * Disegna l'oggetoo
+
+  # * Disegna l'oggetto
   # @param [Integer] index
-  #--------------------------------------------------------------------------
   def draw_item(index)
     rect = item_rect(index)
     draw_bg_rect(rect.x, rect.y, rect.width)
     if item(index)
       item = item(index)
       draw_item_name(item, rect.x, rect.y, enable?(item), rect.width)
-    elsif index == 1 && item(0) != nil && item(0).two_handed || index == 0 && item(1) != nil && item(1).is_a?(RPG::Weapon) && item(1).two_handed
+    elsif index == 1 && first_weapon_two_handed? || index == 0 && second_weapon_two_handed?
       item = index == 0 ? item(1) : item(0)
       draw_item_name(item, rect.x, rect.y, false, rect.width)
     else
       draw_empty_slot(rect.x, rect.y, rect.width, index)
     end
   end
+
+  def first_weapon_two_handed?
+    item(0) != nil && item(0).two_handed
+  end
+
+  def second_weapon_two_handed?
+    item(1) != nil && item(1).is_a?(RPG::Weapon) && item(1).two_handed
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce se l'equipaggiamento può essere sostituito
-  # @param [RPG::Item] item
+  # @param [RPG::BaseItem] item
   # @return [Boolean]
   #--------------------------------------------------------------------------
   def enable?(item)
     !actor.fix_equipment && (item.nil? or !item.equip_locked?)
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il rettangolo dell'oggetto
   # @param [Integer] index
@@ -524,6 +602,7 @@ class Window_ActorEquips < Window_Selectable
     rect.width -= category_width
     rect
   end
+
   #--------------------------------------------------------------------------
   # Determina se l'equipaggiamento può essere sostituito
   # @deprecated
@@ -534,10 +613,11 @@ class Window_ActorEquips < Window_Selectable
     if index == 0 or (index == 1 and @actor.two_swords_style)
       type = :weapon
     else
-      type = @actor.equip_type[index-1]
+      type = @actor.equip_type[index - 1]
     end
     type
   end
+
   #--------------------------------------------------------------------------
   # Determina il tipo di equipaggiamento
   # @param [Integer] ndex
@@ -547,7 +627,7 @@ class Window_ActorEquips < Window_Selectable
     if ndex == 0 or (ndex == 1 and actor.two_swords_style)
       :weapon
     else
-      actor.equip_type[ndex-1]
+      actor.equip_type[ndex - 1]
     end
   end
 end
@@ -575,20 +655,23 @@ class Window_EquipList < Window_Selectable
     @category = :weapon
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Ottiene la lista degli oggetti
   #--------------------------------------------------------------------------
   def make_item_list
-    @data = $game_party.all_items.select {|item| check_condition(item)}
+    @data = ($game_party.all_items + $game_party.placeholder_armors).select {|item| check_condition(item)}
     sort_data
     @data += [nil] if EquipSettings.can_unequip?(self.category)
   end
+
   #--------------------------------------------------------------------------
   # * Ordina l'array
   #--------------------------------------------------------------------------
   def sort_data
-    @data.sort!{|x, y| y.tier <=> x.tier}
+    @data.sort! {|x, y| y.tier <=> x.tier}
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce se la condizione di presenza è soddisfatta
   # @param [RPG::Weapon, RPG::Armor] item
@@ -607,6 +690,7 @@ class Window_EquipList < Window_Selectable
     end
     false
   end
+
   #--------------------------------------------------------------------------
   # * Imposta il tipo di equipaggiamento da mostrare in finestra
   # @deprecated
@@ -616,6 +700,7 @@ class Window_EquipList < Window_Selectable
     @category = category
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Imposta il tipo di equipaggiamento da mostrare in finestra
   # @param [Symbol] new_cat
@@ -625,6 +710,7 @@ class Window_EquipList < Window_Selectable
     @category = new_cat
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Imposta l'eroe della finestra
   # @param [Game_Actor] new_actor
@@ -634,11 +720,15 @@ class Window_EquipList < Window_Selectable
     @actor = new_actor
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'eroe
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor; @actor; end
+  def actor;
+    @actor;
+  end
+
   #--------------------------------------------------------------------------
   # * Aggiunge una finestra per aggiornarsi
   # @param [Window_Base] window
@@ -646,6 +736,7 @@ class Window_EquipList < Window_Selectable
   def attach_window(window)
     @attached_windows.push(window)
   end
+
   #--------------------------------------------------------------------------
   # * Riaggiorna la finestra
   #--------------------------------------------------------------------------
@@ -654,16 +745,23 @@ class Window_EquipList < Window_Selectable
     create_contents
     draw_all_items
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero di oggetti posseduti
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def item_max; @data ? @data.size : 1; end
+  def item_max
+    @data ? @data.size : 1
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce il numero di colonne
   # @return [Integer]
   #--------------------------------------------------------------------------
-  def col_max; 1; end
+  def col_max
+    1
+  end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'oggetto selezionato dal cursore
   # @return [RPG::Item]
@@ -671,6 +769,7 @@ class Window_EquipList < Window_Selectable
   def item
     @data && index >= 0 ? @data[index] : nil
   end
+
   #--------------------------------------------------------------------------
   # * Ottiene lo stato di attivazione dell'oggetto corrente
   # @return [Boolean]
@@ -678,12 +777,16 @@ class Window_EquipList < Window_Selectable
   def current_item_enabled?
     enable?(@data[self.index])
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'oggetto ad un indice stabilito
   # @param [Integer] index
   # @return [RPG::BaseItem]
   #--------------------------------------------------------------------------
-  def data(index); @data[index]; end
+  def data(index)
+    @data[index];
+  end
+
   #--------------------------------------------------------------------------
   # * Disegna l'oggetto
   # @param [Integer] index
@@ -699,6 +802,7 @@ class Window_EquipList < Window_Selectable
       draw_empty_item(rect.x, rect.y)
     end
   end
+
   #--------------------------------------------------------------------------
   # * Disegna il blocco per disequipaggiare
   # @param [Integer] x
@@ -707,8 +811,9 @@ class Window_EquipList < Window_Selectable
   def draw_empty_item(x, y)
     change_color(crisis_color)
     draw_icon(EquipSettings::UNEQUIP_ICON, x, y)
-    draw_text(x+24, y, contents_width - x, line_height, Vocab.equip_none(category))
+    draw_text(x + 24, y, contents_width - x, line_height, Vocab.equip_none(category))
   end
+
   #--------------------------------------------------------------------------
   # * Aggiorna la finestra d'aiuto
   #--------------------------------------------------------------------------
@@ -722,6 +827,7 @@ class Window_EquipList < Window_Selectable
       end
     end
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce se l'oggetto è disponibile
   # @param [RPG::Item] item
@@ -731,6 +837,7 @@ class Window_EquipList < Window_Selectable
     return true if item.nil?
     actor.equippable?(item) && actor.level >= item.equip_level
   end
+
   #--------------------------------------------------------------------------
   # * Disegna il numero degli oggetti posseduti
   # @param [Rect] rect
@@ -751,6 +858,7 @@ class Window_EquipHelp < Window_Base
     super(x, y, width, fitting_height(1))
     refresh
   end
+
   #--------------------------------------------------------------------------
   # * Scrittura
   #--------------------------------------------------------------------------
@@ -760,13 +868,15 @@ class Window_EquipHelp < Window_Base
     draw_help_remove
     draw_help_change
   end
+
   #--------------------------------------------------------------------------
   # * Scrive l'aiuto di rimuovere l'equip
   #--------------------------------------------------------------------------
   def draw_help_remove
     draw_key_icon(:X, 0, 0)
-    draw_text(24, 0, contents_width/2 - 24, line_height, Vocab.help_remove)
+    draw_text(24, 0, contents_width / 2 - 24, line_height, Vocab.help_remove)
   end
+
   #--------------------------------------------------------------------------
   # * Scrive l'aiuto di cambiare eroe
   #--------------------------------------------------------------------------
@@ -798,17 +908,22 @@ class Scene_NewEquip < Scene_MenuBase
     create_equips_window
     create_item_window
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce l'eroe attuale
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor; @actor; end
+  def actor;
+    @actor;
+  end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra delle informazioni sull'eroe
   #--------------------------------------------------------------------------
   def create_actor_window
     @actor_window = Window_ActorStats.new(0, @actor)
   end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra d'aiuto
   #--------------------------------------------------------------------------
@@ -816,6 +931,7 @@ class Scene_NewEquip < Scene_MenuBase
     super
     @help_window.y = @actor_window.by
   end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra degli slot equipaggiamenti
   #--------------------------------------------------------------------------
@@ -833,6 +949,7 @@ class Scene_NewEquip < Scene_MenuBase
     @equip_window.set_handler(:right, method(:next_actor))
     @equip_window.set_handler(:left, method(:prev_actor))
   end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra aiuto equipaggiamento
   #--------------------------------------------------------------------------
@@ -840,6 +957,7 @@ class Scene_NewEquip < Scene_MenuBase
     @comm_help_window = Window_EquipHelp.new(0, 0, equip_width)
     @comm_help_window.y = Graphics.height - @comm_help_window.height
   end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra dell'elenco oggetti
   #--------------------------------------------------------------------------
@@ -857,6 +975,7 @@ class Scene_NewEquip < Scene_MenuBase
     @item_window.set_handler(:ok, method(:item_selection))
     @item_window.set_handler(:cancel, method(:back_selection))
   end
+
   #--------------------------------------------------------------------------
   # * Crea la finestra dei dettagli oggetto
   #--------------------------------------------------------------------------
@@ -868,6 +987,7 @@ class Scene_NewEquip < Scene_MenuBase
     @details_window = Window_ItemInfo.new(x, y, width, height)
     @details_window.set_actor(@actor)
   end
+
   #--------------------------------------------------------------------------
   # * Attiva la selezione dell'equipaggiamento
   #--------------------------------------------------------------------------
@@ -877,12 +997,14 @@ class Scene_NewEquip < Scene_MenuBase
     @item_window.index = 0
     show_items
   end
+
   #--------------------------------------------------------------------------
   # * La larghezza della finestra di equipaggiamento
   #--------------------------------------------------------------------------
   def equip_width
     EquipSettings::EQUIP_WIDTH
   end
+
   #--------------------------------------------------------------------------
   # * Seleziona un oggetto da equipaggiare
   #--------------------------------------------------------------------------
@@ -894,6 +1016,7 @@ class Scene_NewEquip < Scene_MenuBase
     @item_window.refresh
     cover_items
   end
+
   #--------------------------------------------------------------------------
   # * Rimuove l'equip selezionato
   #--------------------------------------------------------------------------
@@ -904,12 +1027,14 @@ class Scene_NewEquip < Scene_MenuBase
     @equip_window.refresh
     @item_window.refresh
   end
+
   #--------------------------------------------------------------------------
   # * Torna indietro
   #--------------------------------------------------------------------------
   def back_selection
     cover_items
   end
+
   #--------------------------------------------------------------------------
   # * Mostra la finestra degli oggetti
   #--------------------------------------------------------------------------
@@ -921,6 +1046,7 @@ class Scene_NewEquip < Scene_MenuBase
     @comm_help_window.smooth_move(0, Graphics.height)
     @item_window.activate
   end
+
   #--------------------------------------------------------------------------
   # * Nasconde la finestra degli oggetti
   #--------------------------------------------------------------------------
@@ -931,6 +1057,7 @@ class Scene_NewEquip < Scene_MenuBase
     @equip_window.activate
     @actor_window.clear_items
   end
+
   #--------------------------------------------------------------------------
   # * Aggiorna le finestre al cambiamento degli eroi
   #--------------------------------------------------------------------------

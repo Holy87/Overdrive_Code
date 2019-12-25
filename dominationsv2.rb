@@ -705,6 +705,16 @@ class Window_DominationSkills < Window_Selectable
     draw_text(rect, skill.name)
     draw_skill_cost(skill, rect, enabled)
   end
+
+  # @param [Rect] rect
+  # @param [RPG::Skill] skill
+    def draw_skill_cost(skill, rect, enabled)
+      draw_mp_cost skill, rect, domination, enabled
+      draw_hp_cost skill, rect, domination, enabled
+      draw_gold_cost skill, rect, domination, enabled
+      draw_variable_cost skill, rect, domination, enabled
+      draw_item_cost skill, rect, domination, enabled
+    end
   #--------------------------------------------------------------------------
   # * disegna il costo dell'abilità
   # @param [RPG::Skill] skill
@@ -712,32 +722,32 @@ class Window_DominationSkills < Window_Selectable
   # @param [Object] enabled
   # noinspection RubyResolve
   #--------------------------------------------------------------------------
-  def draw_skill_cost(skill, rect, enabled = true)
-    posizione = 4
-    gfont = Skill_Costs::Spazio
-    if domination.calc_hp_cost(skill) > 0
-      change_color(crisis_color, enabled)
-      costo = domination.calc_hp_cost(skill)
-      costo = costo.to_s+Vocab.hp_a
-      draw_text(rect, costo, 2)
-      posizione += gfont*costo.size
-    end
-    if domination.calc_mp_cost(skill) > 0
-      change_color(mp_cost_color, enabled)
-      costo = domination.calc_mp_cost(skill)
-      costo = costo.to_s+Vocab.mp_a
-      draw_text(rect.x,rect.y,rect.width-posizione,rect.height, costo, 2)
-      posizione += gfont*costo.size
-    end
-    if domination.calc_var_cost(skill) > 0
-      change_color(colore_var, enabled)
-      costo = domination.calc_var_cost(skill)
-      costo = costo.to_s+Vocab.var_skill
-      draw_text(rect.x,rect.y,rect.width-posizione,rect.height, costo, 2)
-      posizione += gfont*costo.size
-    end
-    posizione
-  end
+  #def draw_skill_cost(skill, rect, enabled = true)
+  #  posizione = 4
+  #  gfont = H87_SKILL_COSTS::SPACING
+  #  if domination.calc_hp_cost(skill) > 0
+  #    change_color(crisis_color, enabled)
+  #    costo = domination.calc_hp_cost(skill)
+  #    costo = costo.to_s+Vocab.hp_a
+  #    draw_text(rect, costo, 2)
+  #    posizione += gfont*costo.size
+  #  end
+  #  if domination.calc_mp_cost(skill) > 0
+  #    change_color(mp_cost_color, enabled)
+  #    costo = domination.calc_mp_cost(skill)
+  #    costo = costo.to_s+Vocab.mp_a
+  #    draw_text(rect.x,rect.y,rect.width-posizione,rect.height, costo, 2)
+  #    posizione += gfont*costo.size
+  #  end
+  #  if domination.calc_var_cost(skill) > 0
+  #    change_color(var_cost_color, enabled)
+  #    costo = domination.calc_var_cost(skill)
+  #    costo = costo.to_s+Vocab.var_skill
+  #    draw_text(rect.x,rect.y,rect.width-posizione,rect.height, costo, 2)
+  #    posizione += gfont*costo.size
+  #  end
+  #  posizione
+  #end
   #--------------------------------------------------------------------------
   # * restituisce la skill selezionata
   # noinspection RubyResolve

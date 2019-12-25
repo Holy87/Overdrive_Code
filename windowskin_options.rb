@@ -662,6 +662,7 @@ class Window_Base < Window
 #   need_refresh: true if you want to recreate contents and refresh.
 #--------------------------------------------------------------------------
   def refresh_windowskin(need_refresh = false)
+    return unless $game_system
     if $game_system.selected_windowskin != nil
       self.windowskin = $game_system.selected_windowskin.bitmap
       unless @boc

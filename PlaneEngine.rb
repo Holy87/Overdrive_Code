@@ -30,7 +30,7 @@ module Plane_Engine
   #--------------------------------------------------------------------------
   def update_x
     @x_state += @x_speed
-    @picture.ox += (@x_state/100)
+    self.ox += (@x_state/100)
     @x_state = @x_state % 100
   end
   #--------------------------------------------------------------------------
@@ -38,7 +38,7 @@ module Plane_Engine
   #--------------------------------------------------------------------------
   def update_y
     @y_state += @y_speed
-    @picture.oy += (@y_state/100)
+    self.oy += (@y_state/100)
     @y_state = @y_state % 100
   end
 end #plane engine

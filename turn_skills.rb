@@ -67,7 +67,7 @@ module H87_Delay
   DAMAGE_COLOR = 10
 
   # colore barra vuota per abilità che si caricano subendo danni
-  DAMAGE_BG_COLOR= 7
+  DAMAGE_BG_COLOR = 7
 
   #Altezza della barra e delle tacche, in pixel
   BAR_HEIGHT = 1
@@ -106,13 +106,12 @@ module H87_Delay
   #===============================================================================
 
 
-
   #===============================================================================
   #stringhe
-  TURN_DELAY_TAG    = /<ricarica turni:[ ]*(\d+)>/i
-  BATTLE_DELAY_TAG  = /<ricarica battaglie:[ ]*(\d+)>/i
-  STEP_DELAY_TAG    = /<ricarica passi:[ ]*(\d+)>/i
-  DAMAGE_DELAY_TAG  = /<ricarica danni:[ ]*(\d+)%>/i
+  TURN_DELAY_TAG = /<ricarica turni:[ ]*(\d+)>/i
+  BATTLE_DELAY_TAG = /<ricarica battaglie:[ ]*(\d+)>/i
+  STEP_DELAY_TAG = /<ricarica passi:[ ]*(\d+)>/i
+  DAMAGE_DELAY_TAG = /<ricarica danni:[ ]*(\d+)%>/i
   START_UNLOADED_TAG = /<inizia scarico>/i
 
   #-----------------------------------------------------------------------------
@@ -129,9 +128,10 @@ end #modulo
 # ** Classe Game_Battler
 #===============================================================================
 class Game_Battler
-  attr_accessor :turn_skills    #attributo per caricamento turni
-  attr_accessor :battle_skills  #attributo per caricamento battaglie
-  attr_accessor :step_skills    #attributo per caricamento passi
+  attr_accessor :turn_skills #attributo per caricamento turni
+  attr_accessor :battle_skills #attributo per caricamento battaglie
+  # @return[]
+  attr_accessor :step_skills #attributo per caricamento passi
 
   alias rec_skill_all recover_all unless $@
   alias inizializza_turni initialize unless $@
@@ -160,7 +160,7 @@ class Game_Battler
   # Restituisce un hash con tutti i poteri che ha in carica (passi)
   # @return [Hash<Integer,RPG::Skill>]
   def step_skills
-    @step_skills ||= {}
+    @step_skills ||= Hash.new
   end
 
   def damage_skills
@@ -231,13 +231,12 @@ class Game_Battler
     end
   end
 
-  # @param [Integer] damage
   def scale_damage
     damage = @hp_damage
-    @damage_skills.each_key do |skill_id|
-      @damage_skills[skill_id] -= damage
-      if @damage_skills[skill_id] <= 0
-        @damage_skills.delete(skill.id)
+    damage_skills.each_key do |skill_id|
+      damage_skills[skill_id] -= damage
+      if damage_skills[skill_id] <= 0
+        damage_skills.delete(skill.id)
         @damage_skills_limit.delete(skill.id)
       end
     end
@@ -267,8 +266,8 @@ class Game_Battler
   # Mostra il popup
   def show_popup(delay)
     RPG::SE.new(H87_Delay::SE).play
-    text = sprintf(H87_Delay::TXT,delay.name,name)
-    Popup.show(text,delay.icon_index,H87_Delay::PopupColor)
+    text = sprintf(H87_Delay::TXT, delay.name, name)
+    Popup.show(text, delay.icon_index, H87_Delay::PopupColor)
   end
 
   # Alias metodo skill_can_use?
@@ -282,7 +281,7 @@ class Game_Battler
   def no_charged(skill)
     return true if skill.turn_delay > 0 and self.turn_skills.include?(skill.id)
     return true if skill.battle_delay > 0 and self.battle_skills.include?(skill.id)
-    skill.step_delay > 0 and self.step_skills.include?(skill.id)
+    skill.step_delay > 0 and step_skills.include?(skill.id)
   end
 
   # ricarica tutte le skill del battler
@@ -301,8 +300,8 @@ class Game_Battler
   end
 
   # processo di esecuzione del danno
-  def execute_damage
-    h87_delay_execute_damage
+  def execute_damage(user)
+    h87_delay_execute_damage(user)
     scale_damage if @hp_damage > 0
   end
 
@@ -310,12 +309,26 @@ class Game_Battler
 end #game_battler
 
 #===============================================================================
+# ** Game_Enemy
+#===============================================================================
+class Game_Enemy < Game_Battler
+  # enemy skills array
+  # @return [Array<RPG::Skill>]
+  def skills
+    sks = enemy.actions.map do |action|
+      action.skill? ? $data_skills[action.skill_id] : nil
+    end
+    sks.compact
+  end
+end
+
+#===============================================================================
 # ** Classe Skill
 #===============================================================================
 class RPG::Skill
-  attr_reader :turn_delay   #attributo per tempo turni
+  attr_reader :turn_delay #attributo per tempo turni
   attr_reader :battle_delay #attributo per tempo battaglie
-  attr_reader :step_delay   #attributo per tempo passi
+  attr_reader :step_delay #attributo per tempo passi
   attr_reader :damage_delay #attributo per tempo danni
   attr_reader :start_unloaded # flag se comincia scarica
 
@@ -332,19 +345,19 @@ class RPG::Skill
     self.note.split(/[\r\n]+/).each { |riga|
       case riga
         #---
-        when H87_Delay::TURN_DELAY_TAG
-          @turn_delay = $1.to_i
-        when H87_Delay::BATTLE_DELAY_TAG
-          @battle_delay = $1.to_i
-          @turn_delay = 0
-        when H87_Delay::STEP_DELAY_TAG
-          @step_delay = $1.to_i
-          @battle_delay = 0
-          @turn_delay = 0
-        when H87_Delay::DAMAGE_DELAY_TAG
-          @damage_delay = $1.to_i
-        when H87_Delay::START_UNLOADED_TAG
-          @start_unloaded = true
+      when H87_Delay::TURN_DELAY_TAG
+        @turn_delay = $1.to_i
+      when H87_Delay::BATTLE_DELAY_TAG
+        @battle_delay = $1.to_i
+        @turn_delay = 0
+      when H87_Delay::STEP_DELAY_TAG
+        @step_delay = $1.to_i
+        @battle_delay = 0
+        @turn_delay = 0
+      when H87_Delay::DAMAGE_DELAY_TAG
+        @damage_delay = $1.to_i
+      when H87_Delay::START_UNLOADED_TAG
+        @start_unloaded = true
       end
     }
   end
@@ -366,6 +379,7 @@ class Scene_Title < Scene_Base
   # *Alias metodo load_bt_database
   #-----------------------------------------------------------------------------
   alias carica_db3 load_bt_database unless $@
+
   def load_bt_database
     carica_db3
     carica_skills3
@@ -375,6 +389,7 @@ class Scene_Title < Scene_Base
   # *Alias metodo load_database
   #-----------------------------------------------------------------------------
   alias carica_db_23 load_database unless $@
+
   def load_database
     carica_db_23
     carica_skills3
@@ -402,7 +417,7 @@ class Scene_Battle < Scene_Base
   alias h87te turn_end unless $@
   alias h87eas execute_action_skill unless $@
   alias h87pv process_victory unless $@
-  alias h87ea execute_action unless$@
+  alias h87ea execute_action unless $@
 
   # inizio
   def start
@@ -428,7 +443,7 @@ class Scene_Battle < Scene_Base
 
   # scarica le abilità che partono scariche
   def unload_skills
-    [$game_party.members + $game_troop.members].each do |member|
+    ($game_party.members + $game_troop.members).each do |member|
       member.unload_skills
     end
   end
@@ -441,7 +456,7 @@ class Scene_Battle < Scene_Base
 
   # scala i turni di tutte le skill dell'eroe
   def scale_all
-    $game_party.members.each {|member|member.scale_turn}
+    $game_party.members.each { |member| member.scale_turn }
   end
 
   # Alias metodo execute_action_skill
@@ -464,7 +479,7 @@ class Scene_Battle < Scene_Base
   # Alias metodo process_victory
   def process_victory
     h87pv
-    $game_party.members.each {|member|
+    $game_party.members.each { |member|
       member.scale_battle
     }
   end
@@ -523,8 +538,8 @@ class Window_Skill < Window_Selectable
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] length
-  # @param [Color] inactive_color
-  # @param [Color] active_color
+  # @param [Integer] inactive_color
+  # @param [Integer] active_color
   # @param [Integer] charged
   # @param [Integer] total
   def draw_skill_loading_bars(x, y, length, inactive_color, active_color, charged, total)
@@ -542,8 +557,8 @@ class Window_Skill < Window_Selectable
   def draw_skill_step_delay(x, y, length, skill)
     caricato = @actor.step_skills[skill.id] || 0
     caricato = skill.step_delay - caricato
-    contents.fill_rect(x, y, lb, H87_Delay::BAR_HEIGHT, text_color(H87_Delay::STEPS_BG_COLOR))
-    lung = lb.to_f * (caricato.to_f / skill.step_delay.to_f)
+    contents.fill_rect(x, y, length, H87_Delay::BAR_HEIGHT, text_color(H87_Delay::STEPS_BG_COLOR))
+    lung = length.to_f * (caricato.to_f / skill.step_delay.to_f)
     contents.fill_rect(x, y, lung, H87_Delay::BAR_HEIGHT, text_color(H87_Delay::STEPS_COLOR))
   end
 
@@ -603,7 +618,7 @@ class Game_Party < Game_Unit
   # noinspection RubyBlockToMethodReference
   def increase_steps
     h87is
-    $game_party.members.each {|member|
+    $game_party.members.each { |member|
       member.scale_step
     }
   end

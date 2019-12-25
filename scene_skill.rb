@@ -1,8 +1,5 @@
-require File.expand_path('rm_vx_data')
-
-#==============================================================================
 # ** IMPOSTAZIONI
-#==============================================================================
+
 module H87SkillSettings
   VOCAB_PASSIVE =     'Passiva'
   VOCAB_SKILLS_CMD =  'Elenco abilità'
@@ -50,11 +47,11 @@ module H87SkillSettings
 
 end
 
-#==============================================================================
+
 # ** Game_Actor
-#------------------------------------------------------------------------------
+----
 #
-#==============================================================================
+
 module Vocab
   def self.passive; H87SkillSettings::VOCAB_PASSIVE; end
   def self.skills_command; H87SkillSettings::VOCAB_SKILLS_CMD; end
@@ -73,30 +70,29 @@ module Vocab
   def self.vocab_actual_skill; H87SkillSettings::VOCAB_NOWSKILL; end
   def self.next_skill_level; H87SkillSettings::VOCAB_NEXSKILL; end
   def self.skill_param_vocab(sym); H87SkillSettings::PARAM_VOCABS[sym]; end
-  end
 end
 
-#==============================================================================
+
 # ** SkillWrapper
-#------------------------------------------------------------------------------
+----
 #
-#==============================================================================
+
 class SkillWrapper
   attr_reader :type   # :skill o :state
   attr_reader :id     # ID dell'oggetto
-  #--------------------------------------------------------------------------
+  
   # * inizializzazione
-  #--------------------------------------------------------------------------
+  
   # @param [Symbol] type il tipo di oggetto :skill o :state
   # @param [Integer] id l'ID dell'oggetto nel database
   def initialize(type, id)
     @type = type
     @id = id
   end
-  #--------------------------------------------------------------------------
+  
   # * restituisce l'effettivo oggetto
   # @return [RPG::BaseItem]
-  #--------------------------------------------------------------------------
+  
   def object
     case @type
     when :skill
@@ -107,202 +103,191 @@ class SkillWrapper
       nil
     end
   end
-  #--------------------------------------------------------------------------
+  
   # * ottiene il nome dell'abilità
-  #--------------------------------------------------------------------------
+  
   def name; object.name; end
-  #--------------------------------------------------------------------------
+  
   # * ottiene l'ID icona della skill
-  #--------------------------------------------------------------------------
+  
   def icon; object.icon_index; end
-  #--------------------------------------------------------------------------
+  
   # * determina se la skill è passiva
-  #--------------------------------------------------------------------------
+  
   def passive?; @type == :state; end
 end
 
-#==============================================================================
+
 # ** Game_Battler
-#------------------------------------------------------------------------------
+----
 #
-#==============================================================================
+
 class Game_Battler
   alias skcanu_hide skill_can_use? unless $@
-  #--------------------------------------------------------------------------
+  
   # *
-  #--------------------------------------------------------------------------
+  
+  # noinspection RubyResolve
   def skill_can_use?(skill)
     return false if actor? && hidden_skills.include?(skill.id) && $game_party.in_battle?
     skcanu_hide(skill)
   end
 end
 
-#==============================================================================
+
 # ** Game_Actor
-#------------------------------------------------------------------------------
+----
 #
-#==============================================================================
+
 class Game_Actor < Game_Battler
   alias unsorted_skills skills unless $@
   alias sk_init initialize unless $@
-  #--------------------------------------------------------------------------
+  
   # inizializzazione
-  #--------------------------------------------------------------------------
+  
   def initialize(actor_id)
     sk_init(actor_id)
     @skill_orders = {}
   end
-  #--------------------------------------------------------------------------
+  
   # * ottiene tutte le skill (comprese quelle passive)
-  #--------------------------------------------------------------------------
+  
   def get_all_skills
     all_sk = @skills.collect{|id| SkillWrapper.new(:skill, id)}
     all_sk.concat(@learned_passives.collect{|id| SkillWrapper.new(:state, id)})
   end
-  #--------------------------------------------------------------------------
+  
   # * restituisce l'ordinamento di un'abilità. Se non è impostato,
   # restituisce il suo ID.
   # @param [RPG::Skill] skill
-  #--------------------------------------------------------------------------
+  
   def skill_order(skill)
     @skill_orders ||= {}
     @skill_orders[skill.id] || skill.id
   end
-  #--------------------------------------------------------------------------
+  
   # * Cambia l'ordinamento di due abilità
   # @param [RPG::Skill] skill1
   # @param [RPG::Skill] skill2
-  #--------------------------------------------------------------------------
+  
   def change_order(skill1, skill2)
     temp = skill_order(skill1)
     @skill_orders[skill1.id] = skill_order(skill2)
     @skill_orders[skill2.id] = temp
   end
-  #--------------------------------------------------------------------------
+  
   # * mostra l'elenco delle abilità ordinate per ordinamento
   # @return [Array<RPG::Skill>]
-  #--------------------------------------------------------------------------
+  
   def skills
-    unsorted_skills.sort{|a, b| skill_order(a) <=> skill_order(b)}
+    unsorted_skills.select {|skill| !skill_hidden?(skill.id) }
+        .sort{|a, b| skill_order(a) <=> skill_order(b)}
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # * contiene le skill nascoste
+  
   def hidden_skills
     @hidden_skills ||= []
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # * aggiunge una skill a quelle nascoste
+  
   def add_hidden_skill(skill_id)
-    hidden_skills.push(skill_id)
+    hidden_skills.push(skill_id) unless skill_hidden? skill_id
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # * rimuove una skill nascosta
+  
   def remove_hidden_skill(skill_id)
     hidden_skills.delete(skill_id)
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # * determina se la skill è nascosta
+  
   def skill_hidden?(skill_id)
     hidden_skills.include?(skill_id)
   end
 end
 
-#==============================================================================
-# ** Scene_NewSkill
-#------------------------------------------------------------------------------
-#
-#==============================================================================
-class Scene_NewSkill < Scene_MenuBase
-  #--------------------------------------------------------------------------
-  # * inizio
-  #--------------------------------------------------------------------------
+# ** Scene_Skill
+# schermata delle abilità (revamped)
+class Scene_Skill < Scene_Base
+  alias h87skill_start start unless $@
+  alias h87skill_update update unless $@
+  alias h87skill_terminate terminate unless $@
+  
+  # inizio
   def start
-    super
+    h87skill_start
+    adjust_windows
     create_command_window
-    create_help_window
-    create_status_window
     create_command_help_window
-    create_skills_window
     create_details_window
-    create_skill_learn_window
-    create_skill_compare_window
   end
-  #--------------------------------------------------------------------------
-  # * crea la finestra dei comandi
-  #--------------------------------------------------------------------------
+
+  def adjust_windows
+    @target_window.x = 0 - @target_window.width
+    @target_window.y = @help_window.height + @command_window.height
+  end
+  
+  # crea la finestra dei comandi
   def create_command_window
     @command_window = Window_SkillCommand.new(0,0)
+    @command_window.x
+    @command_window.set_handler(:cancel, method(:return_scene))
+    @command_window.set_handler(:right, method(:next_actor))
+    @command_window.set_handler(:left, method(:prev_actor))
   end
-  #--------------------------------------------------------------------------
-  # * crea la finestra d'aiuto
-  #--------------------------------------------------------------------------
+
+  # crea la finestra d'aiuto
   def create_help_window
     super
     @help_window.y = @command_window.bottom_corner
   end
-  #--------------------------------------------------------------------------
-  # * crea la finestra dello stato dell'eroe
-  #--------------------------------------------------------------------------
+  
+  # crea la finestra dello stato dell'eroe
   def create_status_window
     x = @command_window.rx
     width = Graphics.width - x
     @actor_window = Window_ActorInfo.new(x, 0, width, actor)
     @command_window.height = @actor_window.height
   end
-  #--------------------------------------------------------------------------
-  # * crea la finestra di legenda tasti da premere
-  #--------------------------------------------------------------------------
+  
+  # crea la finestra di legenda tasti da premere
   def create_command_help_window
     @keys_window = Window_KeyHelp.new
+    @target_window.height = Graphics.height - @target_window.y - @keys_window.height
   end
-  #--------------------------------------------------------------------------
-  # * crea e aggiunge la finestra dell'elenco delle abilità
-  #--------------------------------------------------------------------------
-  def create_skills_window
+  
+  # crea e aggiunge la finestra dell'elenco delle abilità
+  def place_skill_window
     x = 0; y = @help_window.bottom_corner
-    width = Graphics.width / 2
-    height = Graphics.height - y - @keys_window.y
-    @skills_window = Window_Skill.new(x, y, width, height, actor)
-    @skills_window.set_handler(:ok, method(:determine_skill))
-    @skills_window.set_handler(:cancel, method(:skill_unselection))
-    @skills_window.set_handler(:shift, method(:start_skill_sort))
-    @skills_window.set_handler(:function, method(:switch_skill_hidden))
+    width = @target_window.width
+    height = @target_window.height
+    @skill_window.move(x, y, width, height)
+    @skill_window.actor = actor
+    @skill_window.set_handler(:ok, method(:determine_skill))
+    @skill_window.set_handler(:cancel, method(:skill_unselection))
+    @skill_window.set_handler(:shift, method(:start_skill_sort))
+    @skill_window.set_handler(:function, method(:switch_skill_hidden))
   end
-  #--------------------------------------------------------------------------
-  # * Crea e aggiunge la finestra dei dettagli skill
-  #--------------------------------------------------------------------------
+  
+  # Crea e aggiunge la finestra dei dettagli skill
+  
   def create_details_window
-
-  end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
-  def create_skill_compare_window
     x = @skills_window.width
-    y = @skills_window.y
-    w = Graphics.width - x
-    h = @skills_window.height
-    @compare_window = Window_SkillCompare.new(x, y, w, h)
-    @compare_window.visible = false
+    y = @skill_window.y
+    width = Graphics.width - x
+    height = @skills_window.height
+    @info_window = Window_ItemInfo.new(x, y, width, height)
+    @skills_window.set_info_window @info_window
   end
-  #--------------------------------------------------------------------------
-  # * Crea ed aggiunge la finestra di apprendimento abilità
-  #--------------------------------------------------------------------------
-  def create_skill_learn_window
-
-  end
-  #--------------------------------------------------------------------------
+  
   # * Restituisce l'eroe attuale
   # @return [Game_Actor]
-  #--------------------------------------------------------------------------
   def actor; @actor; end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # inizia l'ordinamento delle abilità
   def start_skill_sort
     @skills_window.start_sort_selection
     @skills_window.set_handler(:cancel, method(:end_skill_sort))
@@ -324,6 +309,7 @@ class Scene_NewSkill < Scene_MenuBase
     @skills_window.end_sort_selection(true)
   end
 
+
   def switch_skill_hidden
     skill = @skill_window.skill
     if skill.occasion < 2
@@ -336,78 +322,87 @@ class Scene_NewSkill < Scene_MenuBase
       @skill_window.redraw_current_item
     end
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # attivazione della finestra delle abilità
   def skill_selection
     @skills_window.activate
     @skills_window.index = 0 if @skills_window.index < 0
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # disattivazione della finestra delle abilità
   def skill_unselection
     @skills_window.deactivate
     @command_window.activate
   end
 end
 
-#==============================================================================
-# ** Window_SkillCommand
-#------------------------------------------------------------------------------
+# * Window_SkillCommand
 # la finestra dei comandi della nuova schermata delle abilità.
-#==============================================================================
 class Window_SkillCommand < Window_Command
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # crea la finestra dei comandi
   def make_command_list
     add_command(Vocab::skills_command, :skills)
-    add_command(Vocab::passives_command, :passives)
-    add_command(Vocab::learn_command, :learn)
-    add_command(Vocab::upgrade_command, :upgrade)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il comando evidenziato
+  
+  # Restituisce il comando evidenziato
   # @return [Symbol]
-  #--------------------------------------------------------------------------
   def item; @list[@index][:symbol]; end
 end
 
-#==============================================================================
-# ** Window_Skill
-#------------------------------------------------------------------------------
+# * Window_Skill
 # modifica della finestra standard delle abilità
-#==============================================================================
 class Window_Skill < Window_Selectable
+  include ListWindow
   alias h87_nskill_initialize initialize unless $@
-  alias h87_nskill_draw_item draw_item unless $@
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # inizializzazione
+  # @param [Integer] x coordinata X
+  # @param [Integer] y coordinata Y
   def initialize(x, y, width, height, actor)
     h87_nskill_initialize(x, y, width, height, actor)
     @sort_mode = false
     @sorting_skill = 0
+    @info_window = nil
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # determina il numero di colonne
   def col_max; 1; end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+
+  # disegna l'oggetto (skill)
   def draw_item(index)
-    if @sort_mode and index == @sorting_skill
-      contents.fill_rect(item_rect(index), sort_color)
+    skill = @data[index]
+    if skill
+      rect = item_rect(index)
+      rect.width -= 4
+      draw_item_name(skill, rect.x, rect.y, enable?(skill))
+      draw_skill_cost(rect, skill)
     end
-    pos = h87_nskill_draw_item(index)
-    draw_hidden_line(index)
-    pos
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+
+  # mostra l'eroe corrente
+  # @return [Game_Actor]
+  def current_actor
+    if SceneManager.scene_is?(Scene_NewSkill)
+      @actor
+    elsif SceneManager.scene_is?(Scene_Battle) and SceneManager.scene.active_battler != nil
+      SceneManager.scene.active_battler
+    else
+      @actor
+    end
+  end
+
+  # imposta l'eroe e aggiorna la finestra
+  # @param [Game_Actor] actor
+  def actor=(actor)
+    return if @actor == actor
+
+    @actor = actor
+    refresh
+  end
+
+  # disegna la linea rossa di cancellazione abilità
+  # @param [Integer] index l'indice dell'oggetto nella finestra
   def draw_hidden_line(index)
     skill = @data[index]
     if @actor.hidden_skills.include?(skill.id)
@@ -415,171 +410,90 @@ class Window_Skill < Window_Selectable
       x = rect.x + 5
       y = rect.y + line_height/2
       length = rect.width - 10
-      contents.fill_rect(x,y,length,2,Color.new(255,0,0,150))
+      contents.fill_rect(x,y,length,2,Color::RED.deopacize)
     end
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+
+  # colore di sfondo dell'abilità selezionata da spostare
+  # @return [Color]
   def sort_color
-    col = text_color(H87SkillSettings::SORT_RECT_COLOR_ID)
-    col.alpha = 128
-    col
+    text_color(H87SkillSettings::SORT_RECT_COLOR_ID).deopacize
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+ 
+  # seleziona l'oggetto corrente ed avvia la modalità sorting
   def start_sort_selection
+    return if @sort_mode
+
     @sorting_skill = self.index
     @sort_mode = true
     redraw_current_item
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+
+  # termina la selezione della seconda abilità da scambiare
+  # @param [True,False] sorting_ok se true, le abilità vengono scambiate
   def end_sort_selection(sorting_ok = false)
+    return unless @sort_mode
+
     reorder_data_from_sort if sorting_ok
     @sort_mode = false
     redraw_item(@sorting_skill)
     @sorting_skill = nil
     redraw_current_item if sorting_ok
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # determina se la finestra è in modalità ordinamento
   def sorting?; @sort_mode; end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # restituisce l'abilità che dev'essere scambiata
+  # @return [RPG::Skill]
   def sorting_skill; @data[@sorting_skill]; end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # determina se l'abilità può essere utilizzata
   def enable?(index)
     @actor.skill_can_use?(@data[index])
   end
-  #--------------------------------------------------------------------------
-  # * ottiene lo stato di attivazione della skill selezionata
-  #--------------------------------------------------------------------------
+  
+  # ottiene lo stato di attivazione della skill selezionata
   def current_item_enabled?
     enable?(@data[index])
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+  
+  # applica l'ordinamento dell'abilità
   def reorder_data_from_sort
     @data[@index], @data[@sorting_skill] = @data[@sorting_skill], @data[@index]
   end
 end
 
-class Window_SkillCompare < Window_Base
-  #--------------------------------------------------------------------------
-  # * inizializzazione
-  #--------------------------------------------------------------------------
-  def initialize(x, y, width, height)
-    super
-    @skill = nil
-  end
-  #--------------------------------------------------------------------------
-  # * imposta la skill
-  # @param [RPG::Skill] skill
-  #--------------------------------------------------------------------------
-  def set_skill(skill)
-    return if @skill == skill
-    @skill = skill
+# Finestra che mostra lo status dell'eroe con le informazioni di base.
+class Window_SkillStatus < Window_Base
+  # noinspection RubyArgCount
+  def initialize(x, y)
+    super(x, y, window_width, fitting_height(4))
+    @actor = nil
     refresh
-  end
-  #--------------------------------------------------------------------------
-  # * refresh
-  #--------------------------------------------------------------------------
-  def refresh
-    contents.clear
-    return if @skill.nil?
-    return if @skill.level_maxed?
-    draw_pairings
-  end
-  #--------------------------------------------------------------------------
-  # * disegna le differenze
-  #--------------------------------------------------------------------------
-  def draw_pairings
-    change_color(normal_color)
-    differences = @skill.next_level_compare
-    y = line_height
-    next_level_skill = @skill.get_skill_for_level(@skill.skill_level + 1)
-    differences.each{|diff|
-      y += draw_difference(diff, y, other_sk)
-    }
-  end
-  #--------------------------------------------------------------------------
-  # * disegna la differenza
-  # @param [Symbol] sym
-  # @param [Integer] y
-  # @param [RPG::Skill] skill
-  #--------------------------------------------------------------------------
-  def draw_difference(sym, y, skill)
-    attr_1 = eval("@skill.#{sym.to_s}")
-    attr_2 = eval("skill.#{sym.to_s}")
-    if sym == :base_damage and @skill.base_damage < 0
-      title = Vocab::skill_param_vocab(:heal)
-    else
-      title = Vocab::skill_param_vocab(sym)
-    end
-    change_color(system_color)
-    draw_text(0, y, contents_width, line_height, title)
-    if attr_1.is_a?(Array)
-      draw_param_icons(y + line_height, attr_1, attr_2, sym) + line_height
-    else
-      draw_params(y + line_height, attr_1, attr_2) + line_height
-    end
 
   end
-  #--------------------------------------------------------------------------
-  # * disegna il confronto tra due array
-  # @param [Integer] y
-  # @param [Array] param1
-  # @param [Array] param2
-  # @param [Symbol] sym
-  # @return [Integer] il numero di y aggiunto
-  #--------------------------------------------------------------------------
-  def draw_param_icons(y, param1, param2, sym)
-    width = contents_width / 2 - 12
-    x = contents_width / 2 + 12
-    if sym == :element_set
-      icons1 = param1.map{|id|Y6::ICON[:element_icons][id]}
-      icons2 = param2.map{|id|Y6::ICON[:element_icons][id]}
-    else
-      icons1 = param1.map{|id|$data_states[id].icon_index}
-      icons2 = param2.map{|id|$data_states[id].icon_index}
-    end
-    draw_icons(0, y, width, icons1)
-    draw_text(0, y, contents_width, line_height, '➡', 1)
-    draw_icons(x, y, width, icons2)
+
+  # la larghezza della finestra
+  # @return [Integer]
+  def window_width
+    344 + (padding * 2)
   end
-  #--------------------------------------------------------------------------
-  # * disegna il confronto tra due parametri numerici
-  # @param [Integer] y
-  # @param [Integer] param1
-  # @param [Integer] param2
-  # @return [Integer] y aggiunto (sempre 24)
-  #--------------------------------------------------------------------------
-  def draw_params(y, param1, param2)
-    change_color(normal_color)
-    width = contents_width / 2 - 12
-    x = contents_width / 2 + 12
-    draw_text(0, y, width, line_height, param1)
-    draw_text(x, y, width, line_height, param2, 2)
-    draw_text(0, y, contents_width, line_height, '➡', 1)
-    line_height
+
+  # imposta l'eroe e aggiorna la finestra
+  # @param [Game_Actor] new_actor
+  def actor=(new_actor)
+    return if @actor == new_actor
+
+    @actor = new_actor
+    refresh
   end
-  #--------------------------------------------------------------------------
-  # * disegna l'elenco delle icone
-  #--------------------------------------------------------------------------
-  def draw_icons(x, y, width, icons)
-    cols = width / 24
-    lines = (icons.size / cols) + 1
-    icons.each{|icon, index|
-      draw_icon(icon, x + ((index % cols) * 24), y + index / cols)
-    }
-    lines * line_height
+
+  def refresh
+    contents.clear
+    return if @actor.nil?
+
+    draw_actor_face(actor, 0, 0)
+    draw_actor_simple_status(actor, 100, 0)
   end
 end

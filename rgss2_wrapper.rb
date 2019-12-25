@@ -1,3 +1,4 @@
+=begin
 class Window_Base < Window
   def initialize(x, y, width = 0, height = 0); end
 end
@@ -40,3 +41,4 @@ class Scene_Battle < Scene_Base
 
   end
 end
+=end

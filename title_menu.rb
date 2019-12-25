@@ -66,6 +66,7 @@ module Title_Settings
   START_SE = 'Item3'
   # Immagine di un cursore piccolo a fianco della voce (tipo un dito)
   LITTLE_CUR_IMAGE = ''
+  LITTLE_CUR_IMAGE_MIRRORED = false # mostra un altro cursore identico sulla destra
   LITTLE_CUR_ADJ_X = -10
   LITTLE_CUR_ADJ_Y = 3
   #--------------------------------------------------------------------------
@@ -797,6 +798,17 @@ class Container_TitleCommand
     @little_cursor.oy = @little_cursor.height / 2
     @little_cursor.opacity = 0
   end
+
+  # draw little cursor mirrored
+  def draw_little_cursor_mirrored
+    @little_cursor_m = Sprite_TitleCursor.new(@viewport)
+    return unless show_little_cursor_mirrored?
+    @little_cursor_m.bitmap = Cache.picture(Title_Settings::LITTLE_CUR_IMAGE)
+    @little_cursor_m.mirror = true
+    @little_cursor_m.ox = @little_cursor_m.width / 2
+    @little_cursor_m.oy = @little_cursor_m.height / 2
+    @little_cursor_m.opacity = 0
+  end
   #--------------------------------------------------------------------------
   # * Check continue enabled
   #--------------------------------------------------------------------------
@@ -903,12 +915,20 @@ class Container_TitleCommand
     x = adjust_cur_x(index)
     y = item_height(index) + Title_Settings::LITTLE_CUR_ADJ_Y
     @little_cursor.smooth_move(x, y, Title_Settings::CURSOR_SPEED)
+    return unless show_little_cursor_mirrored?
+    x = adjust_cur_m_x(index)
+    @little_cursor_m.smooth_move(x, y, Title_Settings::CURSOR_SPEED)
   end
   #--------------------------------------------------------------------------
   # * Show little cursor?
   #--------------------------------------------------------------------------
   def show_little_cursor?
     Title_Settings::LITTLE_CUR_IMAGE != ''
+  end
+
+  # show little cursor mirrored?
+  def show_little_cursor_mirrored?
+    show_little_cursor? && Title_Settings::LITTLE_CURSOR_MIRRORED
   end
   #--------------------------------------------------------------------------
   # * Show back cursor?
@@ -951,6 +971,11 @@ class Container_TitleCommand
   #--------------------------------------------------------------------------
   def adjust_cur_x(index)
     (item(index).left_x) + Title_Settings::LITTLE_CUR_ADJ_X
+  end
+
+  # Adjust mirrored cursor X position
+  def adjust_cur_m_x(index)
+    (item(index).right_x) - Title_Settings::LITTLE_CUR_ADJ_X
   end
   #--------------------------------------------------------------------------
   # * Get Command Name

@@ -1,13 +1,14 @@
-require File.expand_path('rm_vx_data')
 #===============================================================================
 # Interfaccia XInput di Holy87
 # Difficoltà utente: ★
-# Versione 1.03
+# Versione 1.04
 # Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
 # lo script nei propri progetti, sia amatoriali che commerciali. Vietata
 # l'attribuzione impropria.
 #
 # changelog
+# v1.04 => aggiornamento della documentazione, disabilita la vibrazione
+#          se la batteria del controller è scarica
 # v1.03 => Ora l'uso del controller non è bloccante per la tastiera
 # v1.02 => Inserita compatibilità con sistemi che non supportano DX11
 # v1.01 => Bugfix
@@ -245,6 +246,9 @@ module XInput_Settings
   # Connessione PAD: questo switch sarà ON se un pad è conesso
   PLUGGED_SW        = 110 # switch di stato di connessione del pad
 
+  # disabilita la vibrazione se la batteria è quasi scarica?
+  DISABLE_VIBRATION_LOW_BT = false
+
 	# Quanto bisogna inclinare l'analogico per fargli riconoscere una direzione
   # in genere questo parametro viene definito zona morta
 	ANALOG_DIRECTION_MIN = 16300 # max 32767
@@ -398,6 +402,10 @@ module XInput
   #--------------------------------------------------------------------------
   def self.set_vibration(l_strenght, r_strenght, index = 0)
     return ERROR_DEVICE_NOT_CONNECTED if @x_set.nil?
+    if get_battery_info.battery_low? && XInput_Settings::DISABLE_VIBRATION_LOW_BT
+      l_strenght = 0
+      r_strenght = 0
+    end
     l_strenght = [l_strenght, 65535].min
     r_strenght = [r_strenght, 65535].min
     @x_set.call(index, [l_strenght, r_strenght].pack('SS'))
@@ -512,15 +520,13 @@ class XInput_BatteryInformation
     @battery_type == XInput::BATTERY_TYPE_ALKALINE ||
       @battery_type == XInput::BATTERY_TYPE_NIMH
   end
-  #--------------------------------------------------------------------------
-  # * Gets if the controller is wired
-  #--------------------------------------------------------------------------
+
+  # determines if the controller is wired
   def wired?
     @battery_type == XInput::BATTERY_TYPE_WIRED
   end
-  #--------------------------------------------------------------------------
-  # * To String (for screen printable)
-  #--------------------------------------------------------------------------
+
+  # To String (for screen printable)
   def to_s
     case @battery_type
       when XInput::BATTERY_TYPE_ALKALINE
@@ -554,11 +560,11 @@ end
 # Contains informations about the connected controller.
 #===============================================================================
 class XInput_Capability
-  # @attr[Integer] type
-  # @attr[Integer] sub_yupe
-  # @attr[Integer] flags
-  attr_reader :type # XINPUT_DEVTYPE_GAMEPAD
+  # @attr[Integer] XINPUT_DEVTYPE_GAMEPAD
+  attr_reader :type
+  # @attr[Integer]
   attr_reader :sub_type
+  # @attr[Integer]
   attr_reader :flags
   #--------------------------------------------------------------------------
   # * Object initializazion
@@ -590,22 +596,22 @@ end #xinput_capability
 # Gamepad keys structure
 #===============================================================================
 class Game_Pad
-  # @attr[Integer] buttons
-  # @attr[Integer] left_trigger
-  # @attr[Integer] right_trigger
-  # @attr[Integer] thumb_lx
-  # @attr[Integer] thumb_ly
-  # @attr[Integer] thumb_rx
-  # @attr[Integer] thumb_ry
-  attr_reader :buttons        # buttons pressed in integer value
-  attr_reader :left_trigger   # LT key, value from 0 to 255
-  attr_reader :right_trigger  # RT key, value from 0 to 255
-  attr_reader :thumb_lx       # left analog X, value between -32768 and 32767
-  attr_reader :thumb_ly       # left analog Y, value between -32768 and 32767
-  attr_reader :thumb_rx       # right analog X, value between -32768 and 32767
-  attr_reader :thumb_ry       # right analog Y, value between -32768 and 32767
-  #--------------------------------------------------------------------------
-  # * Object initialization
+  # @return[Integer] buttons pressed in integer value
+  attr_reader :buttons
+  # @return[Integer] LT key, value from 0 to 255
+  attr_reader :left_trigger
+  # @return[Integer] RT key, value from 0 to 255
+  attr_reader :right_trigger
+  # @return[Integer] left analog X, value between -32768 and 32767
+  attr_reader :thumb_lx
+  # @return[Integer] left analog Y, value between -32768 and 32767
+  attr_reader :thumb_ly
+  # @return[Integer] right analog X, value between -32768 and 32767
+  attr_reader :thumb_rx
+  # @return[Integer] right analog Y, value between -32768 and 32767
+  attr_reader :thumb_ry
+
+  # Object initialization
   # @param [String] buttons		integer with buttons pressed
   # @param [Integer] lt			left trigger value (0 to 255)
   # @param [Integer] rt			right trigger value (0 to 255)
@@ -613,7 +619,6 @@ class Game_Pad
   # @param [Integer] ly			left stick y axis (-32768 to 32767)
   # @param [Integer] rx			right stick x axis (-32768 to 32767)
   # @param [Integer] ry			right stick y axis (-32768 to 32767)
-  #--------------------------------------------------------------------------
   def initialize(buttons, lt, rt, lx, ly, rx, ry)
     @buttons = buttons
     @left_trigger = adjust_trigger(lt, XInput::TRIGGER_THRESHOLD)

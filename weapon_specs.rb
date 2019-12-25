@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 # Questo script mostra l'abilità speciale dell'arma modificata accanto al
 # titolo.
 
@@ -27,7 +25,7 @@ class Window_Base < Window
   # @param [Integer] width
   # @return [Integer]
   #-----------------------------------------------------------------------------
-  def draw_specialization(item, x, y, enabled = true, width = 172)
+  def draw_specialization(item, x, y, enabled = true, width = contents_width)
     x2 = x + 25 + text_size(item.name).width
     w = width - x2 + 2
     old_font = contents.font.size

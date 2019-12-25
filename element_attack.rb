@@ -1,4 +1,3 @@
-require 'rm_vx_data'
 =begin
 EFFETTI ELEMENTALI V1.0
 Questo script aggiunge gli effetti elementali e di status delle armi anche alle skill.
@@ -15,14 +14,11 @@ end
 #===============================================================================
 class Game_Battler
   alias default_make_obk_damage_value make_obj_damage_value unless $@
-  #--------------------------------------------------------------------------
-  # * Calcolo del danno di un'Abilità o Oggetto
-  #     user : Chi usa l'oggetto o l'abilità
-  #     obj  : Potere o oggetto (Se è nil è un attacco normale)
-  #    I risultati sono assegnati a @hp_damage o @mp_damage.
-  # @param [Game_Battler] user
-  # @param [RPG::UsableItem] obj
-  #--------------------------------------------------------------------------
+
+  # Calcolo del danno di un'Abilità o Oggetto
+  # I risultati sono assegnati a @hp_damage o @mp_damage.
+  # @param [Game_Battler] user Chi usa l'oggetto o l'abilità
+  # @param [RPG::UsableItem] obj Potere o oggetto (Se è nil è un attacco normale)
   def make_obj_damage_value(user, obj)
     if obj.atk_f > 0
       $game_temp.equip_elements = user.element_set
@@ -84,8 +80,8 @@ end
 # ** Game_Temp
 #===============================================================================
 class Game_Temp
-  # @attr [Array] equip_elements
-  # @attr [Array] equip_states
+  # @return [Array] equip_elements
+  # @return [Array] equip_states
   attr_accessor :equip_elements   # elementi aggiunti dall'equipaggiamento
   attr_accessor :equip_states     # elementi aggiunti allo status
   # mi serve utilizzare una variabile globale temporanea perché non c'è modo di
@@ -122,10 +118,11 @@ class RPG::UsableItem
   #-----------------------------------------------------------------------------
   def element_set
     first_set = obelemset
-    if !force_noelement and $game_temp.equip_elements != nil
-      first_set |= $game_temp.equip_elements
-    end
-    first_set
+    return first_set if force_noelement or $game_temp.equip_elements.nil?
+    plus_ele = $game_temp.equip_elements
+    has_attributes = (first_set & Element_Settings::WEAPON_ATTRIBUTES).any?
+    plus_ele = (plus_ele & Element_Settings::WEAPON_ATTRIBUTES) if has_attributes
+    first_set | plus_ele # unione senza ripetizioni
   end
   #-----------------------------------------------------------------------------
   # * Alias plus_state_set
@@ -144,7 +141,7 @@ class RPG::UsableItem
   #-----------------------------------------------------------------------------
   # * Controlla se l'arma non deve dare elementi
   #-----------------------------------------------------------------------------
-  def force_noelement; true if @force_noelement; end
+  def force_noelement; @force_noelement; end
   #-----------------------------------------------------------------------------
   # * è una magia d'attacco?
   #-----------------------------------------------------------------------------

@@ -1,5 +1,3 @@
-require File.expand_path('rm_vx_data')
-
 class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   # * Mostra i dettagli da script
@@ -20,7 +18,11 @@ class Window_ItemInfo < Window_DataInfo
       draw_heal_states_plus
       draw_sinergy_bonuses
       draw_summon_bonuses
+      draw_drop_prob
       draw_steal_prob
+      draw_exp_bonus
+      draw_gold_bonus
+      draw_autoscan
     end
     draw_autostates
     if item.is_a?(RPG::Armor) && item.id == 174
@@ -210,8 +212,28 @@ class Window_ItemInfo < Window_DataInfo
   # * Disegna bonus alle probabilità di furto
   #--------------------------------------------------------------------------
   def draw_steal_prob
-    return if item.steal_prob_plus == 0
-    draw_parameter('Prob. furto', item.steal_prob_plus, true)
+    return if item.steal_bonus == 0
+    draw_parameter('Prob. furto', item.steal_prob_plus * 100, true)
+  end
+
+  def draw_drop_prob
+    return if item.drop_bonus == 0
+    draw_parameter('Drop oggetti', item.drop_bonus * 100, true)
+  end
+
+  def draw_gold_bonus
+    return if item.gold_bonus == 0
+    draw_parameter('Drop oro', item.gold_bonus * 100, true)
+  end
+
+  def draw_exp_bonus
+    return if item.exp_bonus == 0
+    draw_parameter('Esperienza', item.exp_bonus * 100, true)
+  end
+
+  def draw_autoscan
+    return unless item.autoscan
+    draw_feature 'Scansiona i nemici'
   end
   #--------------------------------------------------------------------------
   # * Disegna il bonus ai consumi PM

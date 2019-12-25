@@ -939,9 +939,9 @@ class Window_Domination_Skill < Window_DominationSelection
     super(index,enabled)
     rect = item_rect(index)
     posizione = 4
-    gfont = Skill_Costs::Spazio
+    gfont = H87_SKILL_COSTS::Spazio
     if @actor.calc_hp_cost(item) > 0
-      self.contents.font.color = colore_hp
+      self.contents.font.color = hp_cost_color
       self.contents.font.color.alpha = enabled ? 255 : 128
       costo = @actor.calc_hp_cost(item)
       costo = costo.to_s+Vocab.hp_a
@@ -949,7 +949,7 @@ class Window_Domination_Skill < Window_DominationSelection
       posizione += gfont*costo.size
     end
     if @actor.calc_mp_cost(item) > 0
-      self.contents.font.color = colore_mp
+      self.contents.font.color = mp_cost_color
       self.contents.font.color.alpha = enabled ? 255 : 128
       costo = @actor.calc_mp_cost(item)
       costo = costo.to_s+Vocab.mp_a
@@ -957,7 +957,7 @@ class Window_Domination_Skill < Window_DominationSelection
       posizione += gfont*costo.size
     end
     if @actor.calc_var_cost(item) > 0
-      self.contents.font.color = colore_var
+      self.contents.font.color = var_cost_color
       self.contents.font.color.alpha = enabled ? 255 : 128
       costo = @actor.calc_var_cost(item)
       costo = costo.to_s+Vocab.var_skill
@@ -1471,10 +1471,11 @@ class Game_Battler
   # * restituisce gli status attuali + bonus attivati
   #--------------------------------------------------------------------------
   alias add_boost_states states unless $@
+  # @return [Array<RPG::State>]
   def states
     all_states = add_boost_states
     all_states |= self.boost_states if self.actor?
-    return all_states
+    all_states
   end
 end
 
@@ -1494,14 +1495,14 @@ class RPG::State
         end
       }
     end
-    return @boost_malus
+    @boost_malus
   end
 
   #--------------------------------------------------------------------------
   # * restituisce il testo di descrizione del turbo
   #--------------------------------------------------------------------------
   def description
-    return message1
+    message1
   end
 end #RPG::State
 
@@ -1543,7 +1544,7 @@ class Game_Party < Game_Unit
   #--------------------------------------------------------------------------
   def unlocked_boosts
     @unlocked_boosts = [] if @unlocked_boosts.nil?
-    return @unlocked_boosts
+    @unlocked_boosts
   end
   #--------------------------------------------------------------------------
   # * aggiunge un turbo sbloccato al gruppo
@@ -1557,7 +1558,7 @@ class Game_Party < Game_Unit
   #--------------------------------------------------------------------------
   def unlocked_dominations
     @unlocked_espers = [] if @unlocked_espers.nil?
-    return @unlocked_espers
+    @unlocked_espers
   end
   #--------------------------------------------------------------------------
   # * Sblocca una dominazione
@@ -1571,7 +1572,7 @@ class Game_Party < Game_Unit
   #   esper_id: id dell'evocazione
   #--------------------------------------------------------------------------
   def domination_unlocked?(esper_id)
-    return self.unlocked_dominations.include?(esper_id)
+    self.unlocked_dominations.include?(esper_id)
   end
 end #game_party
 

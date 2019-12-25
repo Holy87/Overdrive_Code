@@ -317,7 +317,7 @@ end
 # Aggiunta la memorizzazione dello scrigno per passarlo tra le schermate
 #===============================================================================
 class Game_Temp
-  # @attr [Online_Chest] chest
+  # @return [Online_Chest] chest
   attr_accessor :chest
 end
 

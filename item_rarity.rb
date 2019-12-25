@@ -1,4 +1,3 @@
-require File.expand_path('rm_vx_data')
 =begin
 ===============================================================================
  ** RARITÀ OGGETTI di Holy87 (v1.0)
@@ -17,23 +16,31 @@ require File.expand_path('rm_vx_data')
 # ** Impostazioni della rarità
 #==============================================================================
 module Rarity_Settings
+  SHOW_RARITY_ICONS = false
+
   RARITY_ICONS = {
       0 => 0,   # Icona cornice per oggetti comuni
       1 => 685, # Icona cornice per oggetti rari
-      2 => 686  # Icona cornice per oggetti unici
+      2 => 686, # Icona cornice per oggetti leggendari
+      3 => 687, # Icona cornice per oggetti esotici
+      4 => 684, # Icona cornice per oggetti evento
   }
 
   # Nomi dei livelli di rarità
   RARITY_STRINGS = {
       0 => 'Comune',
       1 => 'Raro',
-      2 => 'Unico'
+      2 => 'Leggendario',
+      3 => 'Esotico',
+      4 => 'Evento',
   }
 
   # Colori dei livelli di rarità (dal tema)
   RARITY_THEME_COLORS = {
       1 => 23,
-      2 => 31
+      2 => 31,
+      3 => 21,
+      4 => 29
   }
 end
 
@@ -165,9 +172,7 @@ class Window_Base < Window
   def draw_item_name(item, x, y, enabled = true, width = 172)
     if item && (item.is_a?(RPG::Weapon) || item.is_a?(RPG::Armor))
       draw_item_rarity(item, x, y, enabled)
-      if item.not_common?
-        @rarity = Rarity_Settings::RARITY_THEME_COLORS[item.rarity]
-      end
+      @rarity = item.not_common? ? Rarity_Settings::RARITY_THEME_COLORS[item.rarity] : nil
     end
     h87_ir_draw_item_name(item, x, y, enabled, width)
   end
@@ -179,7 +184,8 @@ class Window_Base < Window
   # @param [Boolean] enabled
   #--------------------------------------------------------------------------
   def draw_item_rarity(item, x, y, enabled)
-    contents.draw_icon(item.rarity_icon, x, y, enabled) if item.not_common?
+    return unless item.not_common? && Rarity_Settings::SHOW_RARITY_ICONS
+    contents.draw_icon(item.rarity_icon, x, y, enabled)
   end
   #--------------------------------------------------------------------------
   # * Ridefinizione del metodo normal_color per cambiare colore ad oggetti

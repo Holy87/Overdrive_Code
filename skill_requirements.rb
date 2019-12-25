@@ -93,7 +93,7 @@ end
 # ** Classe Armi
 #===============================================================================
 class RPG::Weapon
-  # @attr [Array<String>] w_types
+  # @return [Array<String>] w_types
   attr_reader :w_types
   #--------------------------------------------------------------------------
   # * caricamento cache
@@ -118,7 +118,7 @@ end #weapon
 # ** Classe Armature
 #===============================================================================
 class RPG::Armor
-  # @attr [Array<String>] w_types
+  # @return [Array<String>] w_types
   attr_reader :w_types
   #--------------------------------------------------------------------------
   # * cache...
@@ -165,9 +165,9 @@ end #game_actor
 # ** Classe Skill
 #===============================================================================
 class RPG::Skill
-  # @attr [Array<String>] required_eq
-  # @attr [Array<Integer>] required_status
+  # @return [Array<String>] required_eq
   attr_reader :required_eq
+  # @return [Array<Integer>] required_status
   attr_reader :required_status
   attr_reader :stati_ric
   attr_reader :stato_bloc

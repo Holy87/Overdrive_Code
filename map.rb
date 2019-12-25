@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 module MapConfig
   module_function
 
@@ -188,7 +186,7 @@ module Vocab
   #--------------------------------------------------------------------------
   # * Segnalino
   #--------------------------------------------------------------------------
-  def self.place_position; 'Segnalino'; end
+  def self.place_position; 'Segnaposto'; end
   #--------------------------------------------------------------------------
   # * Aiuto mappa
   #--------------------------------------------------------------------------
@@ -533,6 +531,12 @@ class Game_System
   def unlock_place(place)
     @known_places ||= MapConfig.default_place
     @known_places.push(place) unless @known_places.include?(place)
+  end
+  #--------------------------------------------------------------------------
+  # * determina se un posto della mappa è sbloccato
+  #--------------------------------------------------------------------------
+  def place_unlocked?(place)
+    @known_places.include?(place)
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'array dei posti conosciuti

@@ -82,7 +82,7 @@ module H87_SKILL_COSTS
   ColoreV = 2
 
 # Spazio tra un cost e l'altro nel caso di abilità con più costi
-  SPACING = 12
+  SPACING = 6
 #-------------------------------------------------------------------------------
 # FINE CONFIGURAZIONE
 # Modifica gli script in seguito solo se sai ciò che fai!
@@ -230,7 +230,7 @@ class Scene_Title < Scene_Base
 
   # Inizializza nel caricamento
   def load_skill_costs
-    for skill in $data_skills
+    $data_skills.each do |skill|
       next if skill == nil
       skill.load_skill_cost_cache
     end
@@ -314,99 +314,107 @@ class Game_Battler
   end
 end # game_battler
 
+class Window_Base < Window
+  # @param [RPG::Skill] skill abilità in oggetto
+  # @param [Rect] rect rettangolo
+  # @param [Game_Actor] actor eroe che possiede l'abilità
+  # @param [true, false] enabled se abilitato o diasabilitato
+  # @return [Integer] la nuova larghezza sottratta
+  def draw_mp_cost(skill, rect, actor, enabled)
+    return width if actor.calc_mp_cost(skill) == 0
+    change_color mp_cost_color, enabled
+    cost = sprintf('%d%s', actor.calc_mp_cost(skill), Vocab.mp_a)
+    draw_text(rect, cost, 2)
+    rect.width -= text_size(cost).width + H87_SKILL_COSTS::SPACING
+  end
+
+  # @param [RPG::Skill] skill abilità in oggetto
+  # @param [Rect] rect rettangolo
+  # @param [Game_Actor] actor eroe che possiede l'abilità
+  # @param [true, false] enabled se abilitato o diasabilitato
+  # @return [Integer] la nuova larghezza sottratta
+  def draw_hp_cost(skill, rect, actor, enabled)
+    return width if actor.calc_hp_cost(skill) == 0
+    change_color hp_cost_color, enabled
+    cost = sprintf('%d%s', actor.calc_hp_cost(skill), Vocab.hp_a)
+    draw_text(rect, cost, 2)
+    rect.width -= text_size(cost).width + H87_SKILL_COSTS::SPACING
+  end
+
+  # @param [RPG::Skill] skill abilità in oggetto
+  # @param [Rect] rect rettangolo
+  # @param [Game_Actor] actor eroe che possiede l'abilità
+  # @param [true, false] enabled se abilitato o diasabilitato
+  # @return [Integer] la nuova larghezza sottratta
+  def draw_gold_cost(skill, rect, actor, enabled)
+    return width if actor.calc_gold_cost(skill) == 0
+    change_color gold_cost_color, enabled
+    cost = sprintf('%d%s', actor.calc_gold_cost(skill), Vocab.gold)
+    draw_text(rect, cost, 2)
+    rect.width -= text_size(cost).width + H87_SKILL_COSTS::SPACING
+  end
+
+  # @param [RPG::Skill] skill abilità in oggetto
+  # @param [Rect] rect rettangolo
+  # @param [Game_Actor] actor eroe che possiede l'abilità
+  # @param [true, false] enabled se abilitato o diasabilitato
+  # @return [Integer] la nuova larghezza sottratta
+  def draw_variable_cost(skill, rect, actor, enabled)
+    return width if actor.calc_var_cost(skill) == 0
+    change_color var_cost_color, enabled
+    cost = sprintf('%d%s', actor.calc_var_cost(skill), Vocab.var_skill)
+    draw_text(rect, cost, 2)
+    rect.width -= text_size(cost).width + H87_SKILL_COSTS::SPACING
+  end
+
+  # @param [RPG::Skill] skill abilità in oggetto
+  # @param [Rect] rect rettangolo
+  # @param [Game_Actor] actor eroe che possiede l'abilità
+  # @param [true, false] enabled se abilitato o diasabilitato
+  # @return [Integer] la nuova larghezza sottratta
+  def draw_item_cost(skill, rect, actor, enabled)
+    return width if actor.calc_item_cost(skill) == 0
+    change_color normal_color, enabled
+    cost = sprintf('x%d', actor.calc_item_cost(skill))
+    draw_text(rect, cost, 2)
+    x = rect.width - text_size(cost).width - 24
+    draw_icon($data_items[skill.consume_item].icon_index, x, rect.y, enabled)
+    rect.width -= x
+  end
+end
+
 #===============================================================================
 # * Classe Window_Skill
 #===============================================================================
 class Window_Skill < Window_Selectable
 
+  # Display Skill in Active State?
+  def enable?(item)
+    @actor && @actor.usable?(item)
+  end
+
+  def draw_item(index)
+    rect = item_rect index
+    contents.clear_rect rect
+    skill = @data[index]
+    if skill
+      rect.width -= 4
+      draw_item_name(skill, rect.x, rect.y, enable?(skill))
+      draw_skill_cost(rect, skill)
+    end
+  end
+
   # @param [Rect] rect
   # @param [RPG::Skill] skill
   def draw_skill_cost(rect, skill)
-    width = rect.width
-    y = rect.ys
-
-    skill = @data[index]
-    width = contents_width
-    width = draw_mp_cost skill, width, y, actor, enabled
-    width = draw_hp_cost skill, width, y, actor, enabled
-    width = draw_gold_cost skill, width, y, actor, enabled
-    width = draw_var_cost skill, width, y, actor, enabled
-    draw_item_cost skill, width, y, actor, enabled
+    enabled = enable?(skill)
+    draw_mp_cost skill, rect, actor, enabled
+    draw_hp_cost skill, rect, actor, enabled
+    draw_gold_cost skill, rect, actor, enabled
+    draw_variable_cost skill, rect, actor, enabled
+    draw_item_cost skill, rect, actor, enabled
   end
-
-  # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
-  # @param [Game_Actor] actor eroe che possiede l'abilità
-  # @param [true, false] enabled se abilitato o diasabilitato
-  # @return [Integer] la nuova larghezza sottratta
-  def draw_mp_cost(skill, width, y, actor, enabled)
-    return width if actor.calc_mp_cost(skill) == 0
-    change_color mp_cost_color, enabled
-    cost = sprintf('%d%s', actor.calc_mp_cost(skill), Vocab.mp_a)
-    draw_text(0, y, width, line_height, cost, 2)
-    width - text_size(cost).width - H87_SKILL_COSTS::SPACING
-  end
-
-  # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
-  # @param [Game_Actor] actor eroe che possiede l'abilità
-  # @param [true, false] enabled se abilitato o diasabilitato
-  # @return [Integer] la nuova larghezza sottratta
-  def draw_hp_cost(skill, width, y, actor, enabled)
-    return width if actor.calc_hp_cost(skill) == 0
-    change_color hp_cost_color, enabled
-    cost = sprintf('%d%s', actor.calc_hp_cost(skill), Vocab.hp_a)
-    draw_text(0, y, width, line_height, cost, 2)
-    width - text_size(cost).width - H87_SKILL_COSTS::SPACING
-  end
-
-  # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
-  # @param [Game_Actor] actor eroe che possiede l'abilità
-  # @param [true, false] enabled se abilitato o diasabilitato
-  # @return [Integer] la nuova larghezza sottratta
-  def draw_gold_cost(skill, width, y, actor, enabled)
-    return width if actor.calc_gold_cost(skill) == 0
-    change_color gold_cost_color, enabled
-    cost = sprintf('%d%s', actor.calc_gold_cost(skill), Vocab.gold)
-    draw_text(0, y, width, line_height, cost, 2)
-    width - text_size(cost).width - H87_SKILL_COSTS::SPACING
-  end
-
-  # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
-  # @param [Game_Actor] actor eroe che possiede l'abilità
-  # @param [true, false] enabled se abilitato o diasabilitato
-  # @return [Integer] la nuova larghezza sottratta
-  def draw_variable_cost(skill, width, y, actor, enabled)
-    return width if actor.calc_var_cost(skill) == 0
-    change_color var_cost_color, enabled
-    cost = sprintf('%d%s', actor.calc_var_cost(skill), Vocab.var_skill)
-    draw_text(0, y, width, line_height, cost, 2)
-    width - text_size(cost).width - H87_SKILL_COSTS::SPACING
-  end
-
-  # @param [RPG::Skill] skill abilità in oggetto
-  # @param [Integer] width larghezza rimanente
-  # @param [Integer] y coordinata y
-  # @param [Game_Actor] actor eroe che possiede l'abilità
-  # @param [true, false] enabled se abilitato o diasabilitato
-  # @return [Integer] la nuova larghezza sottratta
-  def draw_item_cost(skill, width, y, actor, enabled)
-    return width if actor.calc_item_cost(skill) == 0
-    change_color normal_color, enabled
-    cost = sprintf('x%d', actor.calc_item_cost(skill))
-    draw_text(0, y, width, line_height, cost, 2)
-    x = width - text_size(cost).width - 24
-    draw_icon($data_items[skill.consume_item].icon_index, x, y, enabled)
-    x
-  end
-
-end # window_skill
+end
 
 #===============================================================================
 # * Classe Scene_Battle
@@ -428,11 +436,11 @@ class Scene_Battle < Scene_Base
   end
 
   # Consuma l'oggetto
-  # @param [Object] item_id
-  # @param [Object] item_number
+  # @param [Integer] item_id
+  # @param [Integer] item_number
   def consume_item_skill(item_id, item_number)
-    item = $data_items[id_oggetto]
-    $game_party.lose_item(item, numero)
+    item = $data_items[item_id]
+    $game_party.lose_item(item, item_number)
   end
 
 end #scene_battle

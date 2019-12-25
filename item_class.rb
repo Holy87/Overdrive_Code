@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 #==============================================================================
 # ** Classi Oggetto di Holy87
 # Difficoltà utente: ★
@@ -268,7 +266,7 @@ class Window_Base < Window
   # @param [RPG::BaseItem] item
   # @param [Fixnum] x
   # @param [Fixnum] y
-  # @param [True] enabled
+  # @param [Boolean] enabled
   #-----------------------------------------------------------------------------
   def draw_item_name(item, x, y, enabled = true, width = 172)
     disegna_nome_oggetto(item, x, y, enabled, width)

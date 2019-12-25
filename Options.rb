@@ -1119,7 +1119,7 @@ class Window_GameOptions < Window_Selectable
   def cursor_up(wrap = false)
     super
     if item.separator?
-      self.index == 0 ? cursor_down : super
+      self.index == 0 && !wrap ? cursor_down : super
     end
   end
   #--------------------------------------------------------------------------

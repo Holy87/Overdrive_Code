@@ -468,7 +468,7 @@ module ActorRoles
   # @return [Actor_Role]
   #--------------------------------------------------------------------------
   def self.role_from_file(file)
-    return nil unless File.extname(file) =~ /\.txt/i
+    return nil unless File.extname(file) =~ /\.xml/i
     text = text_from_file(file)
     begin
       role = parse_role(text, File.basename(file, '.*'))
@@ -499,7 +499,7 @@ module ActorRoles
   def self.parse_role(text, name)
     raise ParseError unless text =~ /[.]*<title>(.+)<\/title>[.]*/i
     title = $1
-    raise ParseError unless text =~ /[.]*<descr>(.+)<\/descr>[.]*/i
+    raise ParseError unless text =~ /[.]*<descr>(.+)<\/descr>[.]*/mi
     descr = $1
     raise ParseError unless text =~ /[.]*<param>(.+)<\/param>[.]*/i
     param = $1
@@ -771,9 +771,9 @@ class Window_ActorStatus < Window_Base
   # @param [Integer] width
   #--------------------------------------------------------------------------
   def draw_param_value(x, y, param, width)
-    value = eval("actor.#{param}")
+    value = actor.send(param)
     change_color(normal_color)
-    draw_text(x+24, y, width, line_height, value, 2)
+    draw_text(x + 24, y, width, line_height, value, 2)
   end
   #--------------------------------------------------------------------------
   # * Un colore più scuro
@@ -794,7 +794,7 @@ class Window_ActorStatus < Window_Base
     contents.font.size = 15
     (7..16).each { |i|
       contents.fill_rect(x+1, y+1, 58, line_height-2, Color.new(0, 0, 0, 50))
-      icon = Y6::ICON[:element_icons][i]
+      icon = $data_system.attribute_icon(i)
       draw_icon(icon, x, y)
       value = actor.element_rate(i) - 100
       if value == 0

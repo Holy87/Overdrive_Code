@@ -92,7 +92,9 @@ class Scene_Player < Scene_MenuBase
   # *
   #--------------------------------------------------------------------------
   def create_titles_window
-
+    @titles_window = Window_PlayerTitles.new(0, @help_window.bottom_corner,
+    Graphics.width, Graphics.height - @help_window.bottom_corner)
+    @titles_window.help_window = @help_window
   end
   #--------------------------------------------------------------------------
   # *

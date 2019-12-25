@@ -475,8 +475,8 @@ end
 class Window_DisenchantList < Window_Selectable
   #--------------------------------------------------------------------------
   # * dichiarazione delle finestre pubbliche
-  # @attr [Window_ItemInfo] details_window
-  # @attr [Window_DisenchantRequirements] gold_window
+  # @return [Window_ItemInfo] details_window
+  # @return [Window_DisenchantRequirements] gold_window
   #--------------------------------------------------------------------------
   attr_accessor :details_window
   attr_accessor :gold_window

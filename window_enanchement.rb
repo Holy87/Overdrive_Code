@@ -1,4 +1,4 @@
-require File.expand_path('rm_vx_data')
+
 
 #==============================================================================
 # ** Window_Base
@@ -160,6 +160,21 @@ class Window_Base < Window
     return if new_actor == @actor
     @actor = new_actor
     refresh
+  end
+
+  # disegna un array di icone in una certa larghezza
+  # Se la larghezza è inferiore al numero di icone,
+  # le icone sono più strette
+  def draw_icons(icons, x, y, width = contents_width - x)
+    if icons.size * 24 <= width
+      spacing = 0
+    else
+      spacing = (width - icons.size * 24) / icons.size
+    end
+    icons.each do |icon_index|
+      draw_icon(icon_index, x, y)
+      x += 24 + spacing
+    end
   end
   #--------------------------------------------------------------------------
   # * Restituisce l'eroe

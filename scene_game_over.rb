@@ -88,7 +88,7 @@ end
 # ** Game_Temp
 #==============================================================================
 class Game_Temp
-  # @attr [Bitmap] battle_snapshot
+  # @return [Bitmap] battle_snapshot
   attr_accessor :battle_snapshot  # l'immagine prima del game over
   attr_accessor :last_in_battle   # se si muore su mappa o in battaglia
 end

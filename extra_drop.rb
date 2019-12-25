@@ -1,4 +1,3 @@
-require File.expand_path('rm_vx_data')
 #===============================================================================
 # Ricompense battaglie extra di Holy87
 # Difficoltà utente: ★

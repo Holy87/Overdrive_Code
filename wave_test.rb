@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 class Wave_Test_Scene < Scene_Base
   def start
     super

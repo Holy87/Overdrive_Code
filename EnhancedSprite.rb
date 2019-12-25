@@ -1,13 +1,9 @@
-require 'SparkEngine'
-require 'SpriteEngine'
-require 'FadeEngine'
-require 'PlaneEngine'
 #===============================================================================
 # ** Sprite
 #-------------------------------------------------------------------------------
 # Aggiunta dei moduli per installare le nuove funzioni
 #===============================================================================
-class Sprite  
+class Sprite
   #--------------------------------------------------------------------------
   # * Inclusione dei moduli
   #--------------------------------------------------------------------------
@@ -78,10 +74,14 @@ class Plane
   # * Alias dei metodi
   #--------------------------------------------------------------------------
   alias h87EnPlane_initialize initialize unless $@
-  alias h87EnPlane_dispose dispose unless $@
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
-  #--------------------------------------------------------------------------
+  if method_defined? :update
+    alias h87EnPlane_update update unless $@
+  else
+    def h87EnPlane_update; end
+  end
+
+  # Inizializzazione
+  # @param [Viewport] viewport
   def initialize(viewport = nil)
     h87EnPlane_initialize(viewport)
     fade_engine_init
@@ -91,7 +91,7 @@ class Plane
   # * Aggiornamento
   #--------------------------------------------------------------------------
   def update
-    h87EnSprite_update
+    h87EnPlane_update
     fade_engine_update
     plane_engine_update
   end
@@ -111,6 +111,7 @@ class Sprite_Spark < Sprite
   #--------------------------------------------------------------------------
   # * Inizializzazione
   #--------------------------------------------------------------------------
+  # @param [Viewport] viewport
   def initialize(viewport = nil)
     super(viewport)
     self.ox = self.width/2

@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 module ItemPedia
   module_function
 
@@ -13,7 +11,7 @@ module ItemPedia
   } #NON RIMUOVERE LA PARENTESI
 
   V_DROP = "Drop"
-  V_STEAL= "Da rubare"
+  V_STEAL = "Da rubare"
   #--------------------------------------------------------------------------
   # * Restituisce le categorie dei nemici
   # @return [Array<Item_Category>]
@@ -54,12 +52,14 @@ class RPG::Item
   def in_list?
     @in_list ||= initialize_in_list
   end
+
   #--------------------------------------------------------------------------
   # * determina se l'oggetto è un ingrediente
   #--------------------------------------------------------------------------
   def ingredient?
     @ingredient ||= initialize_ingredient
   end
+
   #--------------------------------------------------------------------------
   # * determina a quale categoria appartiene
   # @return [Symbol]
@@ -69,6 +69,7 @@ class RPG::Item
     return :ingredient if ingredient?
     :other
   end
+
   #--------------------------------------------------------------------------
   # * inizializza l'informazione della lista
   #--------------------------------------------------------------------------
@@ -78,6 +79,7 @@ class RPG::Item
     end
     true
   end
+
   #--------------------------------------------------------------------------
   # * inzizializza l'informazione dell'ingrediente
   #--------------------------------------------------------------------------
@@ -96,7 +98,9 @@ class RPG::Weapon
   #--------------------------------------------------------------------------
   # * restituisce la categoria
   #--------------------------------------------------------------------------
-  def category; :weapon; end
+  def category;
+    :weapon;
+  end
 end
 
 #==============================================================================
@@ -106,7 +110,9 @@ class RPG::Armor
   #--------------------------------------------------------------------------
   # * restituisce la categoria
   #--------------------------------------------------------------------------
-  def category; :armor; end
+  def category;
+    :armor;
+  end
 end
 
 #==============================================================================
@@ -114,36 +120,31 @@ end
 #==============================================================================
 class Game_Party
   alias wiki_i_gain_item gain_item unless $@
-  #--------------------------------------------------------------------------
-  # * restituisce l'array degli ID degli oggetti scoperti
+
+  # restituisce l'array degli ID degli oggetti scoperti
   # @return [Array]
-  #--------------------------------------------------------------------------
   def discovered_items
     @discovered_items ||= initial_discovered_items
   end
-  #--------------------------------------------------------------------------
-  # * genera l'array iniziale degli ID degli oggetti scoperti
-  #--------------------------------------------------------------------------
+
+  # genera l'array iniziale degli ID degli oggetti scoperti
   def initial_discovered_items
     @discovered_items = @items.keys
   end
-  #--------------------------------------------------------------------------
-  # * aggiunge un oggetto scoperto all'array (se assente)
-  #--------------------------------------------------------------------------
+
+  # aggiunge un oggetto scoperto all'array (se assente)
   def item_discovered(item_id)
-    discovered_items |= [item_id]
+    @discovered_items |= [item_id]
   end
-  #--------------------------------------------------------------------------
-  # * determina se un determinato oggetto è scoperto
-  #--------------------------------------------------------------------------
+
+  # determina se un determinato oggetto è scoperto
   def item_discovered?(item_id)
     discovered_items.include?(item_id)
   end
-  #--------------------------------------------------------------------------
-  # * alias del metodo gain_item
-  #--------------------------------------------------------------------------
+
+  # alias del metodo gain_item
   def gain_item(item, n = 1, include_equip = false)
-    wiki_i_gain_item(item, n, include_equip )
+    wiki_i_gain_item(item, n, include_equip)
     if item != nil
       item_discovered(item.id) if item.is_a?(RPG::Item)
     end
@@ -164,12 +165,14 @@ class Scene_Itempedia < Scene_MenuBase
     create_viewport
     create_windows
   end
+
   #--------------------------------------------------------------------------
   # * crea il viewport
   #--------------------------------------------------------------------------
   def create_viewport
     @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
   end
+
   #--------------------------------------------------------------------------
   # * crea le finestre
   #--------------------------------------------------------------------------
@@ -178,6 +181,7 @@ class Scene_Itempedia < Scene_MenuBase
     create_category_window
     create_drop_window
   end
+
   #--------------------------------------------------------------------------
   # * crea la finestra degli oggetti
   #--------------------------------------------------------------------------
@@ -185,6 +189,7 @@ class Scene_Itempedia < Scene_MenuBase
     @items_window = Window_Item_WikiList.new(0, 0, 200, Graphics.height)
     @items_window.viewport = @viewport
   end
+
   #--------------------------------------------------------------------------
   # * crea la finestra delle categorie
   #--------------------------------------------------------------------------
@@ -194,6 +199,7 @@ class Scene_Itempedia < Scene_MenuBase
     @items_window.set_category_window(@category_window)
     @items_window.set_list(@category_window.item.symbol)
   end
+
   #--------------------------------------------------------------------------
   # * Aggiornamento
   #--------------------------------------------------------------------------
@@ -201,6 +207,7 @@ class Scene_Itempedia < Scene_MenuBase
     super
     @viewport.update
   end
+
   #--------------------------------------------------------------------------
   # * crea la finestra dei drop
   #--------------------------------------------------------------------------
@@ -214,6 +221,7 @@ class Scene_Itempedia < Scene_MenuBase
     @category_window.z = 9999
     @drop_window.viewport = @viewport
   end
+
   #--------------------------------------------------------------------------
   # * Chiusura
   #--------------------------------------------------------------------------
@@ -229,13 +237,20 @@ end
 #  Mostra l'elenco dei nemici visti
 #==============================================================================
 class Window_Item_WikiList < Window_List
+
+  # refresh
+  def refresh
+    get_items
+    create_contents
+    draw_items
+  end
   #--------------------------------------------------------------------------
   # * Ottiene gli oggetti
   #--------------------------------------------------------------------------
   def get_data
     @data = []
     # @param [RPG::Item] item
-    $data_items.each {|item|
+    $data_items.each do |item|
       next if item.nil?
       next if item.name.size == 0
       next unless $game_party.item_discovered?(item.id)
@@ -247,9 +262,10 @@ class Window_Item_WikiList < Window_List
       else
         @data.push(item) if item.wiki_category == @category
       end
-    }
-    @data.sort!{|a, b| a.name <=> b.name}
+    end
+    @data.sort! { |a, b| a.name <=> b.name }
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce true se non ci sono nemici che droppano l'oggetto
   #     item: oggetto
@@ -257,11 +273,9 @@ class Window_Item_WikiList < Window_List
   # @param [RPG::Item] item
   #--------------------------------------------------------------------------
   def no_item_drops(item)
-    Bestiary.unlocked_enemies.each {|enemy|
-      return false if enemy.has_item?(item)
-    }
-    true
+    $game_party.defeated_enemies.select { |enemy| enemy.has_item?(item) }.empty?
   end
+
   #--------------------------------------------------------------------------
   # * Disegna l'oggetto
   #     index: indice dell'oggetto
@@ -284,7 +298,9 @@ class Window_ItemCategoryW < Window_Category
   #--------------------------------------------------------------------------
   # * Metodo astratto per i dati
   #--------------------------------------------------------------------------
-  def default_data; categories; end
+  def default_data;
+    categories;
+  end
 end
 
 #==============================================================================
@@ -302,30 +318,37 @@ class Window_DropInfo < Window_DataInfo
   # noinspection RubyResolve
   #--------------------------------------------------------------------------
   def initialize(x, y, w, h)
-    @enemies = Bestiary.unlocked_enemies
+    @enemies = $game_party.known_enemies
     super(x, y, w, h)
     @pages = [:drops, :steals]
   end
+
   #--------------------------------------------------------------------------
   # * Disegna il contenuto delle informazioni a seconda della pagina
   #--------------------------------------------------------------------------
   def draw_content
     case selected_page
-      when :drops; draw_drops(0, contents.width)
-      when :steals; draw_steals(0,contents.width)
-      else #nothing
+    when :drops;
+      draw_drops(0, contents.width)
+    when :steals;
+      draw_steals(0, contents.width)
+    else #nothing
     end
   end
+
   #--------------------------------------------------------------------------
   # * Ottiene il nome della pagina
   #--------------------------------------------------------------------------
   def page_name(symbol)
     case symbol
-      when :drops; return ItemPedia::V_DROP
-      when :steals; return ItemPedia::V_STEAL
-      else #nothing
+    when :drops;
+      return ItemPedia::V_DROP
+    when :steals;
+      return ItemPedia::V_STEAL
+    else #nothing
     end
   end
+
   #--------------------------------------------------------------------------
   # * disegna i drop
   #--------------------------------------------------------------------------
@@ -333,11 +356,12 @@ class Window_DropInfo < Window_DataInfo
     droplist = get_drop_list
     y = line_height
     return if droplist.size == 0
-    (0..droplist.size-1).each {|i|
-      draw_drop(x, y + (line_height*i), width, droplist[i])
+    (0..droplist.size - 1).each do |i|
+      draw_drop(x, y + (line_height * i), width, droplist[i])
       break if i >= max_lines
-    }
+    end
   end
+
   #--------------------------------------------------------------------------
   # * disegna dove può essere rubato
   #--------------------------------------------------------------------------
@@ -345,88 +369,74 @@ class Window_DropInfo < Window_DataInfo
     steallist = get_steal_list
     y = line_height
     return if steallist.size == 0
-    (0..steallist.size-1).each {|i|
-      draw_drop(x, y + (line_height*i), width, steallist[i])
+    (0..steallist.size - 1).each do |i|
+      draw_drop(x, y + (line_height * i), width, steallist[i])
       break if i >= max_lines
-    }
+    end
   end
-  #--------------------------------------------------------------------------
-  # * disegna il drop
+
+  # disegna il drop
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
   # @param [EnemyDrop] drop
-  #--------------------------------------------------------------------------
   def draw_drop(x, y, width, drop)
+    change_color normal_color
     draw_bg_rect(x, y, width, line_height)
     draw_enemy(x, y, width, drop.enemy)
     draw_text(x, y, width, line_height, sprintf('%10.2f%%', drop.probability), 2)
   end
-  #--------------------------------------------------------------------------
-  # * disegna il nemico
+
+  # disegna il nemico
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
   # @param [RPG::Enemy] enemy
-  #--------------------------------------------------------------------------
   def draw_enemy(x, y, width, enemy)
     draw_text(x, y, width, line_height, enemy.name)
   end
-  #--------------------------------------------------------------------------
-  # * ottiene la lista dei nemici che possono droppare l'oggetto
+
+  # ottiene la lista dei nemici che possono droppare l'oggetto
   # @return [Array<EnemyDrop>]
-  #--------------------------------------------------------------------------
   def get_drop_list
     drops = []
-    @enemies.each {|enemy|
-      drops.push(get_drop(enemy)) if enemy.drops_item?(item)
+    @enemies.each { |enemy|
+      drops.push(item_drop(enemy)) if enemy.drops_item?(item)
     }
-    drops.sort{|b,a| a.probability <=> b.probability }
+    drops.sort { |b, a| a.probability <=> b.probability }
   end
-  #--------------------------------------------------------------------------
-  # * restituisce la lista dei nemici a cui puoi rubare l'oggetto
+
+  # restituisce la lista dei nemici a cui puoi rubare l'oggetto
   # @return [Array<EnemyDrop>]
-  #--------------------------------------------------------------------------
   def get_steal_list
     steals = []
-    @enemies.each {|enemy|
-      steals.push(get_steals(enemy)) if enemy.can_steal_item?(item)
+    @enemies.each { |enemy|
+      steals.push(item_steal(enemy)) if enemy.can_steal_item?(item)
     }
-    steals.sort{|b,a| a.probability <=> b.probability }
+    steals.sort { |b, a| a.probability <=> b.probability }
   end
-  #--------------------------------------------------------------------------
-  # * restituisce la probabilità di rubare del nemico
+
+  # restituisce il drop nemico
   # @param [RPG::Enemy] enemy
   # @return [EnemyDrop]
-  #--------------------------------------------------------------------------
-  def get_steals(enemy)
-    steals = Bestiary.obtain_steals(enemy)
-    item_drop(enemy, steals)
-  end
-  #--------------------------------------------------------------------------
-  # * restituisce la probabilità di drop del nemico
-  # @return [EnemyDrop]
-  #--------------------------------------------------------------------------
-  def get_drop(enemy)
-    drops = Bestiary.obtain_drops(enemy)
-    item_drop(enemy, drops)
-  end
-  #--------------------------------------------------------------------------
-  # * restituisce il drop nemico
-  # @param [RPG::Enemy] enemy
-  # @param [Array<ItemDrop>] drops
-  # @return [EnemyDrop]
-  #--------------------------------------------------------------------------
-  def item_drop(enemy, drops)
-    item_array = drops.select{ |drop| drop.item == item }
-    prob = 0
-    item_array.each do |drop|
-      prob += drop.probability
-    end
+  def item_drop(enemy)
+    item_array = enemy.drop_items.select { |drop| drop.item == item }
+    prob = item_array.inject(0) { |v, d| v + d.drop_percentage }
     EnemyDrop.new(enemy, prob)
   end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
-  def item; @item; end
+
+  # restituisce l'enemyDrop del comando ruba
+  # @param [RPG::Enemy] enemy
+  # @return [EnemyDrop]
+  def item_steal(enemy)
+    item_array = enemy.steals.select { |steal| steal.item == item }
+    prob = item_array.inject(0) { |v, d| v + d.probability }
+    EnemyDrop.new(enemy, prob)
+  end
+
+  # restituisce l'oggetto selezionato
+  # @return [RPG::Item]
+  def item;
+    @item;
+  end
 end

@@ -88,3 +88,54 @@ module Spark_Engine
     @spark_active = false
   end
 end #spark engine
+
+#===============================================================================
+# ** Sprite_Spark
+#-------------------------------------------------------------------------------
+# Sottoclasse di Sprite, sono le scintille che escono da un altro sprite
+#===============================================================================
+class Sprite_Spark < Sprite
+  #--------------------------------------------------------------------------
+  # * Variabili d'istanza pubbliche
+  #--------------------------------------------------------------------------
+  attr_accessor :vector_x #vettore X
+  attr_accessor :vector_y #vettore Y
+  #--------------------------------------------------------------------------
+  # * Inizializzazione
+  #--------------------------------------------------------------------------
+  def initialize(viewport = nil)
+    super(viewport)
+    self.ox = self.width/2
+    self.oy = self.height/2
+    self.flash(Color.new(255,255,255),10)
+  end
+  #--------------------------------------------------------------------------
+  # * Restituisce se è una scintilla
+  #--------------------------------------------------------------------------
+  def is_spark?; true; end
+  #--------------------------------------------------------------------------
+  # * Aggiornamento
+  #--------------------------------------------------------------------------
+  def update
+    super
+    self.opacity -= 8
+    update_direction
+  end
+  #--------------------------------------------------------------------------
+  # * Aggiornamento della direzione
+  #--------------------------------------------------------------------------
+  def update_direction
+    return if @dir_x.nil? || @dir_y.nil?
+    self.x += @dir_x/4
+    self.y += @dir_y/4
+  end
+  #--------------------------------------------------------------------------
+  # * Imposta la direzione
+  #   x: vettore X
+  #   y: vettore Y
+  #--------------------------------------------------------------------------
+  def set_direction(x, y)
+    @dir_x = x
+    @dir_y = y
+  end
+end #sprite spark

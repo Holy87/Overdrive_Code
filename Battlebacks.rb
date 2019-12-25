@@ -1,5 +1,3 @@
-require File.expand_path 'rm_vx_data'
-
 
 module H87_BattleBackground
   module_function
@@ -540,8 +538,8 @@ end #cache
 # Classe che gestisce i frame animati del campo di battaglia
 #===============================================================================
 class Animated_Sprite
-  # @attr [Picture] picture
-  # @attr [Array<String>] bitmaps
+  # @return [Picture] picture
+  # @return [Array<String>] bitmaps
   attr_reader :picture_name   # => Nome della picture
   attr_accessor :picture      # => Oggetto immagine (Sprite o Plane)
   attr_accessor :type         # => Tipo immagine (:sprite o :plane)

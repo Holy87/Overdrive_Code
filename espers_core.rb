@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 # Esper System di Holy87
 # Difficoltà utente: ★★★★
 # Versione 1.0
@@ -61,9 +59,9 @@ module Espers
   #--------------------------------------------------------------------------
                 #ID   var attacca? ricarica turni solo 1 a batt
   Esper_List = {18 => [106, true,    9,      14,   true],#Cerbero
+                17 => [109, true,    7,      15,   true],#Nymeria 15
                 19 => [107,false,   17,      10,   true],#Miyu
                 20 => [108,false,   11,      15,   true],#Kon
-                17 => [109, true,    7,      15,   true],#Nymeria 15
                 21 => [110, true,   12,      18,   true],#Thartaros
                 22 => [111, true,   12,      12,   true],#Volcan
                 23 => [112, true,    9,      19,   true],#Rakurai
@@ -114,6 +112,7 @@ module Espers
   def self.incrementa
     Esper_List.each_key do |id|
       esper = $game_actors[id]
+      next if esper.nil?
       next unless esper.domination?
       esper.battle_add_recharge
     end
@@ -1014,7 +1013,6 @@ class Scene_Battle < Scene_Base
       DF.print("incluso")
       $scene.spriteset.set_action(true, actor.index, "Torna_Demone")
     end
-    re_adjust_sw(true)
     begin
       $game_temp.status_window_refresh = true
       $game_party.members.each {|member|

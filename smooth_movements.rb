@@ -1,4 +1,3 @@
-require File.expand_path('rm_vx_data')
 =begin
  ==============================================================================
   ■ Movimenti fluidi di Holy87
@@ -128,6 +127,12 @@ module Smooth_Movements
   #--------------------------------------------------------------------------
   def move_end?
     @move_end || !@start_move
+  end
+
+  # determina se si sta muovendo
+  # @return [Boolean]
+  def moving?
+    !@start_move
   end
 end #modulo smooth
 
