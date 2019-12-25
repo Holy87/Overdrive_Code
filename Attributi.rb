@@ -1,130 +1,137 @@
-#==============================================================================
-# ** ATTRIBUTI AGGIUNTIVI di Holy87
-# -----------------------------------------------------------------------------
-# Descrizione:
-# Questo script i serve per aggiungere effetti speciali ad armi, skill e stati.
-# BARRA FURIA: Gli eroi che non hanno MP avranno la barra Furia.
-# -----------------------------------------------------------------------------
-# Codici:
-#▼ EVOCAZIONI
-# ● <evoca: x> evoca l'eroe x
-# ● <bonus evocazione: +x%> aumenta la durata delle evocazioni del x percento
-# ● <ricarica esper> solo per le evocazioni, l'evocazione dura più a lungo
-# quando subisce danni
-# ● <vlink> sullo status usato come boost della dominazione: prende il 25% dei
-# danni dell'evocatore
-# ● <bonus ricarica: x%> la ricarica della dominazione impiega -x% battaglie
-# ● <salva dominazione> se muore la dominazione non si dovrà aspettare il doppio
-# delle battaglie
-#▼ UTILITY ESPLORAZIONE
-# ● <virile> ha virilità (sposta i blocchi più velocemente)
-# ● <artificiere> disattiva le trappole
-# ● <scassinatore> scassina le serrature
-# ● <carisma: +x%> sconto sugli oggetti del x%
-# ● <salto lungo> se un eroe con questo tag è nel gruppo, si può saltare più
-# lontano.
-# ● <oggetto bonus: x%> x% di probabilità di creare un oggetto bonus nelle
-# trasmutazioni
-#▼ SINERGIA
-# ● <incentivo: +x> comincia la barra sinergia con x quantità piena (1000 max)
-# ● <durata sinergia: +x%> incrementa la durata della sinergia del x%
-# ● <bonus sinergia: x%> la sinergia si carica più velocemente del x%
-# ● <sinergia: x> l'abilità carica x sinergia invece del valore di default
-#▼ FURIA
-# ● <ira: +/-x> aumenta o diminuisce l'ira che si ottiene attaccando
-# ● <ira max: +/-x> aumenta o diminuisce l'ira massima
-# ● <ira iniziale: +/-x> aumenta o diminuisce l'ira iniziale
-# ● <incremento ira: +/-x> l'abilità incrementa l'ira di x
-# ● <danno ira> l'ira aumenta anche se si viene colpiti
-# ● <ira kill: x> Aumenta l'ira di x quando uccidi un nemico
-# ● <mantieni ira: +/-x> l'ira si scarica di meno camminando
-# ● <ira turno: +/-x> Aggiunge o rimuove Ira ad ogni turno.
-# ● <usa furia> APPLICABILE SUL NEMICO: utilizza la Furia
-#▼ QUALITÀ
-# ● <difensore> chi ha questo status subisce il 20% dei danni di un alleato
-# ● <vlink> l'evocazione con questo status prende il 15% dei danni degli alleati
-# ● <salva oggetto: x%> x% di probabilità di non consumare l'oggetto
-# ● <taumaturgia> le skill con questo tag possono essere usate anche dal menu
-# se l'eroe ha uno stato con questo tag
-# ● <ritmo> quando si canta consecutivamente 3 canzoni o più, la velocità
-# viene incrementata del 50%. Scompare se si fanno altre azioni
-# (la skill deve avere il tag <tipo: Canto>)
-# ● <ultima chance> per una volta nella battaglia, se subisce un colpo mortale
-# l'eroe resta con 1PV invece di morire.
-#▼ PARAMETRI
-# ● <attacco magico: x%> l'attacco diventa una magia con il x% dello spirito. Tieni
-# conto che nel caso degli eroi solo se l'arma principale ha attacco magico, usa
-# quello. Per status ed altri equipaggiamenti, non viene applicato.
-# ● <dona x: y%> dona il parametro x dell'y%, solo status
-# ● <pv vittoria: x%> cura il X% di pv alla vittoria
-# ● <pm vittoria: x%> cura il X% di pm alla vittoria
-# ● <rifletti fis: x%> riflette x% di danno fisico
-# ● <controstato: x> aggiunge status x al nemico quando vieni colpito da un attacco
-# ● <mastery x: +y% z> il parametro z aumenta dell'y% quando possiede l'equip di
-# tipo x
-# ● <vampiro x%>: assorbe il x% dei danni curandosi
-# ● <danno stato x: y%> y% di probabilità di attivare lo stato x quando si
-# subisce un danno
-# ● <attacco stato x: y%> y% di probabilità di attivare lo stato x quando si
-# attacca il nemico
-# ● <bonus party x: +y%> il parametro x del gruppo aumenta del y% se l'eroe con
-# questo tag è presente in battaglia. x: atk, def, spi, agi, cri, eva, hit
-# ● <costo mp: +/-x%> il costo delle abilità viene modificato del x%
-# ● <costo x: +/-y%>  il costo dell'abilità di tipo x viene modificato del x%>
-# ● <rate magico: +/-x%> aumenta o diminuisce il danno magico ricevuto
-# ● <difesa magica: +/-x%> l'inverso del rate magico
-# ● <danno magico: +/-x%> Danno magico inflitto
-# ● <danno fisico: +/-x%> Danno fisico inflitto
-# ● <difesa critici: +/-x%> aumenta o diminuisce le probabilità di subire
-#   danni critici dell'x% (NON FUNZIONA)
-# ● <mod danno: +/-x%> aumenta o diminuisce il danno ricevuto in percentuale.
-# ● <cura: +/-x%> aumenta o diminuisce la quantità di cure subite
-# ● <danno critico: +/-x%> aumenta o diminuisce il danno degli attacchi critici
-# ● <incrementa x: +/-y> aumenta il parametro x di y per la durata della battaglia
-# ● <nome guardia: x> cambia il nome del comando Difendi
-# ● <nome attacca: x> cambia il nome del comando Attacca
-# ● <rune> tutte le magie che danneggiano/curano HP si trasformano in cura MP
-# ● <barriera: x%> il x% dei danni viene assorbito da una barriera (consuma PM)
-# ● <spirattacco: x%> aggiunge all'attacco il x% del proprio spirito
-# ● <spiridifesa: x%> aggiunge alla difesa il x% del proprio spirito
-# ● <spirivelocità: x%> aggiunge alla difesa il x% del proprio spirito
-# ● <x% hp difesa> gli HP vengono curati del x% quando ci si difende
-# ● <x% mp difesa> uguale ma con gli MP
-# ● <x% furia difesa> uguale ma con la Furia
-# ● <x mp attacco> guadagna x MP colpendo i nemici con l'attacco
-# ● <max assimilate: +x> aumenta le abilità assimilabili di x
-# ● <assimilate rounds: +x> aumenta il numero di utilizzi delle abilità assimilate
-# ● <ranged> l'arma/skill è a distanza
-# ● <autoscan> su equip e stati: mostra ulteriori informazioni puntando i nemici
-# ▼ STATUS
-# ● <status attacco: x> aggiunge lo status X all'attacco
-# ● <status rimosso: x> rimuove lo status X all'attacco
-# ● <buff> o <debuff> per impostare uno status positivo o negativo.
-# ● <bonus stati: +/-x> aumenta la potenza di riuscita dello status di x
-# ● <bonus stati: +/-x%> aumenta la potenza di riuscita dello status del x%
-# ● <durata stati inflitti: +/-x> aumenta la durata degli status che l'eroe
-# ● <durata fissa> non viene influenzato da bonus/malus durata stati
-#   infligge ad alleati o nemici (in turni).
-# ● <durata buff: +/-x> modifica la durata dei buff acquisiti (in turni)
-# ● <durata debuff: +/-x> modifica la durata dei debuff acquisiti (in turni)
-# ● <blocca ultima skill> applicato allo status, blocca l'ultima skill usata
-# ▼ POTERI E OGGETTI
-# ● <h+x> l'help aggiunge x
-# ● <virale> lo status è virale e viene trasmesso.
-# ● <spiritolite> l'oggetto è una spiritolite
-# ● <rimuovi stato: x> rimuove lo stato x, ma non funziona ancora
-# ● <bombifica> status che fa esplodere il nemico alla morte
-# ● <odio tank: +/-x> aumenta o diminuisce l'odio del tank.
-# Il tank in gruppo è Francesco, se assente è Larsa, altrimenti Maria Rosaria.
-# Infine Michele.
-# ● <sk_type: x> assegna il tipo di abilità (per il costo)
-# ● <troop: x> l'oggetto è un gruppo di mostri in uno scrigno.
-# ● <jappo: x> ha un nome giapponese. Per le skill di Ryusei.
-# ● <ranged> l'oggetto o l'abilità è a distanza
-# ● <ruba buff> l'abilità ruba tutti gli status (positivi e negativi)
-# ● <reset cumuled damage> azzera il danno accumulato
-# ● <assimilate> è un'abilità che può assimilare le altre abilità
-# ● <mp damage: x%> dannegia anche i PM del x% del danno PV
+# ==============================================================================
+#  ** ATTRIBUTI AGGIUNTIVI di Holy87
+#  -----------------------------------------------------------------------------
+#  Descrizione:
+#  Questo script i serve per aggiungere effetti speciali ad armi, skill e stati.
+#  BARRA FURIA: Gli eroi che non hanno MP avranno la barra Furia.
+#  -----------------------------------------------------------------------------
+#  Codici:
+# ▼ EVOCAZIONI
+#  ● <evoca: x> evoca l'eroe x
+#  ● <bonus evocazione: +x%> aumenta la durata delle evocazioni del x percento
+#  ● <ricarica esper> solo per le evocazioni, l'evocazione dura più a lungo
+#  quando subisce danni
+#  ● <vlink> sullo status usato come boost della dominazione: prende il 25% dei
+#  danni dell'evocatore
+#  ● <bonus ricarica: x%> la ricarica della dominazione impiega -x% battaglie
+#  ● <salva dominazione> se muore la dominazione non si dovrà aspettare il doppio
+#  delle battaglie
+# ▼ UTILITY ESPLORAZIONE
+#  ● <virile> ha virilità (sposta i blocchi più velocemente)
+#  ● <artificiere> disattiva le trappole
+#  ● <scassinatore> scassina le serrature
+#  ● <carisma: +x%> sconto sugli oggetti del x%
+#  ● <salto lungo> se un eroe con questo tag è nel gruppo, si può saltare più
+#  lontano.
+#  ● <oggetto bonus: x%> x% di probabilità di creare un oggetto bonus nelle
+#  trasmutazioni
+# ▼ SINERGIA
+#  ● <incentivo: +x> comincia la barra sinergia con x quantità piena (1000 max)
+#  ● <durata sinergia: +x%> incrementa la durata della sinergia del x%
+#  ● <bonus sinergia: x%> la sinergia si carica più velocemente del x%
+#  ● <sinergia: x> l'abilità carica x sinergia invece del valore di default
+# ▼ FURIA
+#  ● <ira: +/-x> aumenta o diminuisce l'ira che si ottiene attaccando
+#  ● <ira max: +/-x> aumenta o diminuisce l'ira massima
+#  ● <ira iniziale: +/-x> aumenta o diminuisce l'ira iniziale
+#  ● <incremento ira: +/-x> l'abilità incrementa l'ira di x
+#  ● <danno ira> l'ira aumenta anche se si viene colpiti
+#  ● <ira kill: x> Aumenta l'ira di x quando uccidi un nemico
+#  ● <mantieni ira: +/-x> l'ira si scarica di meno camminando
+#  ● <ira turno: +/-x> Aggiunge o rimuove Ira ad ogni turno.
+#  ● <usa furia> APPLICABILE SUL NEMICO: utilizza la Furia
+# ▼ QUALITÀ
+#  ● <difensore> chi ha questo status subisce il 20% dei danni di un alleato
+#  ● <vlink> l'evocazione con questo status prende il 15% dei danni degli alleati
+#  ● <salva oggetto: x%> x% di probabilità di non consumare l'oggetto
+#  ● <taumaturgia> le skill con questo tag possono essere usate anche dal menu
+#  se l'eroe ha uno stato con questo tag
+#  ● <ritmo> quando si canta consecutivamente 3 canzoni o più, la velocità
+#  viene incrementata del 50%. Scompare se si fanno altre azioni
+#  (la skill deve avere il tag <tipo: Canto>)
+#  ● <ultima chance> per una volta nella battaglia, se subisce un colpo mortale
+#  l'eroe resta con 1PV invece di morire.
+#  ● <boss type> applicabile su un nemico, lo identifica come boss. Ci sono alcune
+#    variazioni per i boss, come la carica della Sinergia più lunga, gli status
+#    come Veleno che durano un numero limitato di turni e tolgono meno HP.
+#  ● <zombie> è un non morto! Le magie di guarigione gli causano danni.
+# ▼ PARAMETRI
+#  ● <attacco magico: x%> l'attacco diventa una magia con il x% dello spirito. Tieni
+#  conto che nel caso degli eroi solo se l'arma principale ha attacco magico, usa
+#  quello. Per status ed altri equipaggiamenti, non viene applicato.
+#  ● <dona x: y%> dona il parametro x dell'y%, solo status
+#  ● <pv vittoria: x%> cura il X% di pv alla vittoria
+#  ● <pm vittoria: x%> cura il X% di pm alla vittoria
+#  ● <rifletti fis: x%> riflette x% di danno fisico
+#  ● <controstato: x> aggiunge status x al nemico quando vieni colpito da un attacco
+#  ● <mastery x: +y% z> il parametro z aumenta dell'y% quando possiede l'equip di
+#  tipo x
+#  ● <vampiro x%>: assorbe il x% dei danni curandosi
+#  ● <danno stato x: y%> y% di probabilità di attivare lo stato x quando si
+#  subisce un danno
+#  ● <attacco stato x: y%> y% di probabilità di attivare lo stato x quando si
+#  attacca il nemico
+#  ● <bonus party x: +y%> il parametro x del gruppo aumenta del y% se l'eroe con
+#  questo tag è presente in battaglia. x: atk, def, spi, agi, cri, eva, hit
+#  ● <costo mp: +/-x%> il costo delle abilità viene modificato del x%
+#  ● <costo x: +/-y%>  il costo dell'abilità di tipo x viene modificato del x%>
+#  ● <rate magico: +/-x%> aumenta o diminuisce il danno magico ricevuto
+#  ● <difesa magica: +/-x%> l'inverso del rate magico
+#  ● <danno magico: +/-x%> Danno magico inflitto
+#  ● <danno fisico: +/-x%> Danno fisico inflitto
+#  ● <difesa critici: +/-x%> aumenta o diminuisce le probabilità di subire
+#    danni critici dell'x% (NON FUNZIONA)
+#  ● <mod danno: +/-x%> aumenta o diminuisce il danno ricevuto in percentuale.
+#  ● <cura: +/-x%> aumenta o diminuisce la quantità di cure subite
+#  ● <danno critico: +/-x%> aumenta o diminuisce il danno degli attacchi critici
+#  ● <incrementa x: +/-y> aumenta il parametro x di y per la durata della battaglia
+#  ● <nome guardia: x> cambia il nome del comando Difendi
+#  ● <nome attacca: x> cambia il nome del comando Attacca
+#  ● <rune> tutte le magie che danneggiano/curano HP si trasformano in cura MP
+#  ● <barriera: x%> il x% dei danni viene assorbito da una barriera (consuma PM)
+#  ● <spirattacco: x%> aggiunge all'attacco il x% del proprio spirito
+#  ● <spiridifesa: x%> aggiunge alla difesa il x% del proprio spirito
+#  ● <spirivelocità: x%> aggiunge alla difesa il x% del proprio spirito
+#  ● <x% hp difesa> gli HP vengono curati del x% quando ci si difende
+#  ● <x% mp difesa> uguale ma con gli MP
+#  ● <x% furia difesa> uguale ma con la Furia
+#  ● <x mp attacco> guadagna x MP colpendo i nemici con l'attacco
+#  ● <max assimilate: +x> aumenta le abilità assimilabili di x
+#  ● <assimilate rounds: +x> aumenta il numero di utilizzi delle abilità assimilate
+#  ● <ranged> l'arma/skill è a distanza
+#  ● <autoscan> su equip e stati: mostra ulteriori informazioni puntando i nemici
+#  ▼ STATUS
+#  ● <status attacco: x> aggiunge lo status X all'attacco
+#  ● <status rimosso: x> rimuove lo status X all'attacco
+#  ● <buff> o <debuff> per impostare uno status positivo o negativo.
+#  ● <slip x% damage> danno progressivo del x% dei danni che ha causato
+#  ● l'abilità utilizzata per applicare lo status
+#  ● <bonus stati: +/-x> aumenta la potenza di riuscita dello status di x
+#  ● <bonus stati: +/-x%> aumenta la potenza di riuscita dello status del x%
+#  ● <durata stati inflitti: +/-x> aumenta la durata degli status che l'eroe
+#  ● <durata fissa> non viene influenzato da bonus/malus durata stati
+#    infligge ad alleati o nemici (in turni).
+#  ● <durata buff: +/-x> modifica la durata dei buff acquisiti (in turni)
+#  ● <durata debuff: +/-x> modifica la durata dei debuff acquisiti (in turni)
+#  ● <blocca ultima skill> applicato allo status, blocca l'ultima skill usata
+#  ▼ POTERI E OGGETTI
+#  ● <h+x> l'help aggiunge x
+#  ● <virale> lo status è virale e viene trasmesso.
+#  ● <spirit stone> l'oggetto è una spirit stone
+#  ● <rimuovi stato: x> rimuove lo stato x, ma non funziona ancora
+#  ● <bombifica> status che fa esplodere il nemico alla morte
+#  ● <odio tank: +/-x> aumenta o diminuisce l'odio del tank.
+#     Il tank in gruppo è Francesco, se assente è Luisa, altrimenti Maria Rosaria.
+#     Infine Michele.
+#  ● <sk_type: x> assegna il tipo di abilità (per il costo)
+#  ● <troop: x> l'oggetto è un gruppo di mostri in uno scrigno.
+#  ● <jappo: x> ha un nome giapponese. Per le skill di Ryusei.
+#  ● <ranged> l'oggetto o l'abilità è a distanza
+#  ● <ruba buff> l'abilità ruba tutti gli status (positivi e negativi)
+#  ● <reset cumuled damage> azzera il danno accumulato
+#  ● <assimilate> è un'abilità che può assimilare le altre abilità
+#  ● <mp damage: x%> dannegia anche i PM del x% del danno PV
+#  ● <switchable> l'abilità o l'oggetto può essere lanciato su nemici o alleati
 #==============================================================================
 
 module H87AttrSettings
@@ -139,6 +146,7 @@ module H87AttrSettings
   VLINK_RATE = 0.15
   GUARD_HP_HEAL_ANIMATION_ID = 324
   GUARD_MP_HEAL_ANIMATION_ID = 469
+  BOSS_SLIP_DIVISOR = 10 # divisore danni da veleno se è un boss
   BARRIER_MP_CONSUME = 0.1 # percentuale di consumo della barriera ai danni
   # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
   # quindi se assorbe un danno di 100, consuma 20MP
@@ -164,11 +172,10 @@ module ExtraAttr
   SCASSINATE = /<(?:SCASSINATORE|scassinatore)>/i
   CHARM = /<(?:CARISMA|carisma):[ ]*([+\-]\d+)>/i
   DEFENDER = /<(?:DIFENSORE|difensore)>/i
-  SIN_INCR = /<(?:SINERGIA|sinergia):[ ]*(\d+)>/i
   STATE_DMG = /<(?:DANNO_STATO|danno stato)[ ]*(\d+):[ ]*(\d+)([%％])>/i
   STATE_HIT = /<(?:ATTACCO_STATO|attacco stato)[ ]*(\d+):[ ]*(\d+)([%％])>/i
-  EVOCATION = /<(?:EVOCA|evoca):[ ]*(\d+)>/i
-  ESPER_REC = /<(?:RICARICA_ESPER|ricarica esper)>/i
+  EVOCATION = /<(?:EVOCA|evoca):[ ]*(\d+)>/i #TODO: spostarlo in espers core
+  ESPER_REC = /<(?:RICARICA_ESPER|ricarica esper)>/i #TODO: spostarlo in espers core
   ITEM_SAVE = /<salva oggetto:[ ]*(\d+)([%％])>/i
   FAST_READY = /<(?:BONUS_RICARICA|bonus ricarica):[ ]*(\d+)([%％])>/i
   SAVE_DOMI = /<(?:SALVA_DOMINAZIONE|salva dominazione):[ ]*(\d+)>/i
@@ -188,7 +195,7 @@ module ExtraAttr
   VIRAL = /<virale>/i
   HEAL_RATE = /<cura:[ ]*([+\-]\d+)[%％]>/i
   BOMBER = /<bombifica>/i
-  SPIRITOL = /<spiritolite>/i
+  SPIRITOL = /<spirit stone>/i
   REM_STATE = /<rimuovi stato:[ ]+(\d+)>/i
   PHI_DAMG = /<danno fisico:[ ]*([+\-]\d+)([%％])>/i
   MAG_RATE = /<rate magico:[ ]*([+\-]\d+)([%％])>/i
@@ -271,7 +278,11 @@ module ExtraAttr
   MAX_ASSIMILABLE = /<max assimilate: ([+\-]\d+)>/i
   ASSIMILATE_ROUNDS = /<assimilate rounds: ([+\-]\d+)>/i
   SKILL_MP_DAMAGE_PER = /<mp damage:[ ]*(\d+)([%％])>/i
+  SLIP_DAMAGE_PER = /<slip (\d+)([%％]) damage>/i
   USE_ANGER = /<usa furia>/i
+  BOSS_TYPE = /<boss type>/i
+  SWITCHABLE = /<switchable>/i
+  AVOID_SELF = /<avoid self>/i
   # Variabili di istanza pubblici
   attr_reader :dom_bonus # bonus dominazioni
   attr_reader :viril # stato virile
@@ -463,6 +474,8 @@ module ExtraAttr
     @rune = false
     @fixed_duration = false
     @max_assimilable = 0
+    @slip_damage_per = 0
+    @boss_type = false
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help
         if row =~ HELP_END
@@ -665,6 +678,10 @@ module ExtraAttr
         @max_assimilable = $1.to_i
       when USE_ANGER
         @use_anger = true
+      when SLIP_DAMAGE_PER
+        @slip_damage_per = $1.to_f / 100.0
+      when BOSS_TYPE
+        @boss_type = true
       else
         #nothing
       end
@@ -674,6 +691,7 @@ module ExtraAttr
   # calcola il livello richiesto
   def default_level
     return 0 unless (self.is_a?(RPG::Weapon) or self.is_a?(RPG::Armor))
+    carica_cache_personale_class unless @tier
     (@tier - 1) * 10 + 5
   end
 
@@ -768,6 +786,8 @@ module RPG
   #==============================================================================
   class State
     attr_reader :description
+    attr_reader :slip_damage_per
+
     include ExtraAttr
     # True se lo status è un buff
     def buff?
@@ -789,6 +809,7 @@ module RPG
     attr_reader :description
     attr_reader :attack_attr
     attr_reader :use_anger
+    attr_reader :boss_type
     include ExtraAttr
 
     # restituisce l'attributo principale al danno
@@ -805,9 +826,8 @@ module RPG
   # Imposta gli attributi per le abilità
   #==============================================================================
   class UsableItem
-    attr_reader :syn_bonus #bonus sinergia (NON USATO)
     attr_reader :esper #esper evocato
-    attr_reader :spiritolite #spiritolite
+    attr_reader :spirit_stone #spirit_stone
     attr_reader :absorb_damage_party #assorbi danno e dona al gruppo
     attr_reader :anger_cost #costo ira
     attr_reader :anger_rate #carica ira
@@ -826,11 +846,10 @@ module RPG
     def load_extra_attr
       return if @cache_caricata_attr
       @cache_caricata_attr = true
-      @syn_bonus = 0
       @esper = 0
       @absorb_damage_party = false
       @anger_cost = 0
-      @spiritolite = false
+      @spirit_stone = false
       @ok_with_taumaturgic = false
       @anger_rate = 0
       @max_number = 99
@@ -851,17 +870,16 @@ module RPG
       @reset_damage = false
       @assimilate = false
       @assimilable = false
+      @switchable = false
       @mp_damage_per = 0
       self.note.split(/[\r\n]+/).each { |riga|
         case riga
-        when ExtraAttr::SIN_INCR
-          @syn_bonus = $1.to_i
         when ExtraAttr::EVOCATION
           @esper = $1.to_i
         when ExtraAttr::TAUMATURG
           @ok_with_taumaturgic = true
         when ExtraAttr::SPIRITOL
-          @spiritolite = true
+          @spirit_stone = true
         when ExtraAttr::PARTY_ABS
           @absorb_damage_party = true
         when ExtraAttr::ANGER_COST
@@ -908,6 +926,8 @@ module RPG
           @assimilate = true
         when ExtraAttr::SKILL_MP_DAMAGE_PER
           @mp_damage_per = $1.to_f / 100.0
+        when ExtraAttr::SWITCHABLE
+          @switchable = true
         else
           nil
         end
@@ -1034,6 +1054,11 @@ module RPG
     def is_placeholder?
       false
     end
+
+    # determina se è assimilazione (sempre falso per gli oggetti)
+    def assimilate?
+      false
+    end
   end
 end
 #==============================================================================
@@ -1051,36 +1076,30 @@ class MasteryInfo
   end
 end
 
-#==============================================================================
-# ** Scene_Title
-#---------------------------------------------------------------------------
-# Aggiunta del caricamento degli attributi
-#==============================================================================
-class Scene_Title < Scene_Base
-  # Alias di load_database
-  alias attr_agg_load_database load_database unless $@
+module DataManager
+  class << self
+    alias attr_load_normal_database load_normal_database
+    alias attr_load_battle_test_database load_battle_test_database
+  end
 
-  def load_database
-    attr_agg_load_database
+  def self.load_normal_database
+    attr_load_normal_database
     check_extra_attributes
   end
 
-  # Alias di load_battle_test_database
-  alias attr_load_battle_test_database load_bt_database unless $@
-
-  def load_bt_database
+  def self.load_battle_test_database
     attr_load_battle_test_database
     check_extra_attributes
   end
 
   # Carica i dati degli oggetti
   # collection: collezione di oggetti
-  def parse_bm_data(collection)
+  def self.parse_bm_data(collection)
     collection.each { |obj| next if obj.nil?; obj.load_extra_attr }
   end
 
   # Carica gli attributi extra
-  def check_extra_attributes
+  def self.check_extra_attributes
     parse_bm_data($data_skills)
     parse_bm_data($data_items)
     parse_bm_data($data_weapons)
@@ -1088,7 +1107,7 @@ class Scene_Title < Scene_Base
     parse_bm_data($data_states)
     parse_bm_data($data_enemies)
   end
-end #scene_title
+end
 
 #==============================================================================
 # ** Game_Battler
@@ -1111,10 +1130,13 @@ class Game_Battler
     alias h87attr_item_test item_test
     alias h87_attr_state_prob state_probability
     alias h87status_as add_state
+    alias h87status_rs remove_state
     alias h87hp hp
     alias h87attr_hp hp=
     alias h87attr_apply_state_changes apply_state_changes
     alias h87attr_element_set element_set
+    alias h87attr_slip_damage_effect slip_damage_effect
+    alias h87attr_skill_can_use skill_can_use?
   end
 
   # @return [Integer] ammontare dell'ultimo attacco ricevuto
@@ -1177,7 +1199,7 @@ class Game_Battler
   end
 
   def features_sum_with_param(feature_name, param)
-    features.inject(0.0) {|s, ft| s + ft.send(feature_name, param)}
+    features.compact.inject(0.0) {|s, ft| s + ft.send(feature_name, param)}
   end
 
   # Restituisce un valore da un array
@@ -1215,6 +1237,25 @@ class Game_Battler
   # Resetta i parametri (dopo la fine della battaglia)
   def reset_params
     @increased_params = {}
+  end
+
+  def custom_slip_damages
+    @slip_damages ||= {}
+  end
+
+  # @param [RPG::State] state
+  def apply_custom_slip_damage(state)
+    return if state.slip_damage_per <= 0
+    @slip_damages ||= {}
+    damage = (@hp_damage * state.slip_damage_per).to_i
+    if @slip_damages[state.id].nil? || @slip_damages[state.id] < damage
+      @slip_damages[state.id] = damage
+    end
+  end
+
+  def remove_slip_damage(state_id)
+    @slip_damages ||= {}
+    @slip_damages.delete(state_id)
   end
 
   # modifica del valore critico
@@ -1452,6 +1493,10 @@ class Game_Battler
     has_feature? :block_last_skill
   end
 
+  def boss_type?
+    false
+  end
+
   # Nuova formula
   def run_cdf(user, obj, formula)
     @ignore_mpd = false
@@ -1477,6 +1522,11 @@ class Game_Battler
   def skill_effect(user, skill)
     @bomb = bombified?
     h87attr_skill_effect(user, skill)
+  end
+
+  def custom_slip_damage_sum
+    @slip_damages ||= {}
+    @slip_damages.values.inject(0){|i, d| i + d}
   end
 
   # Aggiungo controlli all'attacco
@@ -1547,6 +1597,7 @@ class Game_Battler
       $game_party.tank.gain_aggro(obj.tank_odd) if obj.tank_odd > 0
       apply_debuff_change(user) if obj.debuff_pass
       user.cumuled_damage = 0 if obj.reset_damage
+      apply_assimilate_effect(user, obj)
     end
     if damaged?
       apply_barrier_protection
@@ -1555,7 +1606,6 @@ class Game_Battler
       self.cumuled_damage += @hp_damage
       damage_states(obj)
       hit_states(user, obj)
-      apply_counter_states(user)
       apply_anger_change(user, obj)
       unless ranged
         apply_physical_reflect(user)
@@ -1587,17 +1637,16 @@ class Game_Battler
   # @param [RPG::Skill] skill
   def apply_assimilate_effect(user, skill)
     return unless skill.assimilate?
+    return unless $game_temp.in_battle
     skills = assimilable_skills.select {|skill| user.assimilable?(skill)}
     if skills.any?
       chosen_skill = skills.sample
-      if $game_temp.in_battle
-        text = sprintf(H87AttrSettings::ASSIMILATED_MESSAGE, user.name,
-                       chosen_skill.name, self.name)
-        $scene.push_popup(text, chosen_skill.icon_index)
-        user.assimilate(chosen_skill)
-      else
-        $scene.push_popup(H87AttrSettings::CANNOT_ASSIMILATE)
-      end
+      text = sprintf(H87AttrSettings::ASSIMILATED_MESSAGE, user.name,
+                     chosen_skill.name, self.name)
+      $scene.push_popup(text, chosen_skill.icon_index)
+      user.assimilate(chosen_skill)
+    else
+      $scene.push_popup(H87AttrSettings::CANNOT_ASSIMILATE)
     end
   end
 
@@ -1637,6 +1686,7 @@ class Game_Battler
       incr = obj.anger_rate
     end
     user.anger += incr
+    self.anger += anger_incr if anger_on_damage?
   end
 
   # applica il riflesso del danno fisico
@@ -1695,6 +1745,25 @@ class Game_Battler
     skill
   end
 
+  # determina se si può utilizzare l'abilità
+  # @param [RPG::Skill] skill
+  def skill_can_use?(skill)
+    return false if skill.can_tau? && !taumaturgic? && !$game_temp.in_battle
+    return false if charge_gauge? && calc_anger_cost(skill) > self.anger
+    return false if last_skill_blocked? && skill.id == @last_skill_used
+    h87attr_skill_can_use(skill)
+  end
+
+  # Restituisce il costo ira dell'abilità
+  # @param [RPG::Skill] skill
+  # @return [Integer]
+  def calc_anger_cost(skill)
+    return 0 unless charge_gauge?
+    cost = skill.anger_cost
+    cost /= 2 if half_mp_cost
+    (cost * self.mp_cost_rate).to_i
+  end
+
   # distrugge le barriere
   # noinspection RubyArgCount
   def remove_barriers
@@ -1708,6 +1777,52 @@ class Game_Battler
     }
     RPG::SE.new(H87AttrSettings::BARRIER_BREAK_SE).play if found
     found
+  end
+
+  # Controlla e attiva gli status che si attivano con l'attacco
+  def activate_hit_states
+    hit_states = get_hit_states_array
+    hit_states.each do |hit|
+      add_state(hit[0]) if hit[1] > rand
+    end
+  end
+
+  # Controlla e attiva gli status che si attivano con il danno
+  def activate_damage_states
+    damage_states = get_damage_states_array
+    damage_states.each do |damage|
+      add_state(damage[0]) if damage[1] > rand
+    end
+  end
+
+  # Ottiene l'array degli status attivabili con l'attacco
+  def get_hit_states_array
+    array = []
+    self.states.each { |state|
+      array.push([state.status_hit, state.status_hit_prob]) if state.status_hit > 0
+      array.push([state.id, 100]) if state.viral
+    }
+    if actor?
+      equips.each { |equip|
+        next if equip.nil?
+        array.push([equip.status_hit, equip.status_hit_prob]) if equip.status_hit > 0
+      }
+    end
+    array
+  end
+
+  # Ottiene l'array degli status attivabili con il danno
+  def get_damage_states_array
+    array = []
+    self.states.each { |state|
+      array.push([state.status_dmg, state.status_dmg_prob]) if state.status_dmg > 0
+      array.push([state.id, 100]) if state.viral
+    }
+    equips.each { |equip|
+      next if equip.nil?
+      array.push([equip.status_dmg, equip.status_dmg_prob]) if equip.status_dmg > 0
+    }
+    array
   end
 
   # Restituisce true se viene danneggiato
@@ -1803,13 +1918,9 @@ class Game_Battler
   end
 
   # restituisce l'array dei controstati
+  # @return [Array]
   def counter_states
-    states = []
-    self.states.each { |state|
-      next if state.nil?
-      states += state.counter_states
-    }
-    states
+    feature_array :counter_states
   end
 
   # Aggiunta effetto cura Ira
@@ -1898,12 +2009,38 @@ class Game_Battler
   end
 
   # aggiungi uno stato
+  # @param [Integer] state_id
+  # @param [RPG::Skill] skill
   def add_state(state_id, skill = nil)
     state = $data_states[state_id]
     return if state == nil # I dati sono invalidi?
     return if state_ignore?(state_id) # È uno stato da ignorare?
     h87status_as(state_id)
+    check_block_skill_message(state)
+    apply_custom_slip_damage(state)
     check_durability_bonus(state, skill)
+  end
+
+  def remove_state(state_id)
+    h87status_rs(state_id)
+    remove_slip_damage(state_id)
+  end
+
+  def slip_damage_effect
+    h87attr_slip_damage_effect
+    @hp_damage /= H87_Settings::BOSS_SLIP_DIVISOR if boss_type?
+    @hp_damage += apply_variance(custom_slip_damage_sum, 10)
+  end
+
+  # @param [RPG::State] state
+  def check_block_skill_message(state)
+    return unless state.block_last_skill
+    return if @last_skill_used.nil?
+    return if @last_skill_used == 0
+    message = '%s non può più usare %s!'
+    skill = $data_skills[@last_skill_used]
+    message = sprintf(message, self.name, skill.name)
+    SceneManager.scene.push_popup(message, state.icon_index)
   end
 
   # Controlla il bonus durata
@@ -2065,7 +2202,6 @@ class Game_Actor < Game_Battler
     alias ex_attr_skills skills
     alias ex_attr_mp mp
     alias ex_attr_maxmp maxmp
-    alias tau_skill_can_use? skill_can_use?
     alias ex_attr_equippable? equippable?
     alias ex_attr_atk atk
     alias ex_attr_def def
@@ -2081,12 +2217,6 @@ class Game_Actor < Game_Battler
     super
     self.song_count = 0
     initialize_anger
-  end
-
-  # definisce le qualità ottenute da status, equip ecc...
-  # @return[Array]
-  def features
-    equips.compact + super
   end
 
   # Restituisce se l'eroe usa la barra charge
@@ -2170,14 +2300,6 @@ class Game_Actor < Game_Battler
   # @return [Array<RPG::Skill]
   def skills
     ex_attr_skills + assimilated_skills
-  end
-
-  # aumenta l'ira se ne ha i requisiti, quando viene colpito
-  # @param [Game_Battler] user
-  # @param [RPG::UsableItem] obj
-  def apply_anger_change(user, obj = nil)
-    super
-    self.anger += anger_incr if anger_on_damage?
   end
 
   # restituisce il bonus dello spirito all'attacco
@@ -2381,7 +2503,7 @@ class Game_Actor < Game_Battler
 
   # Modifica il valore dei passi dell'eroe
   def steps=(new_value)
-    ; @steps = new_value
+    @steps = new_value
   end
 
   # Riduce l'ira con i passi
@@ -2389,26 +2511,6 @@ class Game_Actor < Game_Battler
     self.steps += 1
     self.anger -= 1 if steps % step_divisor == 0 && self.anger > initial_anger
   end
-
-  # determina se si può utilizzare l'abilità
-  # @param [RPG::Skill] skill
-  def skill_can_use?(skill)
-    return false if skill.can_tau? && !taumaturgic? && !$game_temp.in_battle
-    return false if charge_gauge? && calc_anger_cost(skill) > self.anger
-    return false if last_skill_blocked? && skill.id == @last_skill_used
-    tau_skill_can_use?(skill)
-  end
-
-  # Restituisce il costo ira dell'abilità
-  # @param [RPG::Skill] skill
-  # @return [Integer]
-  def calc_anger_cost(skill)
-    return 0 unless charge_gauge?
-    cost = skill.anger_cost
-    cost /= 2 if half_mp_cost
-    (cost * self.mp_cost_rate).to_i
-  end
-
   # Modifica il danno se c'è un difensore
   def apply_transfer_damage
     riduci_danno_difensore
@@ -2478,60 +2580,6 @@ class Game_Actor < Game_Battler
     false
   end
 
-  # Controlla e attiva gli status che si attivano con l'attacco
-  def activate_hit_states
-    hit_states = get_hit_states_array
-    hit_states.each do |hit|
-      add_state(hit[0]) if hit[1] > rand
-    end
-  end
-
-  # Controlla e attiva gli status che si attivano con il danno
-  def activate_damage_states
-    damage_states = get_damage_states_array
-    damage_states.each do |damage|
-      add_state(damage[0]) if damage[1] > rand
-    end
-  end
-
-  # Ottiene l'array degli status attivabili con l'attacco
-  def get_hit_states_array
-    array = []
-    self.states.each { |state|
-      array.push([state.status_hit, state.status_hit_prob]) if state.status_hit > 0
-      array.push([state.id, 100]) if state.viral
-    }
-    equips.each { |equip|
-      next if equip.nil?
-      array.push([equip.status_hit, equip.status_hit_prob]) if equip.status_hit > 0
-    }
-    array
-  end
-
-  # restituisce i controstati
-  def counter_states
-    states = super
-    self.equips.each { |equip|
-      next if equip.nil?
-      states += equip.counter_states
-    }
-    states
-  end
-
-  # Ottiene l'array degli status attivabili con il danno
-  def get_damage_states_array
-    array = []
-    self.states.each { |state|
-      array.push([state.status_dmg, state.status_dmg_prob]) if state.status_dmg > 0
-      array.push([state.id, 100]) if state.viral
-    }
-    equips.each { |equip|
-      next if equip.nil?
-      array.push([equip.status_dmg, equip.status_dmg_prob]) if equip.status_dmg > 0
-    }
-    array
-  end
-
   # Restituisce il valore aggiunto della propria difesa al gruppo
   def param_gift(param)
     multiplier = 0.0
@@ -2591,12 +2639,7 @@ class Game_Enemy < Game_Battler
 
   def initialize(index, enemy_id)
     h87attr_initialize(index, enemy_id)
-    #TODO: inizializzare
-  end
-  # Restituisce le features
-  # @return [Array<RPG::State>]
-  def features
-    super + [enemy]
+    #TODO: inizializzare la Furia
   end
 
   # Morte
@@ -2608,6 +2651,10 @@ class Game_Enemy < Game_Battler
     else
       h87attr_perform_collapse
     end
+  end
+
+  def boss_type?
+    enemy.boss_type
   end
 
   # determina se l'attacco è basato dallo spirito
@@ -2629,11 +2676,6 @@ class Game_Enemy < Game_Battler
   # Bonus drop a fine battaglia
   def spoil_bonus
     features_sum(:spoil_bonus)
-  end
-
-  # restituisce i controstati
-  def counter_states
-    super + enemy.counter_states
   end
 
   # restituisce il set di elementi sull'attacco
@@ -2739,7 +2781,11 @@ class Game_Party < Game_Unit
     end
   end
 
-  def gain_item(item, n, include_equip = false)
+
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
+  # @param [Integer] n
+  # @param [FalseClass] include_equip
+  def gain_item(item, n = 1, include_equip = false)
     return if item.nil?
     return if item.is_placeholder?
     h87attr_gain_item(item, n, include_equip)
