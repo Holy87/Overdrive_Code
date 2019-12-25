@@ -31,7 +31,7 @@ module Vocab
   NOTHING_TO_STEAL_ENEMY = '%s non ha niente da rubare!'
   NOTHING_TO_STEAL_PARTY = 'Non hai nulla di buono!'
   FAILED_STEAL = '%s non riesce a rubare!'
-  STEAL_SUCCESS_ACTOR = '%s ha rubato $s!'
+  STEAL_SUCCESS_ACTOR = '%s ha rubato %s!'
   STEAL_SUCCESS_ENEMY = '%s ti ha rubato %s!'
   ROBBERY_NOTHING = '%s non ha soldi!'
 end
@@ -224,7 +224,7 @@ class Game_Battler
   # probabilità di rubare (o farsi derubare, se è un nemico)
   # @return [Float]
   def steal_rate
-    1.0 + features_sum(:steal_rate)
+    1.0 + features_sum(:steal_bonus)
   end
 end
 
@@ -276,12 +276,13 @@ class Game_Enemy < Game_Battler
   # azione di essere rubato dall'eroe
   # @param [Game_Actor] user
   def steal_action(user)
-    if target.no_steals?
+    if no_steals?
       message = sprintf(Vocab::NOTHING_TO_STEAL_ENEMY, self.name)
       $scene.push_popup(message, StealSettings::NO_STEAL_ICON)
     else
       item = try_steal(user)
       if item
+        #noinspection RubyYardParamTypeMatch
         $game_party.gain_item(item, 1)
         message = sprintf(Vocab::STEAL_SUCCESS_ACTOR, user.name, item.name)
         $scene.push_popup(message, item.icon_index)
