@@ -29,8 +29,6 @@ module ShopsSettings
 
   SHOP_REBUY = 'Ricompra'
   ITEM_SELECT = 'Seleziona'
-  ITEM_BUY = 'Compra'
-  ITEM_SELL = 'Vendi'
   CHANGE_VIEW = 'Cambia vista'
   BUY_ALL = 'Compra tutto'
   SELL_ALL = 'Vendi tutto'
@@ -180,6 +178,26 @@ end
 module DataManager
   class << self
     alias h87_shop_load_normal_database load_normal_database
+    alias h87_shop_extract_save_contents extract_save_contents
+    alias h87_shop_make_save_contents make_save_contents
+    alias h87_shop_cmo create_game_objects
+  end
+
+  def self.create_game_objects
+    h87_shop_cmo
+    $game_shops = Game_Shops.new
+  end
+
+  def self.make_save_contents
+    contents = h87_shop_make_save_contents
+    contents[:shop] = $game_shops
+  end
+
+  # estrae i dati di gioco dal salvataggio
+  # @param [Hash] contents
+  def self.extract_save_contents(contents)
+    h87_shop_extract_save_contents(contents)
+    $game_shops = contents[:shop] || Game_Shops.new
   end
 
   def self.load_normal_database
@@ -240,11 +258,11 @@ module Vocab
   end
 
   def self.key_buy
-    ShopsSettings::ITEM_BUY
+    ShopBuy
   end
 
   def self.key_sell
-    ShopsSettings::ITEM_SELL
+    ShopSell
   end
 
   def self.key_a_buy
@@ -278,6 +296,12 @@ module Vocab
   def self.level_too_low
     ShopsSettings::LEVEL_TOO_LOW
   end
+
+  # @param [Symbol] action
+  # @return [Hash{Symbol->String}]
+  def self.shop_action(action)
+    {:buy => ShopBuy, :sell => ShopSell, :rebuy => shop_rebuy}
+  end
 end
 
 #==============================================================================
@@ -294,7 +318,7 @@ class RPG::Weapon
 end
 
 #==============================================================================
-# ** sho----
+# ** Shop
 # È una classe che contiene le informazioni statiche (definite nei settaggi)
 # dei negozi Game_Shop.
 #==============================================================================
@@ -323,7 +347,7 @@ class RPG::Shop
   attr_reader :spawn_rates #probabilità di comparsa
   # @return [Array<Hash>] denied_sells
   attr_reader :denied_sells #gli oggetti che non possono scomparire dal negozio
-  # @return [Array<RPG::Shop_Good>]
+  # @return [Array<Shop_Good>]
   #
 
   # inizializzazione
@@ -387,7 +411,7 @@ end
 # ** Good_Detail----
 # rappresenta i dettagli dei beni da inserire nel negozio. Sono definiti nelle
 # impostazioni e sono immutabili durante la partita. Vengono utilizzati in
-# Game_Shop e come inizializzatori di RPG::Shop_Good.
+# Game_Shop e come inizializzatori di Shop_Good.
 #==============================================================================
 class RPG::Good_Details
   attr_reader :item_type # tipo oggetto
@@ -444,10 +468,10 @@ class RPG::Good_Details
 end
 
 #==============================================================================
-# ** RPG::Shop_Good
+# ** Shop_Good
 # rappresenta un bene posseduto da Game_Shop. Contiene item, quantità e sconti.
 #==============================================================================
-class RPG::Shop_Good
+class Shop_Good
   attr_reader :item_type # tipo oggetto
   attr_reader :item_id # id oggetto
   attr_accessor :quantity # quantità degli oggetti
@@ -510,6 +534,70 @@ class RPG::Shop_Good
   end
 end
 
+class Game_Shops
+  # inizializzazione
+  def initialize
+    @data = {}
+  end
+
+  # ottiene il negozio
+  # @param [Symbol] shop_id
+  # @return [Game_Shop]
+  def [](shop_id)
+    if @data[shop_id] == nil and $data_shops[shop_id] != nil
+      @data[shop_id] = Game_Shop.new(shop_id)
+    end
+    @data[shop_id]
+  end
+
+  # avanza temporalmente tutti i negozi simulando rifornimenti ed
+  # acquisti.
+  # @param [Boolean] include_sales
+  def advance_shops(include_sales = false)
+    @data.each { |shop| shop.update_shop(include_sales) }
+  end
+
+  # restituisce il flusso di oggetti 
+  # @return [Array<Array>]
+  def trade_flow
+    @trade_flow ||= []
+  end
+
+  # *
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
+  def trade_flow_add(item, number = 1)
+    @trade_flow ||= []
+    case item
+    when RPG::Item
+      type = 1
+    when RPG::Weapon
+      type = 2
+    when RPG::Armor
+      type = 3
+    else
+       type = 0
+    end
+    ary = [item.id, type, number]
+    @trade_flow.add(ary) # unless @trade_flow.include?(ary)
+  end
+
+  # 
+  # @return [Array<Array>]
+  def get_random_trade_items(bonus_rate = 0)
+    rate = ShopsSettings::TRADE_REFLOW_RATE + bonus_rate
+    items = []
+    trade_flow.each { |ary|
+      if rand(100) <= rate
+        arx = [ary[0], ary[1], 1]
+        items.push(arx)
+        ary[2] -= 1
+        trade_flow.delete(ary) if ary[2] <= 0
+      end
+    }
+    items
+  end
+end
+
 #==============================================================================
 # ** Game_Shop
 # rappresenta il negozio fisico memorizzato nel salvataggio.
@@ -560,7 +648,7 @@ class Game_Shop
   end
 
   # restituisce i beni del negozio
-  # @return [Array<RPG::Shop_Good>]
+  # @return [Array<Shop_Good>]
   def goods
     @goods
   end
@@ -583,12 +671,13 @@ class Game_Shop
 
   # restituisce la probabilità di far rifornire il negozio quando lontano
   #   per un certo periodo di tempo
+  # @return [Integer,Float]
   def supply_rate
     db_shop.supply_rate
   end
 
   # restituisce il costo dell'oggetto.
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @param [Boolean] include_sale
   def good_cost(good, include_sale = false)
     discount = 1.0
@@ -615,14 +704,14 @@ class Game_Shop
   end
 
   # determina lo sconto in percentuale dell'oggetto
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def good_discount(good)
     sale = @discounts[good.item_type - 1][good.item_id]
     sale ? sale / 100.0 : 0.0
   end
 
   # restituisce il prezzo dell'item
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def good_price(good)
     if @custom_prices[good.item_type - 1][good.item_id] != nil
       return @custom_prices[good.item_type - 1][good.item_id]
@@ -645,9 +734,9 @@ class Game_Shop
     goods.each { |good| return good.quantity if item == good.item }
   end
 
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def sale_rate(good)
-
+    good.sale_value
   end
 
   # restituisce l'array degli sconti
@@ -697,7 +786,7 @@ class Game_Shop
   end
 
   # determina se l'oggetto non può essere scontato
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @return [Boolean] true: non scontare, false: puoi scontare
   def deny_sale?(good)
     if @denied_sales[good.item_type - 1][good.item_id] != nil
@@ -721,7 +810,7 @@ class Game_Shop
 
   # determina tramite un calcolo casuale quali oggetti rimuovere dal
   # negozio, per simulare gente che acquista ed esaurisce le scorte.
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def valuate_good_selling(good)
     return if good.unlimited?
     return if sell_denied?(good)
@@ -736,7 +825,7 @@ class Game_Shop
   end
 
   # determina se la rivendita dell'oggetto dal negozio è permessa
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def sell_denied?(good)
     if @denied_sells[good.item_type - 1][good.item_id] != nil
       return @denied_sells[good.item_type - 1][good.item_id]
@@ -760,7 +849,7 @@ class Game_Shop
 
   # rimuove un bene dal negozio. Se il bene è illimitato, non fa nulla a
   # meno che non si definisca :all come numero, così li rimuoverà tutti.
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @param [Integer] item_number
   def remove_good(good, item_number = 1)
     return false if good.nil?
@@ -778,7 +867,7 @@ class Game_Shop
       return if in_good.unlimited?
       in_good.quantity = [in_good.quantity + good.quantity, 99].min
     else
-      @goods.push(RPG::Shop_Good.new(good, good.quantity))
+      @goods.push(Shop_Good.new(good, good.quantity))
       @custom_prices[good.item_type - 1][good.item_id] = good.sell_price if good.sell_price
       @denied_sales[good.item_type - 1][good.item_id] = good.deny_sales if good.deny_sales
       @denied_sells[good.item_type - 1][good.item_id] = good.sell_locked if good.sell_locked
@@ -788,7 +877,7 @@ class Game_Shop
 
   # trova la merce
   # @param [RPG::Item] item
-  # @return [RPG::Shop_Good]
+  # @return [Shop_Good]
   def find_good(item)
     goods.each { |good| return good if good.item == item }
   end
@@ -863,52 +952,6 @@ class Game_Temp
   # @return [Hash<RPG::Shop>]
   def init_custom_shops
     # TODO: creare inizializzatore
-  end
-end
-
-#==============================================================================
-# *----
-#
-#==============================================================================
-class Game_System
-  # *
-  # @return [Array<Array>]
-  def trade_flow
-    @trade_flow ||= []
-  end
-
-  # *
-  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
-  def trade_flow_add(item, number = 1)
-    @trade_flow ||= []
-    case item
-    when RPG::Item
-      type = 1
-    when RPG::Weapon
-      type = 2
-    when RPG::Armor
-      type = 3
-    else
-       type = 0
-    end
-    ary = [item.id, type, number]
-    @trade_flow.add(ary) # unless @trade_flow.include?(ary)
-  end
-
-  # *
-  # @return [Array<Array>]
-  def get_random_trade_items(bonus_rate = 0)
-    rate = ShopsSettings::TRADE_REFLOW_RATE + bonus_rate
-    items = []
-    trade_flow.each { |ary|
-      if rand(100) <= rate
-        arx = [ary[0], ary[1], 1]
-        items.push(arx)
-        ary[2] -= 1
-        trade_flow.delete(ary) if ary[2] <= 0
-      end
-    }
-    items
   end
 end
 
@@ -1057,16 +1100,16 @@ class Game_Actor < Game_Battler
 end
 
 #==============================================================================
-# *----
-#
+# * Window_ShopInfo
+# finestra delle informazioni del negozio
 #==============================================================================
 class Window_ShopInfo < Window_Base
-
   # inizializzazione
   # @param [Game_Shop] shop
   def initialize(shop)
-    super(0, 0, Graphics.width, fitting_height(1))
+    super(0, 0, Graphics.width - 160, fitting_height(1))
     @shop = shop
+    @action = :nothing
     refresh
   end
 
@@ -1074,31 +1117,52 @@ class Window_ShopInfo < Window_Base
   def refresh
     contents.clear
     change_color(normal_color)
-    draw_text(0, 0, contents_width, line_height, @shop.name)
+    draw_text(0, 0, contents_width, line_height, shop.name)
+    draw_action
+  end
+
+  def draw_action
+    return if @action == :nothing
+    change_color(crisis_color)
+    text = '//' + Vocab.shop_action(@action)
+    x = text_size(shop.name).width + 5
+    width = contents_width - x
+    draw_text(x, 0, width, line_height, text)
+  end
+
+  # @return [Game_Shop]
+  def shop
+    @shop
+  end
+
+  # @param [Symbol] new_action
+  def set_action(new_action)
+    return if @action == new_action
+    @action = new_action
+    refresh
   end
 end
 
 #==============================================================================
-# *----
-#
+# * Window_ShopCommand
+# finestra dei comandi del negozio
 #==============================================================================
 class Window_ShopCommand < Window_Command
-  # *
-  # @param [Game_Shop] shop
-  def initialize(shop)
-    @shop = shop
+  # inizializzazione
+  def initialize
+    @shop = $game_temp.custom_shop
     super(0, 0)
     refresh
     update_placement
     self.openness = 0
   end
 
-  # *
+  # larghezza della finestra
   def window_width
     160
   end
 
-  # *
+  # crea la lista dei comandi
   def make_command_list
     add_command(Vocab::ShopBuy, :buy) if @shop.permit_buy?
     add_command(Vocab::ShopSell, :sell) if @shop.permit_sell?
@@ -1113,23 +1177,13 @@ class Window_ShopCommand < Window_Command
   end
 end
 
-#==============================================================================
-# * Window_ShopBuyN
-# Nuova finestra d'acquisto dei beni
-#==============================================================================
-class Window_ShopBuyN < Window_Selectable
-  # inizializzazione
+class Window_ShopItems < Window_Selectable
   def initialize(x, y, width, height)
+    @shop = $game_temp.custom_shop
     make_item_list
     super
     refresh
     @index = 0
-  end
-
-  # ottiene la lista degli oggetti da vendere
-  def make_item_list
-    @shop = $game_temp.custom_shop
-    @data = @shop.goods
   end
 
   # Ottiene il numero di elementi
@@ -1138,32 +1192,76 @@ class Window_ShopBuyN < Window_Selectable
     @data ? @data.size : 0
   end
 
-  # 
-  # @return [RPG::Shop_Good]
-  def good
-    @data[@index]
+  # restituisce il negozio corrente
+  # @return [Game_Shop]
+  def shop
+    @shop
   end
 
-  # *
-  # @return [RPG::Item]
+  # restituisce l'oggetto corrente
+  # @return [RPG::Item,RPG::Weapon,RPG::Armor]
   def item
-    good.item
+    # restituito dalla superclasse
   end
 
-  # *
-  def draw_item(index)
+  # determina se l'oggetto selezionato dal cursore è cliccabile
+  def current_item_enabled?
+    enable?(@index)
+  end
+
+  # imposta la finestra dei dettagli oggetto
+  def info_window=(window)
+    @info_window = window
+  end
+
+  # restituisce la finestra dei dettagli oggetto
+  # @return [Window_ItemInfo]
+  def info_window
+    @info_window
+  end
+
+  # aggiorna l'aiuto al cambio di cursore
+  def update_help
+    super
+    @help_window.set_item(item) if @help_window
+    info_window.set_item(item) if info_window
+  end
+end
+
+#==============================================================================
+# * Window_ShopBuyN
+# Nuova finestra d'acquisto dei beni
+#==============================================================================
+class Window_ShopBuyN < Window_ShopItems
+  # determina se l'oggetto è attivo e cliccabile
+  def enable?(index)
     good = @data[index]
     item = good.item
-    rect = item_rect(index)
-    rect.width -= 4
-    enabled = enable?(index)
-    draw_item_name(item, rect.x, rect.y, enabled, 150)
-    draw_price(good, rect, enabled)
-    draw_quantity(good, rect, enabled)
+    return false if $game_party.item_number(item) >= $game_party.max_item_number(item)
+    $game_party.gold >= @shop.good_cost(good, true)
+  end
+
+  # disegna la quantità dell'oggetto
+  # @param [Shop_Good] good
+  # @param [Rect] rect
+  # @param [Boolean] enabled
+  def draw_quantity(good, rect, enabled)
+    if good.unlimited?
+      text = ShopsSettings::ENDLESS
+    else
+      text = sprintf('x%d', good.quantity)
+    end
+    change_color(normal_color, enabled)
+    draw_text(rect, text, 2)
+  end
+
+  # ottiene la lista degli oggetti da vendere
+  def make_item_list
+    @data = @shop.goods
   end
 
   # mostra il prezzo dell'articolo
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @param [Rect] rect
   # @param [Boolean] enabled
   def draw_price(good, rect, enabled)
@@ -1180,62 +1278,42 @@ class Window_ShopBuyN < Window_Selectable
     contents.font.size = old_size
   end
 
-  # *
-  # @param [RPG::Shop_Good] good
-  # @param [Rect] rect
-  # @param [Boolean] enabled
-  def draw_quantity(good, rect, enabled)
-    if good.unlimited?
-      text = ShopsSettings::ENDLESS
-    else
-      text = sprintf('x%d', good.quantity)
-    end
-    change_color(normal_color, enabled)
-    draw_text(rect, text, 2)
+  #
+  # @return [Shop_Good]
+  def good
+    @data[@index]
   end
 
-  # determina se l'oggetto è attivo e cliccabile
-  def enable?(index)
+  # restituisce l'oggetto corrente
+  # @return [RPG::Item,RPG::Weapon,RPG::Armor]
+  def item
+    good.item
+  end
+
+  # disegna l'oggetto
+  def draw_item(index)
     good = @data[index]
     item = good.item
-    return false if $game_party.item_number(item) >= $game_party.max_item_number(item)
-    $game_party.gold >= @shop.good_cost(good, true)
+    rect = item_rect(index)
+    rect.width -= 4
+    enabled = enable?(index)
+    draw_item_name(item, rect.x, rect.y, enabled, 150)
+    draw_price(good, rect, enabled)
+    draw_quantity(good, rect, enabled)
   end
 
-  # determina se l'oggetto selezionato dal cursore è cliccabile
-  def current_item_enabled?
-    enable?(@index)
-  end
-
-  # imposta la finestra dei dettagli oggetto
-  def info_window=(window)
-     @info_window = window
-  end
-
-  # restituisce la finestra dei dettagli oggetto
-  # @return [Window_ItemInfo]
-  def info_window
-    @info_window
-  end
-
-  # aggiorna l'aiuto al cambio di cursore
-  def update_help
-    super
-    @help_window.set_item(item.item) if @help_window
-    info_window.set_item(item.item) if info_window
-  end
 end
 
 #==============================================================================
-# *----
-#
+# * Window_ShopKeys
+# finestra che mostra gli aiuti tasti nello shop
 #==============================================================================
 class Window_ShopKeys < Window_Base
 
   # Inizializzazione
   def initialize(x, y, width)
     super(x, y, width, fitting_height(1))
-    @mode = :select
+    @mode = :nothing
     refresh
   end
 
@@ -1244,7 +1322,7 @@ class Window_ShopKeys < Window_Base
     contents.clear
     change_color(normal_color)
     case @mode
-    when :select
+    when :nothing
       refresh_select
     when :buy
       refresh_buy
@@ -1422,7 +1500,7 @@ class Window_ShopStatusN < Window_Base
     draw_equip_info(@good, line + 1)
   end
 
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   def draw_item_possession(good)
     change_color system_color
     draw_text(line_rect(0), Vocab::Possession)
@@ -1431,7 +1509,7 @@ class Window_ShopStatusN < Window_Base
   end
 
   # draws the current sale (if it is in sale)
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @return [Integer]
   def draw_item_sale(good)
     return 0 unless shop.good_in_sale?(good)
@@ -1442,7 +1520,7 @@ class Window_ShopStatusN < Window_Base
 
   # mostra i membri del gruppo che possono equipaggiare
   # l'oggetto ed i relativi cambi di parametri
-  # @param [RPG::Shop_Good] good
+  # @param [Shop_Good] good
   # @param [Integer] line
   def draw_equip_info(good, line)
     return if good.item_type < 2
@@ -1543,13 +1621,95 @@ class Window_ShopStatusN < Window_Base
 end
 
 class Scene_NewShop < Scene_MenuBase
+
+
+  def create_shop_description_window
+    @info_window = Window_ShopInfo.new(shop)
+  end
+
+  def create_help_window
+    super
+    @help_window.y = @info_window.height
+  end
+
+  def create_gold_window
+    @gold_window = Window_Gold.new
+    @gold_window.x = @info_window.right_corner
+  end
+
+  def create_shop_command_window
+    @command_window = Window_ShopCommand.new
+  end
+
+  def create_good_list_window
+    x = 0
+    y = @help_window.bottom_corner
+    width = Graphics.width / 2
+    height = Graphics.height - @keys_window.height
+    @goods_window = Window_ShopBuyN.new(x, y, width, height)
+  end
+
+  def create_keys_window
+    width = Graphics.width / 2
+    @keys_window = Window_ShopKeys.new(0, 0, width)
+    @keys_window.y = Graphics.height - @keys_window.height
+  end
+
+  def create_rebuy_window
+    # code here
+  end
+
+  def create_item_info_window
+    x = @goods_window.right_corner
+    y = @goods_window.y
+    w = Graphics.width - x
+    h = Graphics.height - y
+    @info_window = Window_ItemInfo.new(x, y ,w, h)
+    @goods_window.info_window = @info_window
+  end
+
+  def create_equip_info_window
+    # code here
+  end
+
+  def create_shop_number_window
+    # code here
+    #
+  end
+
+  def start
+    super
+    @shop = $game_temp.custom_shop
+    @action = :nothing
+    create_shop_description_window
+    create_help_window
+    create_keys_window
+    create_shop_command_window
+    create_good_list_window
+    create_sell_window
+    create_rebuy_window
+    create_item_info_window
+    create_equip_info_window
+    create_shop_number_window
+  end
+
+  # @return [Game_Shop]
+  def shop
+    @shop
+  end
+
+  # ottiene l'azione corrente (compra, vendi, ricompri, nulla)
+  # @return [Symbol]
+  def current_action
+    @action
+  end
 end
 
 class Game_Interpreter
 
   # vai alla nuova schermata del negozio
-  def load_shop(shop_id)
-    $game_temp.custom_shop = shop_id
+  def open_shop(shop_id)
+    $game_temp.custom_shop = $game_shops[shop_id]
     SceneManager.call(Scene_NewShop)
   end
 end

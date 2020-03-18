@@ -481,12 +481,27 @@ class Color
     end
   end
 
+  # restituisce la luminosità da 0 a 255
+  def brightness
+    (self.red + self.green + self.blue) / 3
+  end
+
+  # restituisce il colore deopacizzato. Modifica
+  # l'opracità del colore attuale.
+  # @param [Integer] alpha nuova trasparenza
+  # @return [Color]
+  def deopacize!(alpha = 128)
+    self.alpha = alpha
+    self
+  end
+
   # restituisce il colore deopacizzato
   # @param [Integer] alpha nuova trasparenza
   # @return [Color]
   def deopacize(alpha = 128)
-    self.alpha = alpha
-    self
+    cl = self.clone
+    cl.alpha = alpha
+    cl
   end
   #--------------------------------------------------------------------------
   # * Costanti che restituiscono colori CSS

@@ -293,11 +293,11 @@ class Scene_Battle < Scene_Base
       if target.actor?
         next if state.message1.empty?
         next if state.priority < 1
-        text = sprintf(state.message1, target.name)
+        text = sprintf(state.message1.gender(target.gender), target.name)
       else
         next if state.message2.empty?
         next if state.priority < 1
-        text = sprintf(state.message2, target.name)
+        text = sprintf(state.message2.gender(target.gender), target.name)
       end
       if state.id == 1 # Incapacitated
         target.perform_collapse
@@ -312,7 +312,7 @@ class Scene_Battle < Scene_Base
     target.removed_states.each { |state|
       next if state.message4.empty?
       next if state.priority < 1
-      text = sprintf(state.message4, target.name)
+      text = sprintf(state.message4.gender(target.gender), target.name)
       push_popup(text, state.icon_index)
     }
   end
@@ -324,7 +324,7 @@ class Scene_Battle < Scene_Base
     target.remained_states.each { |state|
       next if state.message3.empty?
       next if state.priority < 1
-      text = sprintf(state.message3, target.name)
+      text = sprintf(state.message3.gender(target.gender), target.name)
       icon = obj ? obj.icon_index : 0
       push_popup(text, icon)
     }

@@ -235,7 +235,7 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   def next_commander
     atb_next_commander
-    place_command_window(@commander.index)
+    place_command_window(@commander.index) if @commander
   end
 
   #--------------------------------------------------------------------------
@@ -243,7 +243,7 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   def back_commander
     atb_back_commander
-    place_command_window(@commander.index)
+    place_command_window(@commander.index) if @commander
   end
 end
 

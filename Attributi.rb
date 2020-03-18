@@ -55,6 +55,9 @@
 #    variazioni per i boss, come la carica della Sinergia più lunga, gli status
 #    come Veleno che durano un numero limitato di turni e tolgono meno HP.
 #  ● <zombie> è un non morto! Le magie di guarigione gli causano danni.
+#  ● <protector> è un protettore. I nemici che non sono protettori non possono essere
+#    bersagliati da attacchi e abilità ravvicinate se prima non vengono uccisi tutti
+#    i protettori sul campo.
 # ▼ PARAMETRI
 #  ● <attacco magico: x%> l'attacco diventa una magia con il x% dello spirito. Tieni
 #  conto che nel caso degli eroi solo se l'arma principale ha attacco magico, usa
@@ -98,7 +101,6 @@
 #  ● <x mp attacco> guadagna x MP colpendo i nemici con l'attacco
 #  ● <max assimilate: +x> aumenta le abilità assimilabili di x
 #  ● <assimilate rounds: +x> aumenta il numero di utilizzi delle abilità assimilate
-#  ● <ranged> l'arma/skill è a distanza
 #  ● <autoscan> su equip e stati: mostra ulteriori informazioni puntando i nemici
 #  ▼ STATUS
 #  ● <status attacco: x> aggiunge lo status X all'attacco
@@ -114,9 +116,10 @@
 #  ● <durata buff: +/-x> modifica la durata dei buff acquisiti (in turni)
 #  ● <durata debuff: +/-x> modifica la durata dei debuff acquisiti (in turni)
 #  ● <blocca ultima skill> applicato allo status, blocca l'ultima skill usata
+#  ● <virale> lo status è virale e viene trasmesso.
 #  ▼ POTERI E OGGETTI
 #  ● <h+x> l'help aggiunge x
-#  ● <virale> lo status è virale e viene trasmesso.
+#  ● <ranged> l'arma/skill è a distanza
 #  ● <spirit stone> l'oggetto è una spirit stone
 #  ● <rimuovi stato: x> rimuove lo stato x, ma non funziona ancora
 #  ● <bombifica> status che fa esplodere il nemico alla morte
@@ -150,6 +153,8 @@ module H87AttrSettings
   BARRIER_MP_CONSUME = 0.1 # percentuale di consumo della barriera ai danni
   # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
   # quindi se assorbe un danno di 100, consuma 20MP
+
+  # suno quando la barriera si distrugge
   BARRIER_BREAK_SE = 'Break'
 
   PARAMS_CAN_ZERO = [:cri, :eva, :hit]
@@ -170,24 +175,24 @@ module ExtraAttr
   VIRIL = /<(?:VIRILE|virile)>/i
   ARTIFICIS = /<(?:ARTIFICIERE|artificiere)>/i
   SCASSINATE = /<(?:SCASSINATORE|scassinatore)>/i
-  CHARM = /<(?:CARISMA|carisma):[ ]*([+\-]\d+)>/i
-  DEFENDER = /<(?:DIFENSORE|difensore)>/i
-  STATE_DMG = /<(?:DANNO_STATO|danno stato)[ ]*(\d+):[ ]*(\d+)([%％])>/i
-  STATE_HIT = /<(?:ATTACCO_STATO|attacco stato)[ ]*(\d+):[ ]*(\d+)([%％])>/i
-  EVOCATION = /<(?:EVOCA|evoca):[ ]*(\d+)>/i #TODO: spostarlo in espers core
-  ESPER_REC = /<(?:RICARICA_ESPER|ricarica esper)>/i #TODO: spostarlo in espers core
-  ITEM_SAVE = /<salva oggetto:[ ]*(\d+)([%％])>/i
-  FAST_READY = /<(?:BONUS_RICARICA|bonus ricarica):[ ]*(\d+)([%％])>/i
-  SAVE_DOMI = /<(?:SALVA_DOMINAZIONE|salva dominazione):[ ]*(\d+)>/i
-  TAUMATURG = /<(?:TAUMATURGIA|taumaturgia)>/i
-  ITEM_BON = /<(?:OGGETTO_BONUS|oggetto bonus):[ ]*(\d+)([%％])>/i
-  ATB_BONUS = /<(?:BONUS_ATB|bonus atb)>/i
-  ATB_SONG = /<(?:ATB_CANZONE|atb canzone)>/i
-  LONG_JUMP = /<(?:SALTO_LUNGO|salto lungo)>/i
+  CHARM = /<carisma:[ ]*([+\-]\d+)>/i
+  DEFENDER = /<difensore>/i
+  STATE_DMG = /<danno[ _]stato[ ]*(\d+):[ ]*(\d+)([%％])>/i
+  STATE_HIT = /<attacco[ _]stato[ ]*(\d+):[ ]*(\d+)([%％])>/i
+  EVOCATION = /<evoca:[ ]*(\d+)>/i #TODO: spostarlo in espers core
+  ESPER_REC = /<ricarica[ _]esper>/i #TODO: spostarlo in espers core
+  ITEM_SAVE = /<salva[ _]oggetto:[ ]*(\d+)([%％])>/i
+  FAST_READY = /<bonus ricarica:[ ]*(\d+)([%％])>/i
+  SAVE_DOMI = /<salva dominazione:[ ]*(\d+)>/i
+  TAUMATURG = /<taumaturgia>/i
+  ITEM_BON = /<oggetto[ _]bonus:[ ]*(\d+)([%％])>/i
+  ATB_BONUS = /<bonus[ _]atb>/i
+  ATB_SONG = /<atb[ _]canzone>/i
+  LONG_JUMP = /<salto[ _]lungo>/i
   VAMPIRE_A = /<vampiro[ ]+(\d+)%>/i
-  RHYTM = /<(?:RITMO|ritmo)>/i
-  PARTY_BON = /<(?:BONUS_PARTY|bonus party)[ ](.*)>:[ ]*(\d+)([%％])>/i
-  MP_RATE = /<(?:COSTO_MP|costo mp):[ ]*([+\-]\d+)([%％])>/i
+  RHYTM = /<ritmo>/i
+  PARTY_BON = /<bonus[ _]party[ ](.*)>:[ ]*(\d+)([%％])>/i
+  MP_RATE = /<costo[ _]mp:[ ]*([+\-]\d+)([%％])>/i
   HELP_STRT = /<help>/i
   HELP_END = /<\/help>/i
   VLINK = /<vlink>/i
@@ -283,6 +288,8 @@ module ExtraAttr
   BOSS_TYPE = /<boss type>/i
   SWITCHABLE = /<switchable>/i
   AVOID_SELF = /<avoid self>/i
+  PROTECTOR = /<protector>/i
+  UNPROTECTED = /<unprotected>/i
   # Variabili di istanza pubblici
   attr_reader :dom_bonus # bonus dominazioni
   attr_reader :viril # stato virile
@@ -378,6 +385,7 @@ module ExtraAttr
   attr_reader :autoscan # auto scan
   attr_reader :max_assimilable # numro massimo di abilità assimilabili insieme
   attr_reader :assimilate_rounds # numero di colpi disponibili per l'abilità assimilata
+  attr_reader :protector # flag protettore (per i nemici o status)
   # Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
   # noinspection RubyScope
   def load_extra_attr
@@ -475,6 +483,8 @@ module ExtraAttr
     @fixed_duration = false
     @max_assimilable = 0
     @slip_damage_per = 0
+    @protector = false
+    @unprotected = false
     @boss_type = false
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help
@@ -659,7 +669,7 @@ module ExtraAttr
       when FU_ON_GUARD
         @fu_on_guard = $1.to_f / 100
       when HP_ON_GUARD
-        @mp_on_guard = $1.to_f / 100
+        @hp_on_guard = $1.to_f / 100
       when MP_ON_GUARD
         @mp_on_guard = $1.to_f / 100
       when ATTACK_ATTR
@@ -682,6 +692,10 @@ module ExtraAttr
         @slip_damage_per = $1.to_f / 100.0
       when BOSS_TYPE
         @boss_type = true
+      when PROTECTOR
+        @protector = true
+      when UNPROTECTED
+        @unprotected = true
       else
         #nothing
       end
@@ -715,11 +729,6 @@ module ExtraAttr
     true
   end
 
-  # determina se ha l'attributo attacco a distanza
-  def ranged?
-    @ranged
-  end
-
   # Determina se l'equipaggiamento non si può disequipaggiare
   def equip_locked?
     false
@@ -734,16 +743,6 @@ module RPG
   #==============================================================================
   class Weapon < BaseItem
     include ExtraAttr
-    # determina se è un'arma con attacco a distanza
-    def ranged?
-      super || self.element_set & ranged_in_set?
-    end
-
-    # determina se nel set di elementi è presente un elemento a distanza
-    def ranged_in_set?
-      H87AttrSettings::RANGED_ELEMENTS.each { |e_id| self.element_set.include?(e_id) }
-    end
-
     # determina se l'arma cambia il tipo di supporto
     def changes_support_type?
       @use_support != nil
@@ -810,6 +809,7 @@ module RPG
     attr_reader :attack_attr
     attr_reader :use_anger
     attr_reader :boss_type
+    attr_reader :unprotected
     include ExtraAttr
 
     # restituisce l'attributo principale al danno
@@ -817,6 +817,11 @@ module RPG
     def attack_attribute
       return nil if @attack_attr.nil?
       $data_system.weapon_attributes.select { |attr| attr.id == attack_attr }.first
+    end
+
+    # determina se è un protettore
+    def protector?
+      @protector
     end
   end
 
@@ -964,9 +969,11 @@ module RPG
 
     # Da definire nelle sottoclassi
     def meele?
+      false
     end
 
     def ranged?
+      true
     end
   end #usable item
 
@@ -983,20 +990,14 @@ module RPG
 
     # determina se è una skill ravvicinata
     def meele?
-      if self.range_type != nil
-        return self.range_type == 0
-      end
+      return self.range_type == 0 if self.range_type != nil
       return false if (self.element_set & H87AttrSettings::RANGED_ELEMENTS).size > 0
       self.atk_f > 0
     end
 
     # determina se è una skill a distanza
     def ranged?
-      if self.range_type != nil
-        return self.range_type == 1
-      end
-      return true if (self.element_set & H87AttrSettings::RANGED_ELEMENTS).size > 0
-      self.atk_f <= 0
+      !meele?
     end
 
     def assimilable?
@@ -1033,16 +1034,6 @@ module RPG
       # noinspection RubyResolve
       return false if @trade_lock #non traddabile se bloccato da tag
       true #traddabile
-    end
-
-    # determina se è una skill ravvicinata
-    def meele?
-      false
-    end
-
-    # determina se è una skill a distanza
-    def ranged?
-      true
     end
 
     # determina se l'oggetto ha un placeholder
@@ -1371,7 +1362,7 @@ class Game_Battler
 
   # Restituisce true se il battler attacca a distanza
   def ranged_attack?
-    has_feature?(:ranged?) || attack_with_magic?
+    has_feature?(:ranged)
   end
 
   # Ha uno stato di zombie?
@@ -1381,6 +1372,14 @@ class Game_Battler
 
   def rune?
     has_feature?(:rune)
+  end
+
+  def protected?
+    false
+  end
+
+  def protector?
+    false
   end
 
   # Restituisce il danno critico
@@ -1532,7 +1531,6 @@ class Game_Battler
   # Aggiungo controlli all'attacco
   # @param [Game_Battler] attacker
   def make_attack_damage_value(attacker)
-    set_last_action(attacker)
     if attacker.attack_with_magic?
       make_magic_damage_value(attacker)
     else
@@ -1570,7 +1568,6 @@ class Game_Battler
   def make_obj_damage_value(user, obj)
     @skill_state_inflict = obj
     @user_state_inflict = user
-    set_last_action(user, obj)
     make_obj_damage_value_ht(user, obj)
     @hp_damage = apply_magical_rate(user, @hp_damage, obj)
     change_damage_rate
@@ -1589,8 +1586,8 @@ class Game_Battler
 
   # processo di esecuzione del danno
   # @param [Game_Battler] user
-  def execute_damage(user)
-    obj = last_action_skill(user)
+  def execute_damage(user, no_action = false)
+    obj = no_action ? nil : user.action.action_object
     ranged = obj.nil? ? user.ranged_attack? : obj.ranged?
     if obj
       recharge_all if obj.skill_recharge?
@@ -1607,7 +1604,7 @@ class Game_Battler
       damage_states(obj)
       hit_states(user, obj)
       apply_anger_change(user, obj)
-      unless ranged
+      unless ranged && user == self
         apply_physical_reflect(user)
         apply_counter_states(user)
         apply_vampire(user)
@@ -1636,6 +1633,7 @@ class Game_Battler
   # @param [Game_Actor] user
   # @param [RPG::Skill] skill
   def apply_assimilate_effect(user, skill)
+    return unless skill.is_a?(RPG::Skill)
     return unless skill.assimilate?
     return unless $game_temp.in_battle
     skills = assimilable_skills.select {|skill| user.assimilable?(skill)}
@@ -1693,8 +1691,9 @@ class Game_Battler
   # @param [Game_Battler] user
   def apply_physical_reflect(user)
     return if physical_reflect <= 0
-    user.hp_damage += ((@hp_damage + @mp_damage) * physical_reflect).to_i
-    user.animation_id = H87AttrSettings::DAMAGE_REFLECT_ANIM_ID unless user.animation_id > 0
+    damage_val = apply_variance(((@hp_damage + @mp_damage) * physical_reflect).to_i, 10)
+    user.hp_damage += damage_val
+    $scene.force_damage_pop(user, H87AttrSettings::DAMAGE_REFLECT_ANIM_ID)
   end
 
   # applica l'assorbimento di PV a tutto il gruppo
@@ -1702,6 +1701,7 @@ class Game_Battler
   # @param [RPG::UsableItem] obj
   def apply_party_absorb(user, obj)
     return unless obj.absorb_damage_party
+    #noinspection RubyResolve
     return if obj.spi_f == 0
     check_party_absorb_heal(user, obj)
   end
@@ -1709,10 +1709,12 @@ class Game_Battler
   # applica il risucchio PV se ha vamp_rate > 0
   # @param [Game_Battler] user
   def apply_vampire(user)
-    return unless user.vampire_rate
-    user.hp_damage -= (@hp_damage * (user.vampire_rate + 1)).to_i
-    user.mp_damage -= (@mp_damage * (user.vampire_rate + 1)).to_i
-    user.animation_id = H87AttrSettings::VAMPIRE_ANIM_ID unless user.animation_id > 0
+    return if user.vampire_rate <= 0
+    hp_dmg = (@hp_damage * (user.vampire_rate + 1)).to_i
+    mp_dmg = (@mp_damage * (user.vampire_rate + 1)).to_i
+    user.hp_damage -= hp_dmg
+    user.mp_damage -= mp_dmg
+    $scene.force_damage_pop(user, H87AttrSettings::VAMPIRE_ANIM_ID)
   end
 
   # @param [Game_Battler] user
@@ -1720,6 +1722,7 @@ class Game_Battler
     return if @hp_damage <= 0
     return if user.mp_on_attack <= 0
     user.mp_damage -= user.mp_on_attack
+    $scene.force_damage_pop(user)
   end
 
   # applica la protezione della barriera
@@ -1728,21 +1731,6 @@ class Game_Battler
     protection = @hp_damage * barrier_rate
     @hp_damage = (@hp_damage - protection).to_i
     @mp_damage += (protection * barrier_consume_rate).to_i
-  end
-
-  # ottiene l'ultima skill (nil se è un attacco)
-  # @param [Game_Battler] user
-  # @return [RPG::UsableItem]
-  def last_action_skill(user)
-    last_action = user.last_action
-    if last_action > 0
-      skill = $data_skills[last_action]
-    elsif last_action < 0
-      skill = $data_items[last_action]
-    else
-      skill = nil
-    end
-    skill
   end
 
   # determina se si può utilizzare l'abilità
@@ -1848,16 +1836,14 @@ class Game_Battler
     if hp_on_guard_rate > 0
       heal = (mhp * hp_on_guard_rate).to_i
       @hp_damage = heal * -1
-      self.hp += heal
       a_id = H87AttrSettings::GUARD_HP_HEAL_ANIMATION_ID
-      $scene.force_damage_pop(self, heal, a_id)
+      $scene.force_damage_pop(self, a_id)
     end
     if mp_on_guard_rate > 0
       heal = (mmp * mp_on_guard_rate).to_i
-      self.mp += heal
       @mp_damage = heal * -1
       a_id = H87AttrSettings::GUARD_MP_HEAL_ANIMATION_ID
-      $scene.force_damage_pop(self, heal, a_id)
+      $scene.force_damage_pop(self, a_id)
     end
     if fu_on_guard_rate > 0
       heal = (max_anger * fu_on_guard_rate).to_i
@@ -1990,16 +1976,6 @@ class Game_Battler
     (magic_damage_rate * 100).to_i - 100
   end
 
-  # Imposta l'ultima azione del battler
-  def set_last_action(user, obj = nil)
-    if obj.nil?
-      user.last_action = 0
-    else
-      user.last_action = obj.id
-      user.last_action *= -1 if obj.is_a?(RPG::Item)
-    end
-  end
-
   # Alias del metodo probabilità status
   def state_probability(state_id)
     value = h87_attr_state_prob(state_id)
@@ -2049,11 +2025,8 @@ class Game_Battler
   def check_durability_bonus(state, skill)
     return unless state.auto_release_prob > 0 and state.hold_turn >= 0
     return if state.fixed_duration
-    if $game_temp.in_battle
-      user = $scene.active_battler
-    else
-      user = $scene.actor
-    end
+    return unless $game_temp.in_battle
+    user = $scene.active_battler
     turns = (state_duration(user, skill, state) + @state_turns[state.id]).to_i
     @state_turns[state.id] = turns
   end
@@ -2132,18 +2105,6 @@ class Game_Battler
     @cumuled_damage
   end
 
-  # Restituisce l'ultima azione dell'eroe. ID della skill, 0 se attacco
-  def last_action
-    @last_action = 0 if @last_action == nil
-    @last_action
-  end
-
-  # Imposta l'ultima azione
-  # actionid: -1 se è un item, 0 se è un attacco, >0 se è una skill
-  def last_action=(actionid)
-    @last_action = actionid
-  end
-
   # Incrementa la durata della dominazione
   # noinspection RubyResolve
   def increase_charge
@@ -2219,6 +2180,11 @@ class Game_Actor < Game_Battler
     initialize_anger
   end
 
+  # @return [Array<RPG::State,RPG::Armor,RPG::Weapon>]
+  def features
+    super + equips.compact
+  end
+
   # Restituisce se l'eroe usa la barra charge
   def charge_gauge?
     super || actor.parameters[1, 1] == 0
@@ -2246,7 +2212,7 @@ class Game_Actor < Game_Battler
   # @param [Symbol] param
   # @return [Integer]
   def party_bonus(value, param = nil)
-    value += super
+    value = super(value, param)
     return value unless $game_temp.in_battle
     if [:hit, :eva, :cri].include?(param)
       value + $game_party.party_bonus(param)
@@ -2639,7 +2605,12 @@ class Game_Enemy < Game_Battler
 
   def initialize(index, enemy_id)
     h87attr_initialize(index, enemy_id)
-    #TODO: inizializzare la Furia
+    self.anger = max_anger
+  end
+
+  # @return [Array<RPG::State,RPG::Enemy>]
+  def features
+    super + [enemy]
   end
 
   # Morte
@@ -2653,8 +2624,23 @@ class Game_Enemy < Game_Battler
     end
   end
 
+  # determina se il nemico è un boss
   def boss_type?
     enemy.boss_type
+  end
+
+  # determina se il nemico è protetto da un altro alleato
+  def protected?
+    return false if protector?
+    return false if enemy.unprotected
+    return false unless exist?
+    #noinspection RubyResolve
+    $game_troop.existing_members.select{ |member| member.protector? }.any?
+  end
+
+  # determia se il nemico è un protettore
+  def protector?
+    has_feature? :protector
   end
 
   # determina se l'attacco è basato dallo spirito
@@ -2664,8 +2650,7 @@ class Game_Enemy < Game_Battler
 
   # Restituisce true se il battler è affetto da bombificazione
   def bombified?
-    self.states.each { |state| return true if state.bombifica }
-    false
+    self.states.select { |state| state.bombifica }.any?
   end
 
   # Esplode.
@@ -2705,6 +2690,7 @@ end
 # Metodo per il contagio delle unità
 #==============================================================================
 class Game_Unit
+
   # Controlla e diffonde il contagio tra i membri
   def check_plague
     members.each { |member|
@@ -2714,6 +2700,12 @@ class Game_Unit
         break
       end
     }
+  end
+
+  # restituisce i membri bersagliabili
+  # @return [Array<Game_Battler>]
+  def targettable_members
+    members
   end
 
   # Espande il contagio
@@ -2747,6 +2739,29 @@ class FakeStObj
   end
 end
 
+class Game_Troop < Game_Unit
+  # restituisce i membri del gruppo che sono bersagliabili
+  # @return [Array<Game_Enemy>]
+  def targettable_members
+    return members unless $game_temp.is_meele_skill
+    members.select { |member| !member.protected? }
+  end
+
+  # @return [Game_Enemy]
+  def smooth_target(index)
+    return super(index) unless $game_temp.is_meele_skill
+    return smooth_target(index + 1) if members[index].protected?
+    super(index)
+  end
+
+  # @return [Game_Enemy]
+  def random_target
+    return super unless $game_temp.is_meele_skill
+    #noinspection RubyResolve
+    existing_members.select { |member| !member.protected? }.sample
+  end
+end
+
 #==============================================================================
 # ** Game_Party
 #---------------------------------------------------------------------------
@@ -2760,11 +2775,7 @@ class Game_Party < Game_Unit
   # posto degli alleati)
   # @return [Game_Actor]
   def defender
-    battle_members.each { |member|
-      return member if member.defender?
-      return member if member.defender?
-    }
-    nil
+    battle_members.select { |member| member.defender?}.first
   end
 
   # @param [RPG::Item, RPG::Armor, RPG::Weapon] item
@@ -2803,29 +2814,22 @@ class Game_Party < Game_Unit
   # Restituisce il bonus parametro del gruppo
   # param: parametro (atk, def, spi, agi, cri, hit, eva)
   def party_bonus(param)
-    bonus = 0
-    members.each { |member|
-      bonus += member.actor_party_bonus(param)
-    }
-    bonus
+    members.inject(0) { |bonus, member| bonus + member.actor_party_bonus(param) }
   end
 
   # Restituisce il parametro aggiunto da un membro del gruppo
   # param: parametro (atk, def, spi, agi)
   def param_gift(param)
-    bonus = 0
-    return bonus unless $game_temp.in_battle
-    members.each { |member|
-      bonus += member.param_gift(param)
-    }
-    bonus
+    return 0 unless $game_temp.in_battle
+    members.inject(0) { |bonus, member| bonus + member.param_gift(param) }
   end
 
   # Non fa consumare l'oggetto con la giusta probabilità
-  alias save_consume_item consume_item unless $@
+  alias force_consume_item consume_item unless $@
   # @param [RPG::Item] item
   def consume_item(item)
-    save_consume_item(item) unless save_prob >= rand && !$game_temp.in_battle
+    return force_consume_item(item) unless $game_temp.in_battle
+    force_consume_item(item) if save_prob <= rand
   end
 
   # Alias del metodo per incrementare passi per scalare l'ira
@@ -2847,48 +2851,24 @@ class Game_Party < Game_Unit
 
   # Restituisce true se un membro del gruppo ha scassinatore
   def ha_scassinatore?
-    members.each { |member|
-      return true if member.scassinatore?
-    }
-    false
+    members.select { |member| member.scassinatore? }.any?
   end
 
   # Restituisce true se un membro del gruppo ha virilità
   def ha_virile?
-    members.each { |member|
-      return true if member.virile?
-    }
-    false
+    members.select { |member| member.virile? }.any?
   end
 
   # Restituisce il bonus di durata delle dominazioni
   # @return [Float]
   def domination_bonus
-    bonus = 1.0
-    members.each { |member|
-      bonus += member.dom_bonus
-    }
-    bonus
-  end
-
-  # Restituisce il bonus sinergia del gruppo
-  # @return [Float]
-  def bonus_sinergia
-    bonus = 1.0
-    members.each { |member|
-      bonus += member.sin_bonus
-    }
-    bonus
+    members.inject(1.0) { |bonus, member| bonus + member.dom_bonus }
   end
 
   # Restituisce lo charm totale dei membri del gruppo
   # @return [Integer]
-  def charm_totale
-    charm = 0
-    members.each { |member|
-      charm += member.charm
-    }
-    charm
+  def total_charm
+    member.inject(0) { |charm, member| charm + member.charm }
   end
 
   # Restituisce true se almeno un giocatore può saltare lontano
@@ -2913,8 +2893,10 @@ class Game_Party < Game_Unit
 end #game_party
 
 class Game_Temp
-  # @attr[Game_Battler] active_battler
+  # @return[Game_Battler] active_battler
   attr_accessor :active_battler
+  attr_accessor :is_meele_skill
+
 end
 
 #==============================================================================
@@ -3018,18 +3000,23 @@ class Scene_Battle < Scene_Base
   end
 
   # forza l'apparizione del danno sul battler
-  # @param [Game_Battler] battler
-  # @param [Integer] animation_id
-  def force_damage_pop(battler, damage, animation_id = 0)
-    if battler.actor?
-      index = $game_party.members.index(battler)
-      sprite = @actor_sprites[index]
+  # @param [Game_Battler] battler su cui mostrare il danno
+  # @param [Integer] animation_id animazione da mostrare
+  # @param [Integer] damage danno in caso non è definito un hp_damage
+  def force_damage_pop(battler, animation_id = 0, damage = nil)
+    sprite = battler_sprite(battler)
+    if damage.nil?
+      damage = battler.hp_damage != 0 ? battler.hp_damage : battler.mp_damage
     else
-      index = $game_troop.members.index(battler)
-      sprite = @enemy_sprites[index]
+      battler.hp_damage = damage
     end
+    battler.double_damage = battler.hp_damage != 0 && battler.mp_damage != 0
     sprite.damage_pop(damage)
-    sprite.animation_id = animation_id if animation_id > 0
+    if animation_id > 0
+      battler.animation_id = animation_id
+      battler.animation_mirror = !battler.actor?
+    end
+    battler.execute_damage(battler, true)
   end
 
   # Alias di fine turno
@@ -3040,13 +3027,28 @@ class Scene_Battle < Scene_Base
     charge_anger
   end
 
+  # restituisce lo sprite del battler
+  # @param [Game_Battler] battler
+  # @return [Sprite_Battler]
+  def battler_sprite(battler)
+    if battler.actor?
+      index = $game_party.members.index(battler)
+      sprite = @spriteset.actor_sprites[index]
+    else
+      index = $game_troop.members.index(battler)
+      sprite = @spriteset.enemy_sprites[index]
+    end
+    sprite
+  end
+
   # Processo di vittoria
   def process_victory
     h87attr_process_victory
     $game_party.battle_members.each { |member|
       next if member.dead?
-      member.hp += member.win_hp
-      member.mp += member.win_mp
+      member.hp_damage -= member.win_hp
+      member.mp_damage -= member.win_mp
+      force_damage_pop(member)
     }
   end
 
@@ -3199,17 +3201,59 @@ end
 
 class Game_BattleAction
   alias set_normal_guard set_guard unless $@
+  alias h87attr_make_attack_targets make_attack_targets unless $@
+  alias h87attr_make_obj_targets make_obj_targets unless $@
 
   # imposta il comando di guardia
   def set_guard
     set_normal_guard
     @battler.apply_guard_bonus
   end
+
+  def make_attack_targets
+    $game_temp.is_meele_skill = meele_and_actor?
+    targets = h87attr_make_attack_targets
+    $game_temp.is_meele_skill = nil
+    targets
+  end
+
+  def make_obj_targets(obj)
+    $game_temp.is_meele_skill = meele_and_actor?
+    targets = h87attr_make_obj_targets(obj)
+    $game_temp.is_meele_skill = nil
+    targets
+  end
+
+  # restituisce l'oggetto dell'azione
+  # @return [RPG::Skill,RPG::Item]
+  def action_object
+    skill || item
+  end
+
+  # determina se è una skill a distanza
+  def ranged?
+    return battler.ranged_attack? if attack?
+    return skill.ranged? if skill?
+    true
+  end
+
+  def meele_and_actor?
+    battler.actor? && !ranged?
+  end
 end
 
 class Spriteset_Battle
-  # @attr[Array<Sprite_Enemy>] enemy_sprites
-  # @attr[Array<Sprite_Actor>] actor_sprites
+  # @return [Array<Sprite_Enemy>]
   attr_reader :enemy_sprites
+  # @return [Array<Sprite_Actor>]
   attr_reader :actor_sprites
+
+  # restituisce lo sprite del battler
+  # @param [Game_Battler] battler
+  # @param [Integer] index
+  # @return [Sprite_Battler]
+  def battler_sprite(battler, index)
+    sprites = battler.actor? ? @actor_sprites : @enemy_sprites
+    sprites[index]
+  end
 end

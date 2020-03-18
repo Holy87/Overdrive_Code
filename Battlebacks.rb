@@ -371,6 +371,16 @@ class Spriteset_Battle
       @battleback_sprite.bitmap = Cache.battleback(background_name.to_s)
     end
   end
+
+  # restituisce lo sprite principale dello sfondo
+  # @return [Sprite]
+  def main_background_sprite
+    if @battleback_sprite.is_a?(Sprite)
+      @battleback_sprite
+    else
+      @battleback_sprite.main_background
+    end
+  end
   #--------------------------------------------------------------------------
   # * Crea lo sfondo di battaglia animato
   # @param [String] name
@@ -513,6 +523,14 @@ class Animated_Background
     }
     ret
   end
+
+  # restituisce lo sfondo principale
+  # @return [Sprite]
+  def main_background
+    sprites = @components.select{|component| component.is_background?}
+    sprite = sprites.sort{|a,b| b.z <=> a.z}.first
+    sprite ? sprite.picture : nil
+  end
 end #animated backgrond
 
 #==============================================================================
@@ -544,6 +562,8 @@ class Animated_Sprite
   attr_accessor :picture      # => Oggetto immagine (Sprite o Plane)
   attr_accessor :type         # => Tipo immagine (:sprite o :plane)
   attr_accessor :bitmaps      # => Array di nomi di frame
+  attr_accessor :x_speed
+  attr_accessor :y_speed
   #--------------------------------------------------------------------------
   # * Inizializzazione
   # @param [Hash] data_hash
@@ -557,6 +577,7 @@ class Animated_Sprite
     @picture.blend_type = data_hash[:blend] if data_hash[:blend]
     @picture.opacity = data_hash[:opacity] if data_hash[:opacity]
     @picture.tone = get_tone(data_hash[:tone]) if data_hash[:tone]
+    @selected_as_background = data_hash[:is_background]
     if data_hash[:pulse_min] || data_hash[:pulse_max]
       min = data_hash[:pulse_min].nil? ? 0 : data_hash[:pulse_min]
       max = data_hash[:pulse_max].nil? ? 255 : data_hash[:pulse_max]
@@ -573,6 +594,7 @@ class Animated_Sprite
     @frame_speed = data_hash[:frame_speed] if data_hash[:frame_speed]
     @frame_state = 0
   end
+
   #--------------------------------------------------------------------------
   # * Restituisce il tipo (:sprite o :plane)
   # @param [Hash]
@@ -583,10 +605,21 @@ class Animated_Sprite
     #return :sprite if data_hash[:move_x].nil? && data_hash[:move_y].nil?
     #:plane
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se è uno Sprite, false se è un Plane
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se è uno Sprite, false se è un Plane
   def is_sprite?; @type == :sprite; end
+
+  # determina se può essere presa come sfondo
+  def is_background?
+    return @selected_as_background if @selected_as_background != nil
+    return false unless is_sprite?
+    return false if @picture.opacity < 200
+    return false if @y_speed != 0
+    return false if @x_speed != 0
+    return false if @picture.bitmap.get_pixel(Graphics.width / 2, (Graphics.height * 0.7).to_i).alpha < 250
+    return false if @picture.bottom_y < Graphics.height
+    true
+  end
   #--------------------------------------------------------------------------
   # * Ottiene l'array dei nomi delle immagini
   #   pics: immagini configurate in Array<String> contenenti i nomi
@@ -701,6 +734,11 @@ class Animated_Sprite
   def update_frames
     @frame_state += 1
     set_frame(@frame + 1) if @frame_state >= @frame_speed
+  end
+
+  # coordinata Z
+  def z
+    @picture.z
   end
 end
 

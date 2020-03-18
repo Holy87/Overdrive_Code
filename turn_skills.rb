@@ -29,6 +29,8 @@
 # <ricarica battaglie: x>, per fare in modo che l'abilità si ricarichi dopo x
 # battaglie; oppure
 # <ricarica passi: x>, per fare in modo che l'abilità si ricarichi dopo x passi.
+# <ricarica danni: x%>, per fare in modo che l'abilità si ricarichi dopo aver
+# subito danni pari all'x% degli HP totali
 #===============================================================================
 # COMPATIBILITA':
 # Compatibile con Tankentai SBS, con o senza ATB. Non dovrebbe creare conflitti.

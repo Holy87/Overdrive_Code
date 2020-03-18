@@ -398,7 +398,7 @@ class Game_Battler
   def check_sinergic_damage(user)
     return unless $scene.is_a?(Scene_Battle)
     return if $game_party.sinergy_active?
-    skill = last_action_skill(user)
+    skill = user.action.action_object
     element_set = skill.nil? ? user.element_set : skill.element_set
     $game_party.add_sinergy(skill.custom_sinergy) if skill
     return unless damaged?

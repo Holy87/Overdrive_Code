@@ -27,6 +27,7 @@ module H87HUD_SETTINGS
   BAR_COLORS = {
       :hp => Color.new(122, 0, 38),
       :black => Color.new(0, 0, 0, 128),
+      :white => Color.new(255,255,255,128),
       :damage => Color.new(255, 0, 0),
       :heal => Color.new(20, 200, 0),
       :back => Color.new(0, 0, 0, 128),
@@ -79,6 +80,10 @@ module H87HUD_SETTINGS
   MPNUMBER_SPACING = 7
   # Sfondo della barra HUD
   HUD_BACKGROUND = 'HudBackground'
+  # La luminosità minima (da 0 a 255) per determinare se uno sfondo è
+  # chiaro. Al di sotto di tale valore, lo sfondo delle barre sarà bianco
+  # per maggiore visibilità.
+  MINIMUM_BRIGHTNESS = 30
   # Suono d'allarme quando un personaggio sta per morire
   ALARM_SE = ["Ice1", 100, 150]
 
@@ -177,6 +182,7 @@ class Battle_Hud
     @index = -1
     @y = y
     @width = width
+    @background_dark = background_dark?
     create_background
     create_contents
   end
@@ -299,7 +305,7 @@ class Battle_Hud
     yy = Graphics.height
     @battle_status_elements = []
     @members.each { |member|
-      battlestatus = Actor_BattleStatus.new(x, yy, width, member)
+      battlestatus = Actor_BattleStatus.new(x, yy, width, member, @background_dark)
       battlestatus.viewport = @viewport unless @viewport.nil?
       @battle_status_elements.push(battlestatus)
       yy += battlestatus.height
@@ -319,6 +325,29 @@ class Battle_Hud
         create_contents
       end
     end
+  end
+
+  def background_dark?
+    sprite = SceneManager.scene.spriteset.main_background_sprite
+    return false if sprite.nil?
+    bitmap = sprite.bitmap
+    bitmap_brightness(bitmap) < H87HUD_SETTINGS::MINIMUM_BRIGHTNESS
+  end
+
+  # @param [Bitmap] bitmap
+  # @param [Integer] samples
+  # @return [Integer]
+  def bitmap_brightness(bitmap, samples = 10)
+    brightnesses = []
+    x = Graphics.width / 2
+    y = Graphics.height - (5 * H87HUD_SETTINGS::BSH)
+    samples.times do |i|
+      y += (5 * i)
+      next if bitmap.get_pixel(x, y).alpha == 0
+      brightnesses.push(bitmap.get_pixel(x, y).brightness)
+    end
+    return 255 if brightnesses.empty?
+    brightnesses.inject(0) {|s, b| s + b} / brightnesses.size
   end
 
   # Delete contents for party change
@@ -369,7 +398,8 @@ class Actor_BattleStatus
   # @param [Integer] y
   # @param [Integer] width
   # @param [Game_Actor] actor
-  def initialize(x, y, width, actor)
+  # @param [Boolean] dark
+  def initialize(x, y, width, actor, dark = false)
     @actor = actor
     @x = x
     @y = y
@@ -379,6 +409,7 @@ class Actor_BattleStatus
     @attached_objects_y = {}
     @selected = false
     @viewport = nil
+    @dark_background = dark
     create_status
     create_faces
     create_bars
@@ -502,21 +533,21 @@ class Actor_BattleStatus
 
   # HP bar creation
   def create_hp_bar
-    @hp_bar = Battle_HpBar.new(bar_x, 4, hp_width)
+    @hp_bar = Battle_HpBar.new(bar_x, 4, hp_width, @dark_background)
     @hp_bar.set_value(actor.hp_rate * 100)
     register_object(@hp_bar)
   end
 
   # MP bar creation
   def create_mp_bar
-    @mp_bar = Battle_MpBar.new(bar_x, 18, mp_width)
+    @mp_bar = Battle_MpBar.new(bar_x, 18, mp_width, @dark_background)
     @mp_bar.set_value(actor.mp_rate * 100)
     register_object(@mp_bar)
   end
 
   # Anger gauge creation
   def create_anger_bar
-    @anger_bar = Battle_Charge_Bar.new(bar_x, 18, anger_width)
+    @anger_bar = Battle_Charge_Bar.new(bar_x, 18, anger_width, @dark_background)
     @anger_bar.set_value(actor.anger_rate * 100)
     register_object(@anger_bar)
   end
@@ -525,7 +556,7 @@ class Actor_BattleStatus
   def create_esper_bar
     width = esper_width
     x = @mp_bar.x + @mp_bar.width + 10
-    @esper_bar = Battle_EsperBar.new(x, 18, width)
+    @esper_bar = Battle_EsperBar.new(x, 18, width, @dark_background)
     @esper_bar.set_value($game_temp.domination_turns_rate * 100)
     register_object(@esper_bar)
   end
@@ -877,9 +908,9 @@ class Battle_HpBar < Battle_Bar
   # x: X coordinate
   # y: Y coord
   # width: bar width
-  def initialize(x, y, width)
+  def initialize(x, y, width, dark = false)
     height = H87HUD_SETTINGS::HP_HEIGHT
-    background_bitmap = Cache.hud_bar(:black)
+    background_bitmap = Cache.hud_bar(dark ? :white : :black)
     foreground_bitmap = Cache.gradient_bitmap(:hp)
     super(x, y, width, height, background_bitmap, foreground_bitmap)
   end
@@ -910,9 +941,9 @@ class Battle_MpBar < Battle_Bar
   # x: X coordinate
   # y: Y coord
   # width: bar width
-  def initialize(x, y, width)
+  def initialize(x, y, width, dark = false)
     height = H87HUD_SETTINGS::MP_HEIGHT
-    background_bitmap = Cache.hud_bar(:black)
+    background_bitmap = Cache.hud_bar(dark ? :white : :black)
     foreground_bitmap = Cache.gradient_bitmap(:mp)
     super(x, y, width, height, background_bitmap, foreground_bitmap)
   end
@@ -932,9 +963,9 @@ end
 # Bar for Esper duration
 #==============================================================================
 class Battle_EsperBar < Battle_Bar
-  def initialize(x, y, width = 100)
+  def initialize(x, y, width = 100, dark = false)
     height = H87HUD_SETTINGS::MP_HEIGHT
-    background_bitmap = Cache.hud_bar(:black)
+    background_bitmap = Cache.hud_bar(dark ? :white : :black)
     foreground_bitmap = Cache.gradient_bitmap(:es)
     super(x, y, width, height, background_bitmap, foreground_bitmap)
   end
@@ -950,9 +981,9 @@ class Battle_Charge_Bar < Battle_Bar
   # x: X coordinate
   # y: Y coord
   # width: bar width
-  def initialize(x, y, width)
+  def initialize(x, y, width, dark = false)
     height = H87HUD_SETTINGS::MP_HEIGHT
-    background_bitmap = Cache.hud_bar(:black)
+    background_bitmap = Cache.hud_bar(dark ? :white : :black)
     foreground_bitmap = Cache.gradient_bitmap(:ch)
     super(x, y, width, height, background_bitmap, foreground_bitmap)
   end
@@ -1283,7 +1314,7 @@ class States_Shower
 
   # @return [Array<RPG::State>]
   def visible_states
-    @actor.states.select{|s|s.priority >= 2}
+    @actor.states.select{|s|s.priority >= 2}.sort{ |a, b| a.priority <=> b.priority }
   end
 
   # @return [Integer]
@@ -1347,9 +1378,7 @@ class States_Shower
 
   # refresh
   def refresh
-    visible_states.sort{|state| state.priority}.each do |state|
-      add_state(state)
-    end
+    visible_states.each { |state| add_state(state) }
   end
 
   # eliminazione
@@ -1412,6 +1441,9 @@ class Scene_Battle < Scene_Base
   alias h87hud_terminate terminate unless $@
   alias h87hud_process_v process_victory unless $@
   alias h87hud_update_basic update_basic unless $@
+  # @return [Spriteset_Battle]
+  attr_reader :spriteset
+
   # alias for Viewport creation
   def create_info_viewport
     h87hud_create_info_viewport
@@ -1444,6 +1476,7 @@ class Scene_Battle < Scene_Base
 
   # aggiorna il viewport per lo smooth move
   def update_basic(main = false)
+    #noinspection RubyArgCount
     h87hud_update_basic(main)
     @hud_viewport.update
   end
@@ -1518,5 +1551,3 @@ if H87HUD_SETTINGS::HP_WIDTH_VAR > 0
 
   H87Options.push_game_option(hash)
 end
-
-hash = nil

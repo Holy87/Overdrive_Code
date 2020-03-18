@@ -75,9 +75,11 @@ class Scene_Battle < Scene_Base
   def start_target_selection(actor = false)
     @selection_active = true
     @commander.action.target_member = actor ? :friend : :enemy
+    $game_temp.is_meele_skill = !@commander.action.ranged? unless actor
     show_switch_help_sprite if action_switchable(@commander.action)
     @selection_active_actor = actor
     h87switchable_sts(actor)
+    $game_temp.is_meele_skill = nil
   end
 
   # fine della selezione del bersaglio
@@ -167,7 +169,7 @@ class Game_BattleAction
   # @param [RPG::UsableItem] obj
   def make_obj_targets(obj)
     return h87sw_make_obj_targets(obj) unless @target_member
-    select_target_member(obj)
+    select_target_member
   end
 
   # restituisce il bersaglio selezionato

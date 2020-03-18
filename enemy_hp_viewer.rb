@@ -29,6 +29,7 @@ module HintVocab
   ATTACK = 'Danni da'
   EVASION = 'Alta Evasione'
   LOW_HIT = 'Mira scarsa'
+  PROTECTOR = 'Protegge le retrovie'
   HINT_CRITICAL = 'Alta prob. Critici'
   MAGIC_DAMAGE = 'Debole contro la magia'
   LOW_MAGIC_RES = 'Resistente alla magia'
@@ -385,6 +386,7 @@ class Game_Enemy < Game_Battler
     hints.push hint_can_absorb
     hints.push hint_reflect_dmg
     hints.push hint_apply_effect
+    hints.push hint_protector
     hints.concat custom_hints
     hints.compact
   end
@@ -508,6 +510,10 @@ class Game_Enemy < Game_Battler
 
   def hint_aoe
     HintVocab::CAN_AOE if enemy.actions.select{|action| action.skill? and $data_skills[action.skill_id].scope == 2}.any?
+  end
+
+  def hint_protector
+    HintVocab::PROTECTOR if enemy.protector?
   end
 
   def hint_can_heal
