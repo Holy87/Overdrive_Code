@@ -37,7 +37,7 @@ module H87Item
     # Dettagli da disegnare nelle skill
     SKILL_DETAILS = [
         :spi_f, :atk_f, :agi_f, :def_f,
-        :mp_cost, :hp_cost, :item_cost, :gold_cost, :recharge, :aggro, :sinergy,
+        :mp_cost, :hp_cost, :item_price, :gold_cost, :recharge, :aggro, :sinergy,
         :tank_odd, :state_inf_bonus, :state_inf_per,
         :state_inf_dur, :type_effectiveness]
     #--------------------------------------------------------------------------
@@ -590,7 +590,7 @@ class Window_ItemInfo < Window_DataInfo
   # @param [RPG::BaseItem] new_item
   #--------------------------------------------------------------------------
   def set_item(new_item)
-    return if @item == new_item
+    return if @item.equal?(new_item)
     @item = new_item
     refresh
   end
@@ -923,7 +923,7 @@ class Window_ItemInfo < Window_DataInfo
       draw_anger_cost
     when :gold_cost
       draw_gold_cost
-    when :item_cost
+    when :item_price
       draw_item_cost
     when :recharge
       draw_recharge_req

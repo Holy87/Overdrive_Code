@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 $imported = {} if $imported == nil
 $imported["H87_EquipEnchant"] = true
 #==============================================================================
@@ -381,6 +379,10 @@ module EquipEnchant
 
   # Restituisce il nuovo ID
   def id
+    __id
+  end
+
+  def __id
     return @id unless customized?
     sprintf("%d.%02d%02d", self.real_id, self.enchant_state, @power_up).to_f
   end
@@ -550,6 +552,7 @@ module EquipEnchant
 
   # Restituisce true se è personalizzato
   def customized?
+    @power_up ||= 0
     enchant_state > 0 || @power_up > 0
   end
 
@@ -653,6 +656,11 @@ class RPG::Item
     @id
   end
 
+  def equal?(other)
+    return false unless other.is_a?(RPG::Item)
+    __id == other.id
+  end
+
   # Inizializza le pergamene
   def setup_enchant_property
     return if @enchant_propr_setted
@@ -691,7 +699,7 @@ class RPG::Weapon
   include EquipEnchant
   # Restituisce il modificatore dell'attributo
   def mod(symbol)
-    ; H87Enchant.get_w_mod(symbol)
+    H87Enchant.get_w_mod(symbol)
   end
 
   # Restituisce l'attacco
@@ -720,6 +728,11 @@ class RPG::Weapon
     @price + (@price * mod(:price) * enchant_state).to_i + pup_price
   end
 
+  def equal?(other)
+    return false unless other.is_a?(RPG::Weapon)
+    __id == other.id
+  end
+
   # Restituisce la descrizione dell'arma
   def description
     if powered?
@@ -745,7 +758,7 @@ class RPG::Armor
   include EquipEnchant
   # Restituisce il modificatore dell'attributo
   def mod(symbol)
-    ; H87Enchant.get_a_mod(symbol)
+    H87Enchant.get_a_mod(symbol)
   end
 
   # Restituisce l'attacco
@@ -771,6 +784,11 @@ class RPG::Armor
   # Restituisce il prezzo
   def price
     @price + (@price * mod(:price) * enchant_state).to_i
+  end
+
+  def equal?(other)
+    return false unless other.is_a?(RPG::Armor)
+    __id == other.id
   end
 
   # Restituisce false
