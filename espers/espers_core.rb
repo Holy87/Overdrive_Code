@@ -147,7 +147,6 @@ module Vocab
   def self.power_up_incr;"Incrementa il parametro %s di %d punti";end
   def self.esper_jp_help;"PA di %s"; end
   def self.esper_jp_no_m;"Nessun proprietario"; end
-
 end
 
 #===============================================================================
@@ -162,6 +161,7 @@ module EsperConfig
   BarL = 200 #lunghezzza della barra
   BarH = 3 #altezza della barra
   DURATION_LEVEL_BONUS = 0.15 #bonus di durata dominazione per ogni livello
+  BOOST_APPRAISED_SE = 'PopUp' # suono del popp quando una turbo è appresa
 
   SW_Dom = {
       #ID    SWITCH
@@ -472,8 +472,9 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   def push_message(stateid)
     state = $data_states[stateid]
-    text = sprintf(Vocab.new_boost,self.name,state.name)
-    $game_party.push_pop_message(text,state.icon_index)
+    text = sprintf(Vocab.new_boost, self.name, state.name)
+    tone = Tone.new(200,255,0,50)
+    $game_map.stack_popup([state.icon_index, text], tone, EsperConfig::BOOST_APPRAISED_SE)
   end
   #--------------------------------------------------------------------------
   # * restituisce i turbo sbloccati
@@ -547,7 +548,8 @@ class Game_Actor < Game_Battler
     @charge_state = recharge_max if @charge_state.nil?
     @charge_state += 1
     if recharged?
-      $game_party.push_pop_message(sprintf(Vocab.ready_dom, self.name))
+      tone = Tone.from_color(Color::GREENYELLOW)
+      $game_map.stack_popup([sprintf(Vocab.ready_dom, self.name)], tone)
     end
   end
   #--------------------------------------------------------------------------
@@ -803,35 +805,6 @@ class Game_Party < Game_Unit
     @actual_esper = actor
   end
   #--------------------------------------------------------------------------
-  # * aggiunge il messaggio di popup da mostrare una volta uscito dalla battaglia
-  #--------------------------------------------------------------------------
-  def push_pop_message(text, icon_index)
-    if $scene.is_a?(Scene_Map)
-      show_pop_message(text,icon_index)
-    else
-      @pop_messages = [] if @pop_messages.nil?
-      @pop_messages.push([text,icon_index])
-    end
-  end
-  #--------------------------------------------------------------------------
-  # * mostra il messaggio memorizzato del popup
-  # noinspection RubyResolve
-  #--------------------------------------------------------------------------
-  def show_pop_message(text,icon_index)
-    Sound.play_load
-    Popup.show(text,icon_index,[200,255,0,50])
-  end
-  #--------------------------------------------------------------------------
-  # * controlla se ci sono messaggi memorizzati
-  #--------------------------------------------------------------------------
-  def check_pop_messages
-    @pop_messages = [] if @pop_messages.nil?
-    @pop_messages.each {|message|
-      show_pop_message(message[0], message[1])
-    }
-    @pop_messages.clear
-  end
-  #--------------------------------------------------------------------------
   # * restituisce i turbo sbloccati
   #--------------------------------------------------------------------------
   def unlocked_boosts; @unlocked_boosts ||= []; end
@@ -877,20 +850,6 @@ class Game_Party < Game_Unit
     result
   end
 end #game_party
-
-#===============================================================================
-# ** classe Scene_Map
-#===============================================================================
-class Scene_Map < Scene_Base
-  alias add_t_pop_s start unless $@
-  #--------------------------------------------------------------------------
-  # * inizio
-  #--------------------------------------------------------------------------
-  def start
-    add_t_pop_s
-    $game_party.check_pop_messages
-  end
-end #scene_map
 
 # noinspection RubyResolve
 class Scene_Battle < Scene_Base
