@@ -14,6 +14,7 @@ module DataManager
   def self.make_save_contents
     contents = h87_shop_make_save_contents
     contents[:shop] = $game_shops
+    contents
   end
 
   # estrae i dati di gioco dal salvataggio
@@ -233,6 +234,7 @@ class Game_Map
 
   # determina se è figlio di una mappa
   def child_of?(search_id, map_id)
+    return false if Cache.map_info[map_id].nil?
     parent_id = Cache.map_info[map_id].parent_id
     return false if parent_id.nil?
     return true if parent_id == search_id

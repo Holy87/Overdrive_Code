@@ -54,7 +54,7 @@ class RPG::Shop
     @permit_sales = hash_info[:sales] != nil ? hash_info[:sales] : ShopsSettings::DISCOUNTS
     @sell_bonus = hash_info[:sell_bonus] ? (hash_info[:sell_bonus] / 100.0) : 0
     @sales_rate_bonus = hash_info[:sale_bonus] || 0
-    @buy_discount = hash_info[:buy_discount] || 0
+    @buy_discount = hash_info[:buy_discount] ? (hash_info[:buy_discount] / 100.0) : 0
     @rebuy_articles = []
     @initial_articles = process_articles(hash_info[:goods]) || []
     @random_articles = process_articles(hash_info[:random_goods]) || []

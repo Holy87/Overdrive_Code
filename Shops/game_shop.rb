@@ -212,7 +212,7 @@ class Game_Shops
   # @param [Boolean] include_sales
   def advance_shops(include_sales = false)
     @timing = initial_timing
-    @data.each { |shop| shop.update_shop(include_sales) }
+    @data.each_value{ |shop| shop.update_shop(include_sales) }
   end
 
   # restituisce il flusso di oggetti speciali che sono stati
@@ -288,6 +288,7 @@ class Game_Shop
     @custom_articles = []
     @rebuy_articles = []
     @fidelity_points = 0
+    update_shop if ShopsSettings::UPDATE_ON_STARTUP
     apply_random_sales if has_discounts?
   end
 
@@ -361,7 +362,7 @@ class Game_Shop
   end
 
   def sellable_articles
-    articles.select { |article| article.quantity > 0}
+    articles.select { |article| article.quantity > 0 || article.unlimited?}
   end
 
   # ottiene lo sconto sull'acquisto di beni
@@ -385,6 +386,10 @@ class Game_Shop
   # @return [Integer,Float]
   def supply_rate
     rpg_shop.supply_rate
+  end
+
+  def sales_rate_bonus
+    rpg_shop.sales_rate_bonus
   end
 
   # le categorie gestite dal negozio
@@ -511,6 +516,7 @@ class Game_Shop
     s_types = ShopsSettings::DISCOUNT_TYPES
     sales = [0]
     bonus = fidelity_level_bonus / 100.0 + 1
+    bonus += sales_rate_bonus
     s_types.each_pair { |key, value|
       sales.push(key) if value * bonus >= rand(100)
     }
