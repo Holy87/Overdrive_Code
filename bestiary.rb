@@ -907,6 +907,9 @@ class Window_EnemyInfo < Window_DataInfo
     draw_bg_rect(0, y, contents.width, line_height)
     skill = $data_skills[action.skill_id]
     draw_icon(skill.icon_index, 0, y)
+    if $game_party.all_members.select { |member| member.can_assimilate? }.any?
+      draw_icon(H87AttrSettings::ASSIMILATE_ICON, 0, y)
+    end
     draw_text(24, y, contents.width - 24, line_height, skill.name)
     draw_condition(y, action)
   end
@@ -944,7 +947,7 @@ class Window_EnemyInfo < Window_DataInfo
 
   # Mostra i drop
   def draw_drops
-    drops = enemy.drop_items
+    drops = enemy.drop_items.sort_by{|drop| drop.drop_percentage}.reverse
     drops.each_with_index do |drop, i|
       draw_drop(drop, line_height * (i + 1))
     end
