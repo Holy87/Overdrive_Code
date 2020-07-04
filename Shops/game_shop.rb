@@ -287,6 +287,7 @@ class Game_Shop
     @denied_sells = [{}, {}, {}]
     @custom_articles = []
     @rebuy_articles = []
+    @buy_discount = nil
     @fidelity_points = 0
     update_shop if ShopsSettings::UPDATE_ON_STARTUP
     apply_random_sales if has_discounts?
@@ -367,7 +368,12 @@ class Game_Shop
 
   # ottiene lo sconto sull'acquisto di beni
   def buy_discount
-    rpg_shop.buy_discount
+    @buy_discount || rpg_shop.buy_discount
+  end
+
+  # imposta uno sconto personalizzato per il negozio
+  def buy_discount=(new_discount)
+    @buy_discount = new_discount
   end
 
   # ottiene il bonus sulla vendita di beni
@@ -556,6 +562,7 @@ class Game_Shop
   # non rifornisce oltre la soglia max_quantity dell'articolo
   # @param [RPG::Shop_Article] article
   def valuate_add_article(article)
+    return unless article.conditions_met?
     i_num = item_number(article.item)
     return if i_num >= article.max_quantity
     max_n = article.max_quantity - i_num

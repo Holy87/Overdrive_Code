@@ -491,7 +491,7 @@ class Window_ShopNumberN < Window_Base
 
   # disegna il costo dell'oggetto
   def draw_item_cost(line)
-    cost = @mode == :buy ? shop.item_price(item) : shop.item_sell_price(item)
+    cost = @mode == :buy ? shop.item_price(item, true) : shop.item_sell_price(item)
     cost *= @quantity
     change_color(system_color)
     draw_text(line_rect(line), Vocab::shop_total)
@@ -563,7 +563,7 @@ class Window_ShopNumberN < Window_Base
   def max_buyable
     max_shop = shop.item_number(item) >= 0 ? shop.item_number(item) : 99
     [$game_party.max_item_number(item) - $game_party.item_number(item),
-     max_shop, $game_party.gold / shop.item_price(item)].min
+     max_shop, $game_party.gold / shop.item_price(item, true)].min
   end
 
   def max_rebuyable

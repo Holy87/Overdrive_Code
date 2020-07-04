@@ -134,14 +134,14 @@ class Game_Party
   # Restituisce lo sconto degli acquisti in negozio
   def shop_discount
     discount = 0.0
-    members.each { |member| discount += member.buy_discount }
+    battle_members.each { |member| discount += member.buy_discount }
     discount
   end
 
   # Restituisce il bonus di vendita dei negozi
   def sell_bonus
     bonus = 0.0
-    members.each { |member| bonus += member.sell_bonus }
+    battle_members.each { |member| bonus += member.sell_bonus }
     bonus
   end
 

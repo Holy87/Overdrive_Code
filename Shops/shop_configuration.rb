@@ -86,13 +86,15 @@ module ShopsSettings
   # ancora lì dentro. Vengono contate anche TUTTE le sottomappe, così
   # non è necessario inserire gli ID di tutte le case presenti in una
   # città.
-  HOLD_UPDATE_MAPS = [87,89]
+  HOLD_UPDATE_MAPS = [87, 89]
 
   # definizione dei negozi
   # ISTRUZIONI
   # Inserire nell'hash un nuovo negozio con un simbolo identificativo ed i
   # seguenti parametri:
   # name: nome del negozio
+  # can_sell: puoi vendere al negozio
+  # can_buy: il negozio può vendere
   # goods: beni iniziali del negozio (quelli che ha la prima volta che ci vai)
   # random_goods: beni che possono comparire a caso dopo un po'
   # sia i goods che random goods sono degli array di hash. I goods possono
@@ -152,14 +154,14 @@ module ShopsSettings
       :bad_equips => {
           :name => 'Equipaggiamenti di Baduelle',
           :goods => [
-              {:set => 'w6x5'}, {:set => 'w21x8'}, {:set => 'w27x2'},
-              {:set => 'w50x1'}, {:set => 'w100x1'}, {:set => 'w70x2'},
+              {:set => 'w6x5'}, {:set => 'w127x8'}, {:set => 'w21x2'},
+              {:set => 'w100x1'}, {:set => 'w70x2'},
               {:set => 'a2x3'}, {:set => 'a22x15'}, {:set => 'a62x2'},
               {:set => 'a63x2'}
           ],
           :random_goods => [
-              {:set => 'w6x5'}, {:set => 'w21x8'}, {:set => 'w27x2'},
-              {:set => 'w50x1'}, {:set => 'w100x1'}, {:set => 'w70x2'},
+              {:set => 'w6x5'}, {:set => 'w127x8'}, {:set => 'w21x2'},
+              {:set => 'w100x1'}, {:set => 'w70x2'},
               {:set => 'a2x3'}, {:set => 'a22x15'}, {:set => 'a62x2'},
               {:set => 'a63x2'}
           ],
@@ -169,12 +171,12 @@ module ShopsSettings
           :name => 'Negozio di protezioni di Sirenas',
           :goods => [
               {:set => 'a2x5'}, {:set => 'a3x2'}, {:set => 'a22x20'},
-              {:set => 'a23x10'}, {:set => 'a62x2'}, {:set => 'a63x4'},
+              {:set => 'a24x10'}, {:set => 'a62x2'}, {:set => 'a63x4'},
               {:set => 'a64x2'},
           ],
           :random_goods => [
               {:set => 'a2x10'}, {:set => 'a3x8'}, {:set => 'a22x20'},
-              {:set => 'a23x20'}, {:set => 'a62x8'}, {:set => 'a63x8'},
+              {:set => 'a24x20'}, {:set => 'a62x8'}, {:set => 'a63x8'},
               {:set => 'a64x10'},
           ]
       },
@@ -182,13 +184,13 @@ module ShopsSettings
           :name => 'Negozio d\'armi di Sirenas',
           :goods => [
               {:set => 'w6x10'}, {:set => 'w7x1'},
-              {:set => 'w21x8'}, {:set => 'w27x2'},
+              {:set => 'w127x8'}, {:set => 'w21x2'},
               {:set => 'w50x1'}, {:set => 'w100x1'}, {:set => 'w71x1'},
               {:set => 'w150x1'}
           ],
           :random_goods => [
               {:set => 'w6x80'}, {:set => 'w7x25'},
-              {:set => 'w21x90'}, {:set => 'w27x30'},
+              {:set => 'w127x90'}, {:set => 'w21x30'},
               {:set => 'w50x30'}, {:set => 'w100x30'}, {:set => 'w71x30'},
               {:set => 'w150x30'}, {:set => 'w78x1', :repl_rate => 0.2}
           ]
@@ -254,8 +256,8 @@ module ShopsSettings
           ],
           :random_goods => [
               {:set => 'i50x1', :sell_locked => true, :repl_rate => 100},
-              {:set => 'i150x1', :sell_locked => true,:repl_rate => 100},
-              {:set => 'i153x1', :sell_locked => true,:repl_rate => 100},
+              {:set => 'i150x1', :sell_locked => true, :repl_rate => 100},
+              {:set => 'i153x1', :sell_locked => true, :repl_rate => 100},
               {:set => 'i20x1', :repl_rate => 0.1},
               {:set => 'i21x3'},
               {:set => 'i7x20'},
@@ -269,9 +271,9 @@ module ShopsSettings
       :monferr_weapons => {
           :name => 'Negozio Armi di Monferras',
           :goods => [
-              {:set => 'w8x6'},
-              {:set => 'w9x5'},
-              {:set => 'w19x2'},
+              {:set => 'w30x6'},
+              {:set => 'w22x5'},
+              {:set => 'w10x2'},
               {:set => 'w51x2'},
               {:set => 'w76x4'},
               {:set => 'w102x5'},
@@ -281,11 +283,11 @@ module ShopsSettings
               {:set => 'i23x1'}
           ],
           :random_goods => [
-              {:set => 'w8x8'},
-              {:set => 'w9x6'},
-              {:set => 'w10x3'},
-              {:set => 'w12x1'},
-              {:set => 'w19x2'},
+              {:set => 'w30x8'},
+              {:set => 'w22x6'},
+              {:set => 'w39x3'},
+              {:set => 'w33x1'},
+              {:set => 'w10x2'},
               {:set => 'w51x2'},
               {:set => 'w72x1', :repl_rate => 0.05},
               {:set => 'w76x2'},
@@ -301,19 +303,19 @@ module ShopsSettings
           :name => 'Negozio Armature di Monferras',
           :goods => [
               {:set => 'a4x13'},
-              {:set => 'a23x8'},
-              {:set => 'a30x5'},
+              {:set => 'a24x8'},
+              {:set => 'a25x5'},
               {:set => 'a64x4'},
-              {:set => 'a72x5'},
+              {:set => 'a67x5'},
               {:set => 'a242x3'}, # guanti semplici, non servono più forse
           ],
           :random_goods => [
               {:set => 'a4x25'},
               {:set => 'a5x2'},
-              {:set => 'a23x16'},
-              {:set => 'a30x10'},
+              {:set => 'a24x16'},
+              {:set => 'a25x10'},
               {:set => 'a64x8'},
-              {:set => 'a72x10'},
+              {:set => 'a67x10'},
               {:set => 'a123x1'},
               {:set => 'a129x1'},
               {:set => 'a130x2'},
@@ -326,7 +328,7 @@ module ShopsSettings
           :sale_bonus => 0.1,
           :goods => [
               {:set => 'w6x8'},
-              {:set => 'w21x10'},
+              {:set => 'w127x10'},
               {:set => 'w50x5'},
               {:set => 'w72x15'},
               {:set => 'w100x13'},
@@ -337,7 +339,7 @@ module ShopsSettings
           ],
           :random_goods => [
               {:set => 'w6x25'},
-              {:set => 'w21x25'},
+              {:set => 'w127x25'},
               {:set => 'w50x25'},
               {:set => 'w72x25'},
               {:set => 'w100x25'},
@@ -389,23 +391,23 @@ module ShopsSettings
               {:set => 'i14x1', :repl_rate => 0.05},
               {:set => 'i20x1', :repl_rate => 0.05},
               {:set => 'i29x1', :repl_rate => 0.05},
-              {:set => 'a154x5',:repl_rate => 0.1},
-              {:set => 'a155x5',:repl_rate => 0.1},
-              {:set => 'a156x5',:repl_rate => 0.1},
-              {:set => 'a158x5',:repl_rate => 0.1},
-              {:set => 'a134x5',:repl_rate => 0.1},
+              {:set => 'a154x5', :repl_rate => 0.1},
+              {:set => 'a155x5', :repl_rate => 0.1},
+              {:set => 'a156x5', :repl_rate => 0.1},
+              {:set => 'a158x5', :repl_rate => 0.1},
+              {:set => 'a134x5', :repl_rate => 0.1},
           ]
       },
       :florea_weap => {
           :name => 'Armeria di Florea',
           :goods => [
-              {:set => 'w8x5'},
+              {:set => 'w30x5'},
               {:set => 'w51x5'},
               {:set => 'w76x5'},
               {:set => 'a3x5'},
-              {:set => 'a32x5'},
-              {:set => 'a75x5'},
-              {:set => 'a75x5'},
+              {:set => 'a25x5'},
+              {:set => 'a67x5'},
+              {:set => 'a67x5'},
               {:set => 'a123x1'},
               {:set => 'a134x1'},
               {:set => 'a143x1'},
@@ -414,14 +416,14 @@ module ShopsSettings
               {:set => 'a154x5'}
           ],
           :random_goods => [
-              {:set => 'w12x5'},
-              {:set => 'w19x5'},
-              {:set => 'w22x5'},
+              {:set => 'w33x5'},
+              {:set => 'w10x5'},
+              {:set => 'w128x5'},
               {:set => 'w76x5'},
               {:set => 'a3x5'},
-              {:set => 'a32x5'},
-              {:set => 'a75x5'},
-              {:set => 'a75x5'},
+              {:set => 'a25x5'},
+              {:set => 'a67x5'},
+              {:set => 'a67x5'},
               {:set => 'a123x1'},
               {:set => 'a134x1'},
               {:set => 'a143x1'},
@@ -435,7 +437,7 @@ module ShopsSettings
           :goods => [
               {:set => 'w100x15'},
               {:set => 'w102x1'},
-              {:set => 'a33x15'},
+              {:set => 'a30x15'},
               {:set => 'a199x3'},
               {:set => 'a200x1'},
               {:set => 'a261x5'},
@@ -444,7 +446,7 @@ module ShopsSettings
               {:set => 'w100x20'},
               {:set => 'w102x4'},
               {:set => 'w105x1', :repl_rate => 0.05},
-              {:set => 'a33x20'},
+              {:set => 'a30x20'},
               {:set => 'a199x5'},
               {:set => 'a200x5'},
               {:set => 'a201x1', :repl_rate => 0.05},
@@ -523,7 +525,7 @@ module ShopsSettings
           ],
           :random_goods => [
               {:set => 'i107x1', :sell_locked => true, :repl_rate => 100},
-              {:set => 'i153x1', :sell_locked => true,:repl_rate => 100},
+              {:set => 'i153x1', :sell_locked => true, :repl_rate => 100},
               {:set => 'i20x1', :repl_rate => 0.1},
               {:set => 'i21x3'},
               {:set => 'i16x6'},
@@ -543,25 +545,25 @@ module ShopsSettings
           :name => 'Negozio di equipaggiamenti di Carpia',
           :buy_discount => 5,
           :goods => [
-              {:set => 'w9x4'},
-              {:set => 'w22x6'},
+              {:set => 'w22x4'},
+              {:set => 'w128x6'},
               {:set => 'w52x3'},
               {:set => 'w72x5'},
               {:set => 'w105x3'},
               {:set => 'a4x10'},
-              {:set => 'a32x8'},
-              {:set => 'a75x5'},
+              {:set => 'a25x8'},
+              {:set => 'a67x5'},
               {:set => 'a242x3'},
           ],
           :random_goods => [
-              {:set => 'w9x20'},
               {:set => 'w22x20'},
+              {:set => 'w128x20'},
               {:set => 'w52x20'},
               {:set => 'w72x10'},
               {:set => 'w105x20'},
               {:set => 'a4x20'},
-              {:set => 'a32x20'},
-              {:set => 'a75x20'},
+              {:set => 'a25x20'},
+              {:set => 'a67x20'},
               {:set => 'a242x20'},
           ]
       },
@@ -579,11 +581,11 @@ module ShopsSettings
               {:set => 'i28x1'},
           ],
           :random_goods => [
-              {:set => 'i41x15',},
-              {:set => 'i42x16',},
-              {:set => 'i43x15',},
+              {:set => 'i41x15', },
+              {:set => 'i42x16', },
+              {:set => 'i43x15', },
               {:set => 'i46x2', },
-              {:set => 'i48x15',},
+              {:set => 'i48x15', },
               {:set => 'i51x3', },
               {:set => 'i91x2', },
               {:set => 'i28x2', },
@@ -656,9 +658,9 @@ module ShopsSettings
           :supply_rate => 50,
           :goods => [
               {:set => 'w10x15'},
-              {:set => 'w8x15'},
+              {:set => 'w30x15'},
               {:set => 'w7x25'},
-              {:set => 'w9x25'},
+              {:set => 'w22x25'},
               {:set => 'w50x25'},
               {:set => 'w71x25'},
               {:set => 'w102x25'},
@@ -666,9 +668,9 @@ module ShopsSettings
           ],
           :random_goods => [
               {:set => 'w10x15'},
-              {:set => 'w8x15'},
+              {:set => 'w30x15'},
               {:set => 'w7x25'},
-              {:set => 'w9x25'},
+              {:set => 'w22x25'},
               {:set => 'w50x25'},
               {:set => 'w71x25'},
               {:set => 'w102x25'},
@@ -679,13 +681,13 @@ module ShopsSettings
           :name => 'Armeria di Sebastiano',
           :goods => [
               {:set => 'w10x30'},
-              {:set => 'w11x30'},
+              {:set => 'w23x30'},
               {:set => 'w52x30'},
               {:set => 'w155x30'},
           ],
           :random_goods => [
               {:set => 'w10x30'},
-              {:set => 'w11x30'},
+              {:set => 'w23x30'},
               {:set => 'w52x30'},
               {:set => 'w155x30'}
           ],
@@ -697,22 +699,22 @@ module ShopsSettings
               {:set => 'a4x30'},
               {:set => 'a5x10'},
               {:set => 'a6x1'},
-              {:set => 'a23x20'},
-              {:set => 'a24x1'},
+              {:set => 'a24x20'},
+              {:set => 'a26x1'},
               {:set => 'a64x20'},
               {:set => 'a66x10'},
-              {:set => 'a75x20'},
+              {:set => 'a67x20'},
               {:set => 'a243x10'},
           ],
           :random_goods => [
               {:set => 'a4x30'},
               {:set => 'a5x10'},
               {:set => 'a6x1'},
-              {:set => 'a23x20'},
-              {:set => 'a24x1'},
+              {:set => 'a24x20'},
+              {:set => 'a26x1'},
               {:set => 'a64x20'},
               {:set => 'a66x10'},
-              {:set => 'a75x20'},
+              {:set => 'a67x20'},
               {:set => 'a243x10'},
           ],
           :replenishment_rate => 5
@@ -736,7 +738,7 @@ module ShopsSettings
           ],
           :random_goods => [
               {:set => 'i107x1', :sell_locked => true, :repl_rate => 100},
-              {:set => 'i153x1', :sell_locked => true,:repl_rate => 100},
+              {:set => 'i153x1', :sell_locked => true, :repl_rate => 100},
               {:set => 'i20x1', :repl_rate => 0.1},
               {:set => 'i21x5'},
               {:set => 'i2x2'},
@@ -827,25 +829,25 @@ module ShopsSettings
           :depletion_rate => 3,
           :buy_discount => -30,
           :goods => [
-              {:set => 'w9x5'},
-              {:set => 'w10x4'},
               {:set => 'w22x5'},
+              {:set => 'w10x4'},
+              {:set => 'w128x5'},
               {:set => 'a5x2'},
               {:set => 'a37x1'},
               {:set => 'a65x2'},
               {:set => 'a66x1'},
-              {:set => 'a75x2'},
+              {:set => 'a67x2'},
               {:set => 'a243x2'},
           ],
           :random_goods => [
-              {:set => 'w9x10'},
-              {:set => 'w10x8'},
               {:set => 'w22x10'},
+              {:set => 'w10x8'},
+              {:set => 'w128x10'},
               {:set => 'a5x4'},
               {:set => 'a37x2'},
               {:set => 'a65x4'},
               {:set => 'a66x2'},
-              {:set => 'a75x4'},
+              {:set => 'a67x4'},
               {:set => 'a243x4'},
           ]
       },
@@ -1026,9 +1028,137 @@ module ShopsSettings
       :balthazar_weapons => {
           :name => 'L\'onesto venditore di armi Gildo',
           :goods => [
-              {:set => 'w6x20'},
-              {:set => 'w7x15'}
+              {:set => 'w7x15'},
+              {:set => 'w9x10'},
+              {:set => 'w10x2'},
+              {:set => 'w22x15'},
+              {:set => 'w23x1'},
+              {:set => 'w33x1'},
+              {:set => 'w39x10'},
+              {:set => 'w40x1'},
+              {:set => 'w51x5'},
+              {:set => 'w53x2'},
+              {:set => 'w72x3'},
+              {:set => 'w75x2'},
+              {:set => 'w105x10'},
+              {:set => 'w106x5'},
+              {:set => 'w107x2'},
+              {:set => 'w128x10'},
+              {:set => 'w129x5'},
+              {:set => 'w153x5'},
+              {:set => 'w155x1'},
+          ],
+          :random_goods => [
+              {:set => 'w7x30'},
+              {:set => 'w9x20'},
+              {:set => 'w10x5'},
+              {:set => 'w22x30'},
+              {:set => 'w23x3'},
+              {:set => 'w33x3'},
+              {:set => 'w39x20'},
+              {:set => 'w40x3'},
+              {:set => 'w51x10'},
+              {:set => 'w53x4'},
+              {:set => 'w72x5'},
+              {:set => 'w75x4'},
+              {:set => 'w105x20'},
+              {:set => 'w106x10'},
+              {:set => 'w107x5'},
+              {:set => 'w128x20'},
+              {:set => 'w129x10'},
+              {:set => 'w153x10'},
+              {:set => 'w155x5'},
+              {:set => 'w11x1', :sell_locked => true, :repl_rate => 0.2},
+              {:set => 'w12x1', :sell_locked => true, :repl_rate => 0.2},
+              {:set => 'w13x1', :sell_locked => true, :repl_rate => 0.2},
+              {:set => 'w135x1', :sell_locked => true, :repl_rate => 0.4},
+              {:set => 'w136x1', :sell_locked => true, :repl_rate => 0.4},
+              {:set => 'w137x1', :sell_locked => true, :repl_rate => 0.4},
           ]
+      },
+      :balthazar_boutique => {
+          :name => 'La bottega della moda di Balthazar',
+          :goods => [
+              {:set => 'a25x5'},
+              {:set => 'a29x2'},
+              {:set => 'a30x1'},
+              {:set => 'a63x4'},
+              {:set => 'a67x4'},
+              {:set => 'a69x2'},
+          ],
+          :random_goods => [
+              {:set => 'a25x10'},
+              {:set => 'a29x5'},
+              {:set => 'a30x5'},
+              {:set => 'a63x10'},
+              {:set => 'a67x10'},
+              {:set => 'a69x5'},
+              {:set => 'a32x1', :sell_locked => true, :repl_rate => 0.5},
+          ]
+      },
+      :balthazar_souvenirs => {
+          :name => 'Bancarella dei souvenir di Balthazar',
+          :can_sell => false,
+          :goods => [
+              {:set => 'i38x15'},
+              {:set => 'i107x1', :sell_locked => false},
+              {:set => 'i108x1', :sell_locked => false},
+              {:set => 'i150x1', :sell_locked => false},
+              {:set => 'i153x1', :sell_locked => false},
+              {:set => 'i160x2'},
+              {:set => 'i142x2'},
+          ],
+          :random_goods => [
+              {:set => 'i38x15'},
+              {:set => 'i107x1'},
+              {:set => 'i108x1'},
+              {:set => 'i150x1'},
+              {:set => 'i153x1'},
+              {:set => 'i160x5'},
+              {:set => 'i28x1'},
+              {:set => 'i109x1'},
+              {:set => 'i29x1'},
+              {:set => 'i142x5'},
+          ]
+      },
+      :balthazar_vegetables => {
+          :name => 'Fruttivendolo di Balthazar',
+          :can_sell => false,
+          :buy_discount => 500,
+          :goods => [
+              {:set => 'i21x25'},
+              {:set => 'i41x15'},
+              {:set => 'i43x10'},
+              {:set => 'i48x6'},
+              {:set => 'i46x4'},
+          ],
+          :random_goods => [
+              {:set => 'i41x50'},
+              {:set => 'i21x30'},
+              {:set => 'i43x20'},
+              {:set => 'i48x12'},
+              {:set => 'i46x8'},
+          ]
+      },
+      :balthazar_items_accessories => {
+          :name => 'Anastasia, l\'aiutante di Thomas',
+          :goods => [
+              {:set => 'i170x1'},
+              {:set => 'i173x1'},
+              {:set => 'i174x1'},
+              {:set => 'i176x1'},
+              {:set => 'i180x1'},
+              {:set => 'i185x1'},
+          ],
+          :random_goods => [
+              {:set => 'i170x1'},
+              {:set => 'i173x1'},
+              {:set => 'i174x1'},
+              {:set => 'i176x1'},
+              {:set => 'i180x1'},
+              {:set => 'i185x1'},
+          ]
+
       }
   }
 end

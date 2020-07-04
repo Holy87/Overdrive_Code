@@ -55,7 +55,6 @@ class RPG::Shop
     @sell_bonus = hash_info[:sell_bonus] ? (hash_info[:sell_bonus] / 100.0) : 0
     @sales_rate_bonus = hash_info[:sale_bonus] || 0
     @buy_discount = hash_info[:buy_discount] ? (hash_info[:buy_discount] / 100.0) : 0
-    @rebuy_articles = []
     @initial_articles = process_articles(hash_info[:goods]) || []
     @random_articles = process_articles(hash_info[:random_goods]) || []
     @fidelity_rate = hash_info[:fidelity_rate] || ShopsSettings::FIDELITY_DEFAULT_RATE
@@ -68,6 +67,7 @@ class RPG::Shop
   # @param [Array<Hash>] articles_hash
   # @return [Array<RPG::Shop_Article>]
   def process_articles(articles_hash)
+    return [] if articles_hash.nil?
     articles_hash.collect { |article_detail| RPG::Shop_Article.new(article_detail) }
   end
 
@@ -131,6 +131,10 @@ class RPG::Shop_Article
     @price = hash_info[:price].nil? ? item.price : hash_info[:price]
     @sell_locked = hash_info[:sell_locked].nil? ? false : hash_info[:sell_locked]
     @deny_sales = hash_info[:no_sales].nil? ? false : hash_info[:no_sales]
+    @required_sw = hash_info[:switch]
+    @required_var = hash_info[:variable]
+    @required_var_value = hash_info[:variable_val] || 1
+    @required_noitem = hash_info[:if_not_item]
   end
 
   # restituisce l'oggetto reale del database
@@ -163,5 +167,24 @@ class RPG::Shop_Article
   # @return [Integer]
   def quantity
     @max_quantity
+  end
+
+  def conditions_met?
+    variable_condition_met? and switch_condition_met? and no_item_met?
+  end
+
+  def variable_condition_met?
+    return true if @required_var.nil?
+    $game_variables[@required_var] > @required_var_value
+  end
+
+  def switch_condition_met?
+    return true if @required_sw.nil?
+    $game_switches[@required_sw]
+  end
+
+  def no_item_met?
+    return true if @required_noitem.nil?
+    !$game_party.has_item?($data_items[@required_noitem])
   end
 end
