@@ -1,5 +1,3 @@
-require 'rm_vx_data' if false
-
 =begin
  ==============================================================================
   ■ Opzioni skin finestre di Holy87

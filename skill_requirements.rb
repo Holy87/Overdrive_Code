@@ -293,6 +293,7 @@ class Game_Battler
   # @param [RPG::Skill] skill
   #-----------------------------------------------------------------------------
   def skill_can_use?(skill)
+    return false unless normal_requirements(skill)
     return false if req_equip_no_pres(skill) and actor?
     return false if no_req_state(skill)
     return false if blocked_by_state(skill)
@@ -302,7 +303,7 @@ class Game_Battler
     return false if mp_no_enough(skill)
     return false if req_switch_off(skill)
     return false if req_custom(skill)
-    normal_requirements(skill)
+    true
   end
   #-----------------------------------------------------------------------------
   # *Restituisce true se non sono soddisfatti i requisiti di equip
@@ -312,7 +313,7 @@ class Game_Battler
   def req_equip_no_pres(skill)
     return unless actor?
     return false if skill.required_eq.size == 0
-    etypes = equip_types
+    e_types = equip_types
     return true if e_types.size < skill.required_eq.size
     skill.required_eq.each do |req|
       found = false

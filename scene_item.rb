@@ -650,7 +650,7 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   # * Disegna un dettaglio generico
   # @param [String] param
-  # @param [String, Integer] value
+  # @param [String, Integer, Float] value
   # @param [Integer] icon
   # @param [Integer] height
   # @param [Color] color
@@ -1383,6 +1383,24 @@ class Window_Item < Window_Selectable
       enabled = true
     end
     super(item, x, y, enabled, width)
+  end
+end
+
+class Game_Party < Game_Unit
+  alias inventory_item_number item_number unless $@
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
+  # @param [Boolean] include_equips
+  # @return [Integer]
+  def item_number(item, include_equips = false)
+    inventory_item_number(item) + include_equips ? members_item_number(item) : 0
+  end
+
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
+  # @return [Integer]
+  def members_item_number(item)
+    sum = 0
+    members.each { |member| sum += member.equips.select { |equip| equip == item}.size }
+    sum
   end
 end
 

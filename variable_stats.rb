@@ -1,5 +1,18 @@
 $imported = {} if $imported == nil
 $imported["H87_VariableStats"] = true
+# ==============================================================================
+#  ** PARAMETRI VARIABILI di Holy87
+#  -----------------------------------------------------------------------------
+#  Descrizione:
+#  Questo script permette ai parametri di eroi e nemici di aumentare o diminuire
+#  sotto determinate condizioni (HP/MP/Furia bassi)
+#
+#  Utilizzo:
+#  Inserire nelle note di equip/nemici/status tag con questo pattern:
+#  <hp min atk: +30>  -> aumenta l'attacco di 30 quando gli HP sono bassi
+#  <mp min spi: +50%> -> aumenta lo Spirito del 50% quando gli MP sono bassi
+#  -----------------------------------------------------------------------------
+
 module VariableStatsConfig
   #-----------------------------------------------------------------------------
   # * Configura qual è la percentuale al di sotto del quale si attiva il bonus

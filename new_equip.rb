@@ -81,7 +81,7 @@ module EquipSettings
   TYPE_RULES = {
       # Equip  => [ Nome,       Tipo, Vuoto?],
       :weapon => ['Arma', nil, true],
-      :shield => ['Scudo', 0, true],
+      :shield => ['Supporto', 0, true],
       :helmet => ['Testa', 1, true],
       :armour => ['Corpo', 2, true],
       :other => ['Acc.', 3, true],

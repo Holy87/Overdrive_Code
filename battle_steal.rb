@@ -1,3 +1,6 @@
+# STEAL SCRIPT
+# Questo script permette alle abilità di rubare.
+
 module StealSettings
   # icona che compare nel popup quando nulla viene rubato
   NO_STEAL_ICON = 0
@@ -93,10 +96,12 @@ end
 class RPG::Enemy
   # @return [Array<RPG::Enemy::StealItem]
   attr_reader :steals
+  attr_reader :steal_bonus
 
   def init_steal_data
     return if @steal_data_init
     @steal_data_init = true
+    @steal_bonus = 0
     @steals = []
     @gold_steal = nil
     self.note.split(/[\n\r]+/).each do |line|
@@ -110,6 +115,8 @@ class RPG::Enemy
         @steals.push(StealItem.new(type, $2.to_i, $3.to_i))
       when /<steal gold: [ ]*(\d+)>/i
         @gold_steal = $1.to_i
+      when /<steal bonus:[ ]*([+\-]\d+)%>/i
+        @steal_bonus = $1.to_f / 100
       else
         # type code here
       end
@@ -341,8 +348,10 @@ class Game_Enemy < Game_Battler
   end
 
   # calcola le probabilità di default per rubare gli oggetti
+  # aumenta se il bersaglio è incapacitato
   # @param [Game_Actor] user
   def calculate_steal_prob(user)
+    # parriable? definito in RGSS2 come può schivare
     # noinspection RubyResolve
     sleep_mul = parriable? ? 1 : StealSettings::SLEEP_MULTIPLIER
     user.steal_rate * steal_rate * sleep_mul
