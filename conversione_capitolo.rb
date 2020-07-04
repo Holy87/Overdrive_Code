@@ -631,6 +631,104 @@ module SC_Mod
       471=>473
   }
 
+  SHIFTED_WEAPONS = {
+      30 => 13,
+      8 => 30,
+      22 => 128,
+      20 => 9,
+      9 => 22,
+      19 => 10,
+      10 => 39,
+      14 => 34,
+      36 => 14,
+      23 => 36,
+      28 => 11,
+      11 => 23,
+      33 => 137,
+      12 => 33,
+      26 => 8,
+      24 => 26,
+      13 => 24,
+      17 => 41,
+      15 => 16,
+      32 => 136,
+      16 => 32,
+      18 => 42,
+      21 => 127,
+      27 => 21,
+      29 => 12,
+      31 => 135,
+      40 => 15,
+      35 => 40,
+      38 => 41,
+      111 => 112,
+  }
+
+  REMOVED_WEAPONS = {
+      173 => 400,
+      174 => 800,
+      175 => 1500,
+      176 => 6200,
+      25 => 9000,
+      39 => 0,
+  }
+
+  SHIFTED_ARMORS = {
+      201 => 211,
+      214 => 201, # SIGILLO DEL VESPRO -> GRIMORIO ANTICO
+      204 => 203,
+      205 => 204,
+      206 => 205,
+      207 => 206,
+      208 => 207,
+      209 => 208,
+      199 => 209,
+      200 => 209,
+      219 => 202,
+      202 => 265,
+      212 => 262,
+      213 => 201,
+      215 => 262,
+      216 => 203,
+      217 => 263,
+      218 => 261,
+      220 => 218,
+      30 => 25,
+      24 => 31,
+      23 => 24,
+      26 => 29,
+      31 => 26,
+      32 => 25,
+      33 => 30,
+      34 => 32,
+      35 => 29,
+      67 => 76,
+      77 => 74,
+      68 => 77,
+      72 => 67,
+      73 => 68,
+      75 => 67,
+      79 => 69,
+  }
+
+  REMOVED_ARMORS = {
+      210 => 4000,
+      211 => 4000,
+      221 => 4000,
+      # guanti
+      242 => 700,
+      243 => 1000,
+      244 => 1500,
+      245 => 3000,
+      246 => 5000,
+      25 => 5500,
+      29 => 2600,
+      38 => 4000,
+      74 => 1500,
+      78 => 3500,
+      80 => 4000
+  }
+
   #--------------------------------------------------------------------------
   # * Aggiunge i luoghi visitati alla mappa leggendo le informazioni sul gioco.
   #--------------------------------------------------------------------------
@@ -858,7 +956,7 @@ class Window_Conversion < Window_Base
 
   def draw_save_state_bar
     contents.clear_rect(line_rect(2))
-    rate = @save_state.to_f / 56.0
+    rate = @save_state.to_f / 57.0
     draw_gauge(0, line_height * 2, contents_width, rate, Color::WHITE, Color::WHITE)
   end
 
@@ -1024,6 +1122,10 @@ class Conversion_Scheduler
     advance_step
     rimuovi_oggetti_eliminati
     advance_step
+    handle_old_equips
+    advance_step
+    update_shop_states
+    recover_all
     continue_chapter4 if $game_variables[72] >= 57
   end
   #--------------------------------------------------------------------------
@@ -1050,6 +1152,10 @@ class Conversion_Scheduler
     $game_switches[121] = $game_party.atb_custom[1]
   end
 
+  def recover_all
+    $game_party.all_members.each { |member| member.recover_all }
+  end
+
   # fa avanzare lo stato della conversione di 1
   def advance_step
     @save_state += 1
@@ -1069,6 +1175,18 @@ class Conversion_Scheduler
   def discover_items_for_itempedia
     puts 'sblocco gli oggetti oggettario'
     $game_party.discovered_items
+  end
+
+  def update_shop_states
+    update_balthazar_shop
+  end
+
+  def update_balthazar_shop
+    state = $game_variables[80]
+    return if state <= 0
+    Roba_Personale.riempi_shop_balth(1)
+    Roba_Personale.riempi_shop_balth(2) if $game_switches[433]
+    Roba_Personale.riempi_shop_balth(3) if $game_variables[165] >= 5
   end
   #--------------------------------------------------------------------------
   # * scambia gli oggetti per la nuova posizione
@@ -1108,6 +1226,92 @@ class Conversion_Scheduler
       $game_actors[14].change_equip(4, $data_armors[191])
     end
   end
+
+  # @param [RPG::Weapon] weapon
+  # @return [RPG::Weapon]
+  def process_weapon(weapon)
+    # per le armi modificate
+    if SC_Mod::MODDED_WEAPONS[weapon.id] != nil
+      weapon = $data_weapons[SC_Mod::MODDED_WEAPONS[weapon.id]]
+    end
+    if SC_Mod::REMOVED_WEAPONS.keys.include?(weapon.real_id)
+      $game_party.gain_gold SC_Mod::REMOVED_WEAPONS[weapon.real_id]
+      return nil
+    end
+    if SC_Mod::SHIFTED_WEAPONS.keys.include?(weapon.real_id)
+      power_up = weapon.power_up_id || 0
+      weapon = $data_weapons[SC_Mod::SHIFTED_WEAPONS[weapon.real_id]]
+      weapon.power_up = power_up
+    end
+    weapon
+  end
+  
+  # @param [RPG::Armor] armor
+  # @return [RPG::Armor]
+  def process_armor(armor)
+    if SC_Mod::REMOVED_ARMORS.keys.include?(armor.id)
+      $game_party.gain_gold SC_Mod::REMOVED_ARMORS[armor.id]
+      return nil
+    end
+    if SC_Mod::SHIFTED_ARMORS.keys.include?(armor.id)
+      return $data_armors[SC_Mod::SHIFTED_ARMORS[armmor.id]]
+    end
+    armor
+  end
+
+  def handle_old_equips
+    puts 'elimino gli equipaggiamenti non più usati'
+
+    $game_party.weapons.each do |weapon|
+      n = $game_party.item_number weapon, true
+      $game_party.lose_item(weapon, n, true)
+      new_weapon = process_weapon(weapon)
+      if weapon != nil
+        $game_party.gain_item(new_weapon, n)
+      end
+    end
+
+    $game_party.armors.each do |armor|
+      n = $game_party.item_number armor, true
+      $game_party.lose_item(armor, n, true)
+      new_armor = process_armor(armor)
+      if armor != nil
+        $game_party.gain_item(new_armor, n)
+      end
+    end
+
+    #SC_Mod::REMOVED_WEAPONS.each_pair do |weapon_id, cost|
+    #  remove_item_and_get_refund($data_weapons[weapon_id], cost)
+    #end
+
+    #SC_Mod::SHIFTED_ARMORS.each_pair do |old_id, new_id|
+    #  remove_item_and_replace($data_armors[old_id], $data_armors[new_id])
+    #end
+
+    #SC_Mod::REMOVED_ARMORS.each_pair do |armor_id, cost|
+    #  remove_item_and_get_refund($data_weapons[armor_id], cost)
+    #end
+  end
+
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
+  # non più usato
+  def remove_item_and_get_refund(item, cost)
+    number = $game_party.item_number(item, true)
+    return if number == 0
+    $game_party.lose_item(item, number, true)
+    $game_party.gain_gold(cost * number)
+  end
+
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] old_item
+  # @param [RPG::Item,RPG::Armor,RPG::Weapon] new_item
+  # non più usato
+  def remove_item_and_replace(old_item, new_item)
+    number = $game_party.item_number(old_item, true)
+    return if number == 0
+    $game_party.lose_item(old_item, number, true)
+    $game_party.gain_item(new_item, number)
+  end
+
   #--------------------------------------------------------------------------
   # * aggiorna le statistiche dei personaggi
   #--------------------------------------------------------------------------
@@ -1288,7 +1492,7 @@ class Conversion_Scheduler
     puts 'aggiorno la posizione del gruppo'
     update_last_place(index)
     if $game_map.map_id == 2
-      for i in 5..8
+      (5..8).each do |i|
         $game_map.screen.pictures[i].erase
       end
       $game_map.setup(1)
