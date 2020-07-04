@@ -31,6 +31,9 @@
 #   aggiunto a status ed equipaggiamenti, aumenta la probabilità di
 #   drop di tutti i nemici del x%. Vale anche se il nemico è affetto
 #   da uno status che ha quel tag.
+# ● <jp rate: +x%>
+#   aggiunto a status ed equipaggiamenti, aumenta i JP ottenuti dai
+#   nemici
 
 #===============================================================================
 #===============================================================================
@@ -46,7 +49,8 @@ module Drop_Modifier_Settings
   DATA_BUCKETS = {
       :exp_rate => 'exp_rate',
       :gold_rate => 'gold_rate',
-      :drop_rate => 'drop_rate'
+      :drop_rate => 'drop_rate',
+      :jp_rate => 'jp_rate'
   }
 
   # Valori di default dei parametri di gioco (nel caso non sia attivo o non sia
@@ -54,6 +58,7 @@ module Drop_Modifier_Settings
   DROP_RATE = 1.0   # rate dei drop
   GOLD_RATE = 1.0   # moltiplicatore oro
   EXP_RATE = 1.0    # moltiplicatore exp
+  JP_RATE = 1.0     # moltiplicatore JP
 end
 
 #===============================================================================
@@ -65,6 +70,7 @@ module Drop_Modifier_Core
   #--------------------------------------------------------------------------
   REGEXP_EXP_BONUS = /<exp rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_GOLD_BONUS = /<gold rate:[ ]*([+\-]\d+)[%％]>/i
+  REGEXP_JP_BONUS = /<jp rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_DROP_BONUS = /<drop rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_ITEM_DROP = /<drop (item|armor|weapon)[ ]+(\d+):[ ]*(.+)>/i
   # per le configurazioni precedenti con KGC::ItemDrop
@@ -95,6 +101,10 @@ module Game_Metrics
     data[:gold]
   end
 
+  def self.jp_rate
+    data[:jp]
+  end
+
   # restituisce l'hash di tutti i moltiplicatori
   def self.data
     @metrics ||= refresh_metrics
@@ -105,7 +115,8 @@ module Game_Metrics
     @metrics = {
         :exp => DROP_RATE,
         :gold => GOLD_RATE,
-        :drop => DROP_RATE
+        :drop => DROP_RATE,
+        :jp => JP_RATE
     }
 
     return @metrics unless USE_ONLINE_FEATURES
@@ -117,6 +128,7 @@ module Game_Metrics
     @metrics[:exp] = server_data[data_buckets[:exp_rate]] || @metrics[:exp]
     @metrics[:gold] = server_data[data_buckets[:gold_rate]] || @metrics[:gold]
     @metrics[:drop] = server_data[data_buckets[:drop_rate]] || @metrics[:drop]
+    @metrics[:jp] = server_data[data_buckets[:jp_rate]] || @metrics[:jp]
     @metrics
   end
 end
@@ -128,6 +140,7 @@ module Drop_Common
   attr_reader :exp_bonus
   attr_reader :drop_bonus
   attr_reader :gold_bonus
+  attr_reader :jp_bonus
 
   # inizializzazione dei parametri
   def drop_attr_init
@@ -144,6 +157,8 @@ module Drop_Common
         @exp_bonus = $1.to_f / 100
       when Drop_Modifier_Core::REGEXP_GOLD_BONUS
         @gold_bonus = $1.to_f / 100
+      when Drop_Modifier_Core::REGEXP_JP_BONUS
+        @jp_bonus = $1.to_f / 100
       else
         # niente
       end
@@ -236,6 +251,11 @@ class RPG::Enemy
     (@exp * $game_system.exp_rate).to_i
   end
 
+  alias normal_jp_earn jp unless $@
+  def jp
+    (normal_jp_earn * $game_system.jp_rate).to_i
+  end
+
   # creates a custom drop item
   # @param [Symbol] item_type
   # @param [Integer] item_id
@@ -319,6 +339,12 @@ class Game_System
   def exp_rate
     Game_Metrics.exp_rate
   end
+
+  # the jp rate
+  # @return [Float]
+  def exp_rate
+    Game_Metrics.jp_rate
+  end
 end
 
 #===============================================================================
@@ -338,6 +364,11 @@ class Game_Battler
   # the gold bonus
   def gold_bonus
     features_sum :gold_bonus
+  end
+
+  # the jp bonus
+  def jp_bonus
+    features_sum :jp_bonus
   end
 end
 
@@ -413,6 +444,10 @@ class Game_Actor < Game_Battler
   # @param [Integer] exp
   def gain_exp(exp, show)
     h87_drop_gain_exp((exp * exp_bonus).to_i, show)
+  end
+
+  def earn_jp(amount = 0)
+    h87_drop_earn_jp((amount * jp_bonus).to_i)
   end
 end
 
