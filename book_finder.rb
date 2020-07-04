@@ -15,6 +15,18 @@ module GameFinder
     save_results(result, 'books')
   end
 
+  def self.find_armor(armor_id)
+    command = 128
+    params = [armor_id, 0, 0, 1]
+    msgbox pretty_results(find command, params)
+  end
+
+  def self.find_weapon(weapon_id)
+    command = 127
+    params = [weapon_id, 0, 0, 1]
+    msgbox pretty_results(find command, params)
+  end
+
   # @param [Integer] switch_id
   # @return [String]
   def self.find_switch_on(switch_id)
