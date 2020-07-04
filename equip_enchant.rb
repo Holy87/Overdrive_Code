@@ -62,6 +62,9 @@ module H87Enchant
   # sid: incremento durata stati
   # amp: recupera MP con l'attacco
   # ats: aumenta l'attacco in base allo spirito
+  # ira: aumenta l'ira attaccando
+  # sir: aumento ira iniziale
+  # kir: aumento ira uccisione
   WEAPON_TAGS = {
       1 => ["Stordente", "sta 8", "Probabilità di stordire con l'attacco.", 971],
       2 => ["Velenoso", "sta 2", "Probabilità di avvelenare con l'attacco.", 965],
@@ -103,7 +106,7 @@ module H87Enchant
       38 => ["Possente", "atk +23, agi -15", "Aumenta l'attacco, ma diminuisce la velocità.", 978],
       39 => ["Spirituale", "spi +30, mpr +20", "Aumenta lo Spirito e il consumo delle magie.", 980],
       40 => ["Prode", "atb +50", "Comincia l'incontro con ATB a metà o più.", 1223],
-      41 => ["Prode", "atb +100", "Comincia l'incontro con l'ATB piena.", 1223],
+      41 => ["Prode+", "atb +100", "Comincia l'incontro con l'ATB piena.", 1223],
       42 => ["del Sangue", "lhp hp atk +50", "Attacco +50% quando i PV sono sotto il 25%.", 1225],
       43 => ["Chance", "lhp hp agi +30, lhp hp eva +10", "Velocità +30% e Evasione +10% a PV bassi.", 1225],
       44 => ["Stamina", "lhp mp spi +100", "Spirito +100% se i PM stanno per esaurirsi.", 1225],
@@ -128,9 +131,9 @@ module H87Enchant
       63 => ["Coalizione", "snd +30", "Aumenta la durata della Sinergia quando attiva.", 920],
       64 => ["Selvaggio", "ele 18,ele 19,ele 21,ele 22", "Danni aumentati contro animali, rettili e uccelli.", 1068],
       65 => ["Veloce", "agi +15", "Aumenta la Velocità del 15%.", 981],
-      66 => ["Ustionante", "sta 130", "Possibilità di infliggere Fuoco Avverso.", 952],
-      67 => ["Gelante", "sta 131", "Possibilità di infliggere Ghiaccio Avverso.", 953],
-      68 => ["Folgorante", "sta 132", "Possibilità di infliggere Tuono Avverso.", 954],
+      66 => ["Ustionante", "sta 130", "Possibilità di infliggere Combustione.", 952],
+      67 => ["Gelante", "sta 131", "Possibilità di infliggere Congelamento.", 953],
+      68 => ["Folgorante", "sta 132", "Possibilità di infliggere Shock.", 954],
       69 => ["Magiparalisi", "mst 7", "Possibilità di infliggere Paralisi con magie.", 970],
       70 => ["Corrodi", "sta 135", "Possibilità di infliggere Vento Avverso.", 957],
       # - ARPIONE -
@@ -190,6 +193,10 @@ module H87Enchant
       132 => ['Ultra S', 'spi +15', 'Aumenta lo spirito del 15%.',0],
       133 => ['Ultra V', 'agi +15', 'Aumenta la velocità del 15%.',0],
 
+      135 => ['Iracondo', 'ira +5', 'Aumenta la Furia attaccando', 0],
+      136 => ['Mietitore', 'kir +15', 'Guadagno 15 punti Furia uccidendo un nemico', 0],
+      137 => ['Furioso', 'sir +10', 'Dona 10 punti Furia a inizio battaglia', 0],
+
 
 
 
@@ -220,12 +227,14 @@ module H87Enchant
 
   # Ottiene il modificatore di incantamento dell'arma
   #     symbol: simbolo del parametro
+  # @return [Float]
   def self.get_w_mod(symbol)
     return Weapon_Modifier[symbol] / 100.0
   end
 
   # Ottiene il modificatore d'incantamento dell'armatura
   #     symbol: simbolo del parametro
+  # @return [Float]
   def self.get_a_mod(symbol)
     return Armor_Modifier[symbol] / 100.0
   end
@@ -499,8 +508,14 @@ module EquipEnchant
       @mp_on_attack += value
     when :ats
       @spirit_attack += value.to_f / 100
+    when :ira
+      @anger_bonus += value.to_i
+    when :sir
+      @anger_init += value.to_i
+    when :kir
+      @anger_kill += value.to_i
     else
-      ; # niente
+      # niente
     end
   end
 
@@ -543,11 +558,12 @@ module EquipEnchant
   # Restituisce tutti i power up possibili
   # @return [Array<Equip_Abilities>]
   def power_ups
-    pups = []
-    @power_ups.each do |pup|
-      pups.push(Equip_Abilities.new(pup[0], pup[1], pup[2]))
-    end
-    pups
+    @power_ups.map {|pup| Equip_Abilities.new(pup[0], pup[1], pup[2])}
+  end
+
+  # restituisce il tipo di potenziamento
+  def power_up_id
+    @power_up
   end
 
   # Restituisce true se è personalizzato
@@ -587,6 +603,23 @@ module EquipEnchant
   end
 end
 
+class RPG_Weapons < Array
+  # @return [RPG:Weapon, Array<RPG::Weapon>]
+  def [](*args)
+    return super(*args) unless args[0].is_a?(Float)
+    return super(*args) if args.size > 1
+    H87Enchant.weapon_from_id(args[0])
+  end
+end
+
+class RPG_Armors < Array
+  def [](*args)
+    return super(*args) unless args[0].is_a?(Float)
+    return super(*args) if args.size > 1
+    H87Enchant.armor_from_id(args[0])
+  end
+end
+
 #==============================================================================
 # ** Scene_Title
 #------------------------------------------------------------------------------
@@ -601,30 +634,23 @@ class Scene_Title < Scene_Base
     set_enchant_items
     set_enchantable_weapons
     set_enchantable_armors
+    $data_weapons = RPG_Weapons.new($data_weapons)
+    $data_armors = RPG_Armors.new($data_armors)
   end
 
   # Inizializza gli oggetti che incantano le armi
   def set_enchant_items
-    $data_items.each { |item|
-      next if item.nil?
-      item.setup_enchant_property
-    }
+    $data_items.compact.each { |i| i.setup_enchant_property }
   end
 
   # Inizializza le armi modificabili
   def set_enchantable_weapons
-    $data_weapons.each { |weapon|
-      next if weapon.nil?
-      weapon.setup_enchant_property
-    }
+    $data_weapons.compact.each { |w| w.setup_enchant_property }
   end
 
   # Inizializza le armature modificabili
   def set_enchantable_armors
-    $data_armors.each { |armor|
-      next if armor.nil?
-      armor.setup_enchant_property
-    }
+    $data_armors.compact.each { |a| a.setup_enchant_property }
   end
 end
 
@@ -658,7 +684,7 @@ class RPG::Item
 
   def equal?(other)
     return false unless other.is_a?(RPG::Item)
-    __id == other.id
+    @id == other.id
   end
 
   # Inizializza le pergamene
@@ -700,6 +726,11 @@ class RPG::Weapon
   # Restituisce il modificatore dell'attributo
   def mod(symbol)
     H87Enchant.get_w_mod(symbol)
+  end
+
+  # @return [RPG::Weapon]
+  def original
+    $data_weapons[@id]
   end
 
   # Restituisce l'attacco
@@ -759,6 +790,11 @@ class RPG::Armor
   # Restituisce il modificatore dell'attributo
   def mod(symbol)
     H87Enchant.get_a_mod(symbol)
+  end
+
+  # @return [RPG::Armor]
+  def original
+    $data_armors[@id]
   end
 
   # Restituisce l'attacco
@@ -831,7 +867,7 @@ class Equip_Abilities
   # restituisce l'oro richiesto per il potenziamento
   # @param [RPG::Weapon] equip
   def required_gold(equip)
-    ; equip.price / 4
+    equip.price / 4
   end
 
   # restituisce il nome del potenziamento
@@ -904,30 +940,6 @@ class Power_Up
     effects
   end
 end #weapon_powerup
-
-#==============================================================================
-# ** Array
-#------------------------------------------------------------------------------
-#  Modifica del metodo di restituzione degli oggetti
-#==============================================================================
-class Array
-  alias old_return [] unless $@
-  # Alias del metodo di ritorno dell'oggetto
-  def [](value)
-    return old_return(value) if value.is_a?(Integer) || !is_equip?
-    if value.is_a?(Float)
-      return nil if old_return(value.to_i) == nil
-      return H87Enchant.weapon_from_id(value) if old_return(1).is_a?(RPG::Weapon)
-      return H87Enchant.armor_from_id(value) if old_return(1).is_a?(RPG::Armor)
-    end
-  end
-
-  # Restituisce true se è un array di equipaggiamenti
-  def is_equip?
-    val = old_return(1)
-    val.is_a?(RPG::Weapon) or val.is_a?(RPG::Armor)
-  end
-end
 
 #==============================================================================
 # ** Scene_Enchant
