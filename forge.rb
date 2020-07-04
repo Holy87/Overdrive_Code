@@ -1,4 +1,3 @@
-require 'rm_vx_data'
 #===============================================================================
 # Forgiatura di Holy87
 # Difficoltà utente: ★
@@ -65,23 +64,23 @@ module Forge_Settings
   BLACKSMITHS = {
       :faide => {
           :name => 'Gino, il fabbro di Faide-Eiba',
-          :items => [:iron_shield, :iron_helmet, :leather_hat, :leather_gloves,
-                     :rainbow_hat, :iron_armor, :leather_jacket, :rainbow_mantle,
-                     :claymore, :morning_star, :sabre, :harpoon, :arbalest,
-                     :onyx_staff, :battle_gloves, :great_boomerang]
+          :items => [:iron_shield, :iron_helmet, :leather_hat, :buckler,
+                     :elf_hat, :iron_armor, :leather_jacket, :elf_mantle,
+                     :claymore, :peaked_mace, :sabre, :harpoon, :hard_bow,
+                     :onyx_staff, :battle_gloves]
       },
       :balthazar => {
           :name => 'Pino, il fabbro di Balthazar',
-          :items => [:iron_shield, :iron_helmet, :leather_hat, :leather_gloves,
-                     :rainbow_hat, :iron_armor, :leather_jacket, :rainbow_mantle,
-                     :claymore, :morning_star, :sabre, :harpoon, :arbalest,
-                     :onyx_staff, :battle_gloves, :great_boomerang]
+          :items => [:iron_shield, :iron_helmet, :leather_hat, :buckler,
+                     :elf_hat, :iron_armor, :leather_jacket, :elf_mantle,
+                     :claymore, :iron_mace, :killer_sword, :harpoon, :hard_bow,
+                     :onyx_staff, :battle_gloves]
       },
       :jugure => {
           :name => 'Kanou, maestro fabbro di Yugure',
-          :items => [:grater, :war_axe, :rune_sword, :mugen, :halberd,
-                     :elven_bow, :quasar, :machete, :silver_glow, :steel_eagle,
-                     :imperial_shield, :rogue_gloves, :mystic_sigil,
+          :items => [:nodachi, :war_axe, :katana, :naginata, :peaked_mace,
+                     :yumi_bow, :khakkhara, :sai, :silver_glow,
+                     :imperial_shield, :armguard,
                      :imperial_helmet, :rogue_hat, :mystic_diadem, :imperial_armor,
                      :rogue_shirt, :mystic_dress]
       },
@@ -92,9 +91,9 @@ module Forge_Settings
       },
       :nevandra => {
           :name => 'Edoardo, il fabbro di Nevandra',
-          :items => [:mugen, :mithril_sword, :dwarf_axe, :dragon_slayer,
+          :items => [:mugen, :golden_sword, :dwarf_axe, :dragon_slayer,
                      :javelin, :crimson_bow, :quantic_line, :crystal_dagger,
-                     :shocker, :nemesis_shield, :warden_shield, :wind_gloves,
+                     :shocker, :nemesis_shield, :warden_shield, :magnet_buckler,
                      :nemesis_helmet, :warden_helm, :elven_hat,
                      :blessed_diadem, :elven_cap, :wind_helmet],
       },
@@ -131,41 +130,48 @@ module Forge_Settings
       :fine_silk =>         {:item => 'i88', :mats => %w(i82 i52x2),      :gold => 50},
 
       # armi
-      :claymore => {:item => 'w11', :mats => %w(i76, i60x3, i64)},
-      :morning_star => {:item => 'w12', :mats => %w(i76, i77x2)},
-      :grater => {:item => 'w13', :mats => %w(i76x2 i71x2 i77x3), :gold => 1500},
-      :mithril_sword => {:item => 'w15', :mats => %w(i85 i73), :gold => 3200},
-      :war_axe => {:item => 'w17', :mats => %w(i76x2 i71x2 i64x3), :gold => 1500},
-      :dwarf_axe => {:item => 'w18', :mats => %w(i75 i69x2 i82x2), :gold => 3200},
-      :sabre => {:item => 'w20', :mats => %w(i77, i56x3, i64)},
-      :dragon_slayer => {:item => 'w24', :mats => %w(i75x2 i69x2 i82x2), :gold => 3200},
-      :rune_sword => {:item => 'w36', :mats => %w(i76x2 i71x3 i77x3), :gold => 1500},
-      :mugen => {:item => 'w40', :mats => %w(i75 i71x3 i77x3), :gold => 1850},
+      :sabre => {:item => 'w9', :mats => %w(i77, i56x3, i64)},
+      :killer_sword => {:item => 'w10', :mats => %w(i85 i73), :gold => 650},
+      :katana => {:item => 'w14', :mats => %w(i76x2 i71x3 i77x3), :gold => 1500},
+      :golden_sword => {:item => 'w16', :mats => %w(i75 i71x3 i77x3), :gold => 3000},
+
+      :claymore => {:item => 'w23', :mats => %w(i76, i60x3, i64), :gold => 700},
+      :nodachi => {:item => 'w24', :mats => %w(i76x2 i71x2 i77x3), :gold => 1600},
+      :dragon_slayer => {:item => 'w26', :mats => %w(i75x2 i69x2 i82x2), :gold => 3200},
+
+      :iron_mace => {:item => 'w32', :mats => %w(i76, i64x3), :gold => 650},
+      :peaked_mace => {:item => 'w33', :mats => %w(i76x2, i77x2), :gold => 1500},
+
+      :war_axe => {:item => 'w41', :mats => %w(i76x2 i71x2 i64x3), :gold => 1500},
+      :dwarf_axe => {:item => 'w42', :mats => %w(i75 i69x2 i82x2), :gold => 3200},
+
       :harpoon => {:item => 'w53', :mats => %w(i77 i53x4)},
-      :halberd => {:item => 'w54', :mats => %w(i77x4 i71x2 i80x3), :gold => 1500},
+      :naginata => {:item => 'w54', :mats => %w(i77x4 i71x2 i80x3), :gold => 1500},
       :javelin => {:item => 'w55', :mats => %w(i75 i81 i86), :gold => 3200},
-      :arbalest => {:item => 'w73', :mats => %w(i64x3 i56x2 i51)},
-      :elven_bow => {:item => 'w74', :mats => %w(i51x2 i64x3 i80x3), :gold => 1500},
+
+      :hard_bow => {:item => 'w73', :mats => %w(i64x3 i56x2 i51)},
+      :yumi_bow => {:item => 'w74', :mats => %w(i51x2 i64x3 i80x3), :gold => 1500},
       :crimson_bow => {:item => 'w75', :mats => %w(i81 i62x3 i71 i74x2), :gold => 3200},
+
       :onyx_staff => {:item => 'w107', :mats => %w(i72 i64x2)},
-      :quasar => {:item => 'w110', :mats => %w(i53 i71x2 i73x2), :gold => 1500},
+      :khakkhara => {:item => 'w110', :mats => %w(i53 i71x2 i73x2), :gold => 1500},
       :quantic_line => {:item => 'w111', :mats => %w(i72x2 i84 i83x2), :gold => 3200},
-      :machete => {:item => 'w130', :mats => %w(i76x2 i74x2 i77x3), :gold=> 1500},
+
+      :sai => {:item => 'w130', :mats => %w(i76x2 i74x2 i77x3), :gold=> 1500},
       :crystal_dagger => {:item => 'w133', :mats => %w(i75 i72 i60x2), :gold => 3200},
+
       :battle_gloves => {:item => 'w155', :mats => %w(i56x2 i53x2 i55x2)},
       :silver_glow => {:item => 'w156', :mats => %w(i78 i67 i76x2), :gold => 1500},
       :shocker => {:item => 'w157', :mats => %w(i75x2 i50x3 i67x2)},
-      :great_boomerang => {:item => 'w175', :mats => %w(i64x2 i73)},
-      :steel_eagle => {:item => 'w176', :mats => %w(i75 i56x2)},
 
       # armature
       :iron_shield => {:item => 'a6', :mats => %w(i76 i59x2)},
       :imperial_shield => {:item => 'a9', :mats => %w(i77x3 i56x3 i71x2)},
       :nemesis_shield => {:item => 'a10', :mats => %w(i75 i73x2 i63)},
       :warden_shield => {:item => 'a11', :mats => %w(i75 i74x2 i67x2)},
-      :iron_helmet => {:item => 'a24', :mats => %w(i76 i60x2 i77)},
-      :leather_hat => {:item => 'a26', :mats => %w(i56 i52)},
-      :rainbow_hat => {:item => 'a39', :mats => %w(i52 i55x2 i63)},
+      :leather_hat => {:item => 'a29', :mats => %w(i56 i52)},
+      :iron_helmet => {:item => 'a31', :mats => %w(i76 i60x2 i77)},
+      :elf_hat => {:item => 'a39', :mats => %w(i52 i55x2 i63)},
       :imperial_helmet => {:item => 'a40', :mats => %w(i75 i71)},
       :rogue_hat => {:item => 'a41', :mats => %w(i82 i60x2)},
       :mystic_diadem => {:item => 'a42', :mats => %w(i75 i73)},
@@ -175,9 +181,9 @@ module Forge_Settings
       :elven_cap => {:item => 'a46', :mats => %w(i88 i73 i74),},
       :wind_helmet => {:item => 'a47', :mats => %w(i77x2 i60x2 i71)},
       :elven_hat => {:item => 'a48', :mats => %w(i82 i60x2 i77x2)},
-      :iron_armor => {:item => 'a68', :mats => %w(i76x2 i60x3 i77x2)},
-      :leather_jacket => {:item => 'a69', :mats => %w(i56x2 i59x2 i 53x2)},
-      :rainbow_mantle => {:item => 'a76', :mats => %w(i52x2 i55x3 i63x2)},
+      :leather_jacket => {:item => 'a69', :mats => %w(i56x2 i59x2 i53x2)},
+      :elf_mantle => {:item => 'a76', :mats => %w(i52x2 i55x3 i63x2)},
+      :iron_armor => {:item => 'a77', :mats => %w(i76x2 i60x3 i77x2)},
       :imperial_armor => {:item => 'a81', :mats => %w(i75 i77x3 i71)},
       :rogue_shirt => {:item => 'a82', :mats => %w(i77x3 i75)},
       :mystic_dress => {:item => 'a83', :mats => %w(i52 i51x2 i77)},
@@ -188,13 +194,10 @@ module Forge_Settings
       :elven_cloak => {:item => 'a88', :mats => %w(i82x2 i65x2 i61x2)},
       :wind_shell => {:item => 'a89', :mats => %w(i77x4 i71x2 i55x4)},
 
-      # sigilli
-      :mystic_sigil => {:item => 'a200', :mats => %w(i80x2 i67x2 i76x2)},
-
-      # guanti
-      :leather_gloves => {:item => 'a244', :mats => %w(i56x2 i53x2)},
-      :rogue_gloves => {:item => 'a245', :mats => %w(i82 i60x3)},
-      :wind_gloves => {:item => 'a246', :mats => %w(i82x2 i71 i77x2)},
+      # supporti
+      :buckler => {:item => 'a244', :mats => %w(i56x2 i53x2)},
+      :armguard => {:item => 'a245', :mats => %w(i82 i60x3)},
+      :magnet_buckler => {:item => 'a246', :mats => %w(i82x2 i71 i77x2)},
   }
 end
 
