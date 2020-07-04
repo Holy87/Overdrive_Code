@@ -4,6 +4,7 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   def draw_script_detail
     if item.is_a?(RPG::Weapon) or item.is_a?(RPG::Armor)
+      draw_item_class
       draw_rarity
       draw_required_level
       draw_perc_increment
@@ -23,6 +24,13 @@ class Window_ItemInfo < Window_DataInfo
       draw_exp_bonus
       draw_gold_bonus
       draw_autoscan
+      draw_parry
+      draw_super_guard
+      draw_pharmacology
+      draw_healing_magic_states
+      draw_offensive_magic_states
+      draw_hp_on_guard
+      draw_mp_on_guard
     end
     draw_autostates
     if item.is_a?(RPG::Armor) && item.id == 174
@@ -56,6 +64,49 @@ class Window_ItemInfo < Window_DataInfo
     text = sprintf('Richiede il livello %d', item.equip_level)
     draw_feature(text, color)
   end
+
+  def draw_parry
+    return unless item.parry
+    draw_feature('Contrattacco su schivata')
+  end
+
+  def draw_offensive_magic_states
+    return if item.offensive_magic_states.empty?
+    item.offensive_magic_states.each do |state_id|
+      draw_feature(sprintf('Può causare %s con la magia', $data_states[state_id]))
+    end
+  end
+
+  def draw_healing_magic_states
+    return if item.heal_magic_states.empty?
+    item.heal_magic_states.each do |state_id|
+      draw_feature(sprintf('Può causare %s con la magia', $data_states[state_id]))
+    end
+  end
+
+  def draw_super_guard
+    return unless item.super_guard
+    draw_feature('1/4 danni su Difendi')
+  end
+
+  def draw_pharmacology
+    return unless item.pharmacology
+    draw_feature('Effetto pozioni doppio')
+  end
+
+  def draw_hp_on_guard
+    return if item.hp_on_guard == 0
+    draw_detail('PV su Difendi', sprintf('%d%%',item.hp_on_guard * 100))
+  end
+
+  def draw_mp_on_guard
+    return if item.mp_on_guard == 0
+    draw_detail('PM su Difendi', sprintf('%d%%', item.mp_on_guard * 100))
+  end
+
+
+
+
   #--------------------------------------------------------------------------
   # * Disegna l'incremento (in percentuale) delle statistiche
   #--------------------------------------------------------------------------
@@ -137,6 +188,18 @@ class Window_ItemInfo < Window_DataInfo
     return if icon.nil?
     text = sprintf('Pot. %s', Vocab.element(element))
     draw_parameter(text, rate, true, icon)
+  end
+
+  # mostra il rank oggetto con un numero di stelle
+  def draw_item_class
+    return if item.tier == 0
+    icon = 568 # icona stella
+    text = 'Classe'
+    y = @line
+    change_color system_color
+    draw_text(0, y, contents_width, line_height, text)
+    item.tier.times{|i| draw_icon(icon, contents_width - (i+1) * 24, y)}
+    @line += 24
   end
   #--------------------------------------------------------------------------
   # * Disegna il rateo di danno non elementale. Non serve, perché non ce ne sono.
