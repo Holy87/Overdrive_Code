@@ -51,6 +51,9 @@ module H87_ItemClass
   # Proporzioni Armature
   Prop_Armr  = 50
 
+  # Mostrare le stelle sull'icona oggetto?
+  SHOW_ON_ICON = false
+
 
   #============================================================================
   # ** FINE CONFIGURAZIONE **
@@ -70,6 +73,7 @@ module RPG
     #--------------------------------------------------------------------------
     # * Restituisce il livello dell'oggetto
     #--------------------------------------------------------------------------
+    # @return [Integer]
     def tier; @tier; end
     #--------------------------------------------------------------------------
     # * Inizializza il livello della classe dell'oggetto
@@ -270,7 +274,7 @@ class Window_Base < Window
   #-----------------------------------------------------------------------------
   def draw_item_name(item, x, y, enabled = true, width = 172)
     disegna_nome_oggetto(item, x, y, enabled, width)
-    if item != nil and item.tier != 0
+    if item != nil and item.tier != 0 and H87_ItemClass::SHOW_ON_ICON
       draw_icon(H87_ItemClass::Icone[item.tier], x, y, enabled)
     end
   end
