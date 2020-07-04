@@ -85,6 +85,6 @@ module Fade_Engine
   # * Restituisce true se l'oggetto sta cambiando trasparenza
   #--------------------------------------------------------------------------
   def fading?
-    return @new_opacity != nil
+    @new_opacity != nil
   end
 end #fade engine

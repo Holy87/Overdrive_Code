@@ -1,5 +1,3 @@
-
-
 #==============================================================================
 # ** Window_Base
 #------------------------------------------------------------------------------
@@ -57,6 +55,14 @@ class Window_Base < Window
     by = actor.character_index / 4 * (bitmap.height / 2) + 2
     rect = Rect.new(bx, by, 32, line_height)
     contents.blt(x, y, bitmap, rect)
+  end
+
+  # @param [Game_Actor] actor
+  # @param [Integer] x
+  # @param [Integer] y
+  def draw_actor_equip_icons(actor, x, y, width = 110)
+    icons = actor.equips.compact.map { |e| e.icon_index }
+    draw_icons(icons, x, y, width)
   end
   #--------------------------------------------------------------------------
   # * Restituisce il massimo numero di righe nella finestra

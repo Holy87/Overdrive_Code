@@ -148,14 +148,3 @@ class Sprite_Spark < Sprite
     @dir_y = y
   end
 end #sprite spark
-
-class Sprite_Base < Sprite
-  unless $@
-    alias h87ensp_initialize initialize
-  end
-
-  def initialize(viewport = nil)
-    h87ensp_initialize(viewport)
-
-  end
-end
