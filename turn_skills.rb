@@ -1,5 +1,6 @@
 #===============================================================================
 # ** SKILL DELAY DI HOLY87 **
+# 04/07/2020 -> versione 1.2.2 (fix su forget skill)
 # 01/08/2019 -> versione 1.2.1 (aggiunta della ricarica sui danni)
 # 26/07/2019 -> Versione 1.2 (bugfix e miglioramenti al codice)
 # 03/02/2013 -> Versione 1.1 (bugfix e maggiori opzioni)
@@ -321,6 +322,16 @@ class Game_Enemy < Game_Battler
       action.skill? ? $data_skills[action.skill_id] : nil
     end
     sks.compact
+  end
+end
+
+class Game_Actor < Game_Battler
+  alias h87_step_forget_skill forget_skill unless $@
+
+  def forget_skill(skill_id)
+    h87_step_forget_skill skill_id
+    @step_skills.delete skill_id if @step_skills
+    @battle_skills.delete skill_id if @battle_skills
   end
 end
 
