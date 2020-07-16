@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 #===============================================================================
 # ** Impostazioni script
 #===============================================================================
@@ -593,5 +591,36 @@ class Window_DisenchantRequirements < Window_Base
     return if @equip == new_equip
     @equip = new_equip
     refresh
+  end
+end
+
+class Game_Interpreter
+  # procedura di chiamata miglioramento delle armi
+  def open_equip_enhancer
+    $game_temp.next_scene = :equip_enhancer
+  end
+
+  # apre la finestra di rimozione incantamenti
+  def open_equip_disenchant
+    $game_temp.next_scene = :equip_disenchant
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias h87_equip_en_update_scene_change update_scene_change unless $@
+
+  def update_scene_change
+    return if $game_player.moving?
+    return call_equip_enhancer if $game_temp.next_scene == :equip_enhancer
+    return call_equip_disenchant if $game_temp.next_scene == :equip_disenchant
+    h87_equip_en_update_scene_change
+  end
+
+  def call_equip_enhancer
+    SceneManager.call(Scene_EquipEnhancer)
+  end
+
+  def call_equip_disenchant
+    SceneManager.call(Scene_EquipDisenchant)
   end
 end

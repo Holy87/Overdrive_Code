@@ -1823,3 +1823,25 @@ class Game_Actor < Game_Battler
     end
   end
 end
+
+class Game_Interpreter
+
+  # chiama la schermata di incantamento armi
+  def call_enchant
+    $game_temp.next_scene = 'enchant'
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias h87_enchant_update_scene_change update_scene_change unless $@
+
+  def update_scene_change
+    return if $game_player.moving?
+    return call_enchant if $game_temp.next_scene == 'enchant'
+    h87_enchant_update_scene_change
+  end
+
+  def call_enchant
+    SceneManager.call(Scene_Enchant)
+  end
+end

@@ -176,7 +176,7 @@ class Game_Interpreter
   # vai alla nuova schermata del negozio
   def open_shop(shop_id)
     $game_temp.custom_shop = $game_shops[shop_id]
-    SceneManager.call(Scene_NewShop)
+    $game_temp.next_scene = 'new_shop'
   end
 
   # aggiorna lo stato di tutti i negozi.
@@ -192,10 +192,21 @@ end
 #==============================================================================
 class Scene_Map < Scene_Base
   alias h87_shop_refresh_update update unless $@
+  alias h87_shop_update_scene_change update_scene_change unless $@
   # aggiornamento
   def update
     h87_shop_refresh_update
     $game_shops.update_shop_status
+  end
+
+  def update_scene_change
+    return if $game_player.moving?
+    return call_shop if $game_temp.next_scene == 'new_shop'
+    h87_shop_update_scene_change
+  end
+
+  def call_shop
+    SceneManager.call(Scene_NewShop)
   end
 end
 

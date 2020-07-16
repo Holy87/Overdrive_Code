@@ -1392,7 +1392,7 @@ class Game_Party < Game_Unit
   # @param [Boolean] include_equips
   # @return [Integer]
   def item_number(item, include_equips = false)
-    inventory_item_number(item) + include_equips ? members_item_number(item) : 0
+    inventory_item_number(item) + (include_equips ? members_item_number(item) : 0)
   end
 
   # @param [RPG::Item,RPG::Armor,RPG::Weapon] item

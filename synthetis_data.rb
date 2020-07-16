@@ -1,4 +1,14 @@
-require File.expand_path('rm_vx_data')
+# SISTEMA DI SCOMPOSIZIONE EQUIPAGGIAMENTI
+# Scompone e distrugge oggetti per recuperare materiali!
+# ISTRUZIONI
+# Per definire le scomposizioni degli equipaggiamenti:
+# <synth level: x> - determina il livello di scomposizione richiesto per distruggersi
+# <synth exp: x> - l'esperienza (di sintetizzazione) donata dopo la sintesi
+# <synth item/weapon/armor: XxY, Z%> aggiunge al risultato della scomposizione un oggetto, armatura
+# o arma con ID X di Y unità, al Z% di probabilità. Almeno un oggetto viene sempre dato,
+# perciò se si configura un solo risultato di scomposizione, sarà sempre al 100% anche se viene
+# indicato di meno.ò
+
 $imported = {} if $imported == nil
 $imported["H87_Synthetis"] = true
 module Vocab
@@ -1419,5 +1429,27 @@ class Scene_Synthetize < Scene_MenuBase
     @end_window.close
     @item_window.refresh
     @item_window.activate
+  end
+end
+
+class Game_Interpreter
+
+  # chiama la schermata di distruzione equip
+  def call_synthetize
+    $game_temp.next_scene = 'item_synthetize'
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias h87_synthetize_update_scene_change update_scene_change unless $@
+
+  def update_scene_change
+    return if $game_player.moving?
+    return call_synthetize if $game_temp.next_scene == 'item_synthetize'
+    h87_synthetize_update_scene_change
+  end
+
+  def call_synthetize
+    SceneManager.call(Scene_Synthetize)
   end
 end

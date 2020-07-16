@@ -1578,6 +1578,20 @@ class Game_Interpreter
   #--------------------------------------------------------------------------
   def open_forge(blacksmith_name)
     $game_temp.forge_shop = $game_temp.blacksmiths[blacksmith_name]
+    $game_temp.next_scene = 'forge'
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias h87_forge_update_scene_change update_scene_change unless $@
+
+  def update_scene_change
+    return if $game_player.moving?
+    return call_forge if $game_temp.next_scene == 'forge'
+    h87_forge_update_scene_change
+  end
+
+  def call_forge
     SceneManager.call(Scene_Forge)
   end
 end
