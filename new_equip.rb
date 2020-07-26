@@ -52,7 +52,8 @@ module EquipSettings
   ICONS = {:mhp => 1008, :mmp => 1009, :atk => 1010, :def => 1011,
            :spi => 1012, :agi => 1013, :hit => 1015, :cri => 1014,
            :eva => 1016, :odds => 1249, :res => 1251,
-           :mag => 1250, :maxhp => 1008, :maxmp => 1009}
+           :mag => 1250, :maxhp => 1008, :maxmp => 1009,
+           :max_anger => 1250 }
   # quali parametri vengono mostrati in percentuale?
   PARAM_PERCENTAGES = [:hit, :cri, :eva, :res]
   # quali parametri occupano il doppio dello spazio?
@@ -127,6 +128,18 @@ module EquipSettings
   #--------------------------------------------------------------------------
   def self.longest_vocab
     type_vocabs.max {|x| x.size}
+  end
+end
+
+#==============================================================================
+# ** Data_System
+#==============================================================================
+class RPG::System
+  # restituisce l'ID icona del parametro
+  # @param [Symbol] param
+  # @return [Integer]
+  def param_icon(param)
+    EquipSettings::ICONS[param.to_sym] || 0
   end
 end
 

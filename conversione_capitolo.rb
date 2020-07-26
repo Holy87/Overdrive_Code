@@ -665,12 +665,24 @@ module SC_Mod
   }
 
   REMOVED_WEAPONS = {
+      163 => 0,
+      164 => 0,
+      165 => 0,
+      166 => 0,
+      167 => 0,
+      168 => 0,
+      169 => 0,
+      170 => 0,
+      171 => 0,
       173 => 400,
       174 => 800,
       175 => 1500,
       176 => 6200,
       25 => 9000,
       39 => 0,
+      181 => 0,
+      182 => 0,
+      183 => 0
   }
 
   SHIFTED_ARMORS = {
@@ -699,9 +711,12 @@ module SC_Mod
       26 => 29,
       31 => 26,
       32 => 25,
-      33 => 30,
+      33 => 27,
       34 => 32,
       35 => 29,
+      36 => 29,
+      37 => 28,
+      39 => 30,
       67 => 76,
       77 => 74,
       68 => 77,
@@ -727,6 +742,11 @@ module SC_Mod
       74 => 1500,
       78 => 3500,
       80 => 4000
+  }
+
+  ELEMENTAL_STONES = {
+      # element_id => item_id
+      9 => 133, 10 => 134, 11 => 135, 12 => 136, 13 => 137, 14 => 138
   }
 
   #--------------------------------------------------------------------------
@@ -844,7 +864,7 @@ class Scene_Conversion < Scene_MenuBase
 
   def create_conversion_scheduler
     @conversion_scheduler = Conversion_Scheduler.new
-      #@conversion_scheduler.set_window(@status_window)
+    #@conversion_scheduler.set_window(@status_window)
     #@conversion_scheduler.set_bar(@bar)
   end
 
@@ -876,7 +896,7 @@ class Scene_Conversion < Scene_MenuBase
   # inizia la conversione
   def start_conversion
     t = Thread.start {@conversion_scheduler.start_process}
-      #t.priority = 1
+    #t.priority = 1
   end
 end #scene_conversion
 
@@ -1080,7 +1100,12 @@ class Conversion_Scheduler
     read_save_data(file)
     file.close
     return if $game_system.save_version >= 4
-    change_savedata(index)
+    begin
+      change_savedata(index)
+    rescue
+      puts $!.message
+      puts $!.backtrace
+    end
     $game_system.default_save_version
     $game_system.conversion_bgm = @last_bgm
     $game_system.conversion_bgs = @last_bgs
@@ -1106,8 +1131,6 @@ class Conversion_Scheduler
     check_dangerous_save_points
     advance_step
     $game_system.saved_bgm = @last_bgm
-    modifica_personaggi
-    advance_step
     change_position(index)
     advance_step
     process_dominations
@@ -1178,6 +1201,7 @@ class Conversion_Scheduler
   end
 
   def update_shop_states
+    puts 'aggiorno i negozi'
     update_balthazar_shop
   end
 
@@ -1211,9 +1235,7 @@ class Conversion_Scheduler
   #--------------------------------------------------------------------------
   def rimuovi_oggetti_eliminati
     puts 'rimuovo oggetti eliminati'
-    for i in 201..206
-      $game_party.lose_item($data_items[i], 99)
-    end
+    (201..206).each { |i| $game_party.lose_item($data_items[i], 99) }
     $game_party.lose_item($data_items[211], 99)
     exchange_items(90, 209)
     exchange_items(91, 210)
@@ -1245,7 +1267,7 @@ class Conversion_Scheduler
     end
     weapon
   end
-  
+
   # @param [RPG::Armor] armor
   # @return [RPG::Armor]
   def process_armor(armor)
@@ -1254,16 +1276,16 @@ class Conversion_Scheduler
       return nil
     end
     if SC_Mod::SHIFTED_ARMORS.keys.include?(armor.id)
-      return $data_armors[SC_Mod::SHIFTED_ARMORS[armmor.id]]
+      return $data_armors[SC_Mod::SHIFTED_ARMORS[armor.id]]
     end
     armor
   end
 
   def handle_old_equips
-    puts 'elimino gli equipaggiamenti non più usati'
+    puts 'elimino gli equipaggiamenti non usati'
 
     $game_party.weapons.each do |weapon|
-      n = $game_party.item_number weapon, true
+      n = $game_party.item_number(weapon)
       $game_party.lose_item(weapon, n, true)
       new_weapon = process_weapon(weapon)
       if weapon != nil
@@ -1272,7 +1294,7 @@ class Conversion_Scheduler
     end
 
     $game_party.armors.each do |armor|
-      n = $game_party.item_number armor, true
+      n = $game_party.item_number armor
       $game_party.lose_item(armor, n, true)
       new_armor = process_armor(armor)
       if armor != nil
@@ -1312,21 +1334,6 @@ class Conversion_Scheduler
     $game_party.gain_item(new_item, number)
   end
 
-  #--------------------------------------------------------------------------
-  # * aggiorna le statistiche dei personaggi
-  #--------------------------------------------------------------------------
-  def modifica_personaggi
-    puts 'modifico i personaggi'
-    change_new_character_names
-    (1..15).each do |i|
-      advance_step
-      actor = $game_actors[i]
-      (118..123).each do |j|
-        actor.remove_state(j)
-      end
-      change_skills(actor)
-    end
-  end
   #--------------------------------------------------------------------------
   # * Gestisce i punti di salvataggio cambiati sulla mappa
   #--------------------------------------------------------------------------
@@ -1501,18 +1508,36 @@ class Conversion_Scheduler
     end
   end
 
+  #--------------------------------------------------------------------------
+  # * aggiorna le statistiche dei personaggi
+  #--------------------------------------------------------------------------
   def process_actors
     puts 'aggiorno gli eroi'
+    change_new_character_names
     (1..15).each do |i|
       next if i == 4
-      actor = $game_actors[i]
-      if actor.level > 50
-        margin = actor.level - 50
-        margin /= 3
-        actor.level = 50 + margin
-      end
-      actor.check_weapon_sa
+      process_actor $game_actors[i]
     end
+    advance_step
+  end
+
+  # processa i dati dell'eroe
+  # @param [Game_Actor] actor
+  def process_actor(actor)
+    if actor.level > 50
+      # riduce il livello dell'eroe se sopra il livello 50
+      margin = actor.level - 50
+      margin /= 3
+      actor.level = 50 + margin
+    end
+    (118..123).each do |j|
+      actor.remove_state(j)
+    end
+
+    change_skills(actor)
+    actor.check_weapon_sa
+    actor.process_old_element_affinity
+    advance_step
   end
   #--------------------------------------------------------------------------
   # * Aggiorna le dominazioni
@@ -1615,6 +1640,18 @@ class Game_Actor < Game_Battler
   def check_weapon_sa
     @weapon_id = check_weapon_sa_id(@weapon_id)
     @armor1_id = check_weapon_sa_id(@armor1_id) if two_swords_style
+  end
+
+  # azzera le affinità elementali e restituisce gli oggetti
+  def process_old_element_affinity
+    return if @bonus_element_affinity.nil?
+    @bonus_element_affinity.each do |element_id, value|
+      next if element_id.nil?
+      next if value == 0
+      next if value.nil?
+      next if SC_Mod::ELEMENTAL_STONES[element_id].nil?
+      $game_party.gain_item($data_items[SC_Mod::ELEMENTAL_STONES[element_id]], value)
+    end
   end
 
   def check_weapon_sa_id(id)

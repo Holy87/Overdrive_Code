@@ -201,6 +201,10 @@ class Game_Party < Game_Unit
     @actors.size >= @max_battle_member_count
   end
 
+  def reserve_exp_rate
+    FormationConfig::STANDBY_BATTLE_EXP_RATE / 100.0
+  end
+
 end
 
 #===============================================================================
@@ -301,10 +305,13 @@ class Window_PartyMembers < Window_Selectable
   # @param [Integer] y
   # @param [Integer] width
   def draw_actor_extra_info(actor, x, y, width)
-    draw_actor_state(actor, x, y, width)
+    draw_actor_name(actor, x, y, width)
+    x_st = text_size(actor.name).width + 2
+    draw_actor_state(actor, x + x_st, y, width - x_st)
     draw_actor_equip_icons(actor, x, y + line_height, width)
-    draw_actor_exp(actor, x, y + line_height * 2, width)
-    draw_actor_jp(actor, x, y + line_height * 3, width)
+    draw_actor_basic_stats(actor, x, y + line_height * 2, width)
+    #draw_actor_exp(actor, x, y + line_height * 2, width)
+    #draw_actor_jp(actor, x, y + line_height * 3, width)
   end
 
   # disegna i parametri dell'eroe
@@ -313,6 +320,31 @@ class Window_PartyMembers < Window_Selectable
     6.times do |i|
       draw_actor_param(actor, i % 2 * w + x, i % 2 + y, i)
     end
+  end
+
+  # @param [Game_Actor] actor
+  # @param [Integer] x
+  # @param [Integer] y
+  # @param [Integer] width
+  def draw_actor_basic_stats(actor, x, y, width, columns = 2)
+    param_width = width / columns
+    stats = [:atk, :def, :spi, :agi]
+    stats.each_with_index do |stat, i|
+      draw_actor_param_icon(actor, stat,
+                            x + (param_width * (i % columns)),
+                            y + (line_height * (i / columns)),
+                            param_width)
+    end
+  end
+
+  # @param [Game_Actor] actor
+  # @param [Symbol] param
+  # @param [Integer] x
+  # @param [Integer] y
+  # @param [Integer] width
+  def draw_actor_param_icon(actor, param, x, y, width)
+    draw_icon($data_system.param_icon(param), x, y)
+    draw_text(x + 24, y, width - 24, line_height, actor.send(param))
   end
 
   # Definisce la larghezza della finestra (1/2 di schermo)
@@ -446,7 +478,7 @@ end
 class Window_PartyTitle < Window_Base
   # Inizializzazione
   def initialize(x, y, width)
-    super(x, y, width, fitting_height(1))
+    super(x, y, width, 64)
   end
 
   # Imposta il testo
@@ -718,7 +750,7 @@ class Game_Interpreter
 
   def command_315
     $game_temp.force_reserve_members = true
-    return h87_f_command_315
+    h87_f_command_315
     $game_temp.force_reserve_members = false
     true
   end
@@ -728,8 +760,22 @@ class Scene_Battle < Scene_Base
   alias h87_f_display_level_up display_level_up unless $@
 
   def display_level_up
-    $game_temp.force_reserve_members = true
     h87_f_display_level_up
-    $game_temp.force_reserve_members = false
+    gain_reserve_exp
+  end
+
+  def gain_reserve_exp
+    exp = $game_troop.exp_total * $game_party.reserve_exp_rate
+    $game_party.stand_by_members.compact.each { |member| member.gain_exp(exp.to_i, false) }
+  end
+end
+
+class Game_Troop < Game_Unit
+  alias distribute_active_members_jp distribute_jp unless $@
+
+  def distribute_jp
+    distribute_active_members_jp
+    jp = $game_troop.dead_members.inject(0) {|sum, enemy| sum + enemy.jp } * $game_party.reserve_exp_rate
+    $game_party.stand_by_members.compact.each { |member| member.earn_jp(jp.to_i) }
   end
 end

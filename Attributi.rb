@@ -260,7 +260,7 @@
     LAST_CHANCE = /<ultima chance>/i
     JAPANESE_NM = /<jappo:[ ]*(.+)>/i
     ALLOW_EQUIP = /<permetti equip[ ]+(.+)>/i
-    SYNTH_BONUS = /<cura:[ ]*([+\-]\d+)[%％]>/i
+    SYNTH_BONUS = /<synth bonus:[ ]*([+\-]\d+)[%％]>/i
     REC_SKILLS = /<ricarica skills>/i
     EQIP_LEVEL = /<livello:[ ]+(\d+)>/i
     CRIT_DMG = /<danno critico:[ ]*([+\-]\d+)([%％])>/i
@@ -308,6 +308,8 @@
     PARRY = /<parry>/
     HP_ON_KILL = /<hp kill:[ ]*(\d+)([%％])>/i
     MP_ON_KILL = /<mp kill:[ ]*(\d+)([%％])>/i
+    LINKED_ELEMENT = /<linked[ _]element:[ ]*(\d+)>/i
+    STATE_DEFENSE = /<state[ _]rate[ ]+(\d+):[ ]*([\+\-]\d+)%>/i
     # Variabili di istanza pubblici
     attr_reader :dom_bonus # bonus dominazioni
     attr_reader :viril # stato virile
@@ -410,10 +412,13 @@
     attr_reader :hp_on_kill # hp guadagnati su uccisione
     attr_reader :mp_on_kill # mp guadagnati su uccisione
     attr_reader :parry # flag per contrattacco su schivata
+    attr_reader :linked_element # elemento linkato. Funziona solo per la probabilità degli status
     # @return [Array<Integer>]
     attr_reader :offensive_magic_states
     # @return [Array<Integer>]
     attr_reader :heal_magic_states
+    # @return [Hash]
+    attr_reader :state_rate_set
     # Carica gli attributi aggiuntivi dell'oggetto dal tag delle note
     # noinspection RubyScope
     def load_extra_attr
@@ -522,6 +527,8 @@
       @parry = false
       @hp_on_kill = 0
       @mp_on_kill = 0
+      @linked_element = 0
+      @state_rate_set = {}
       self.note.split(/[\r\n]+/).each { |row|
         if reading_help
           if row =~ HELP_END
@@ -748,6 +755,10 @@
           @hp_on_kill = $1.to_f / 100.0
         when MP_ON_KILL
           @mp_on_kill = $1.to_f / 100.0
+        when LINKED_ELEMENT
+          @linked_element = $1.to_i
+        when STATE_DEFENSE
+          @state_rate_set[$1.to_i] = $2.to_i
         else
           #nothing
         end
@@ -784,6 +795,15 @@
     # Determina se l'equipaggiamento non si può disequipaggiare
     def equip_locked?
       false
+    end
+
+    def state_defense_rate(state_id)
+      @state_rate_set[state_id] || 0
+    end
+
+    # @return [Hash]
+    def state_rate_per
+      @state_rate_set
     end
   end
 
@@ -848,6 +868,16 @@
       # True se lo status è un debuff
       def debuff?
         @buff_type == :debuff
+      end
+
+      def linked_to_element?
+        @linked_element > 0
+      end
+
+      # @return [String]
+      def description
+        return @passive_description unless @passive_description.empty?
+        @description
       end
     end #state
 
@@ -2076,6 +2106,7 @@
     def state_probability(state_id)
       value = h87_attr_state_prob(state_id)
       state = $data_states[state_id]
+      value += apply_linked_element @skill_state_inflict, state
       value /= 2 if guard? and state_guard and !state.nonresistance
       return value if value == 0 or value >= 100
       apply_state_bm(value, @user_state_inflict, @skill_state_inflict, state)
@@ -2141,7 +2172,7 @@
       modificator
     end
 
-    # Applicazione del bonus
+    # Applicazione del bonus malus
     # @param [Integer] value
     # @param [Game_Battler] user
     # @param [RPG::Skill] skill
@@ -2157,6 +2188,13 @@
       # bonus += (user.spi.to_f + adder) / self.def*(self.magic_def) + (magic_damage_rate-1)/2
       #end
       (value * bonus.to_f).to_i
+    end
+
+    # @param [RPG::Skill] skill
+    # @param [RPG::State] state
+    def apply_linked_element(skill, state)
+      return 0 unless state.linked_to_element?
+      element_rate(state.linked_element) - 100
     end
 
     # Restituisce il moltiplicatore di probabilità di infliggere lo status

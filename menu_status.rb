@@ -91,7 +91,8 @@ module StatusSettings
       :state_inf_per => {:text => 'Bonus stati',
                          :description => 'Bonus per la probabilità di infliggere stati negativi ai nemici.',
                          :format => '%+d%%',
-                         :default => 0},
+                         :default => 0,
+                         :formula => 'x*100' },
       :state_inf_dur => {
           :text => 'Bonus durata stati',
           :description => 'Bonus durata in turni per gli stati che causa ad|alleati e nemici.',
@@ -306,7 +307,7 @@ module Vocab
   # @return [String]
   #--------------------------------------------------------------------------
   def self.state_type(symbol)
-    {:con => 'Stato', :set => 'Bonus Set', :pas => 'Passiva'}[symbol]
+    {:con => 'Stato', :set => 'Bonus Set', :pas => 'Qualità'}[symbol]
   end
 end
 
@@ -1278,8 +1279,8 @@ class Window_ActorConditions < Window_Selectable
   # * Ottiene la lista degli oggetti
   #--------------------------------------------------------------------------
   def make_item_list
-    @data = actor.states.select{|x| x.icon_index > 0 && x.description != ''}
-    @data.sort!{|x, y| y.priority <=> x.priority}
+    @data = actor.states.select{|x| x.icon_index > 0}
+    @data = @data.sort_by{|x| x.priority}.reverse
   end
   #--------------------------------------------------------------------------
   # * Ottiene il numero di elementi

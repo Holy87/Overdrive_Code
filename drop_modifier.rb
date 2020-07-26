@@ -342,7 +342,7 @@ class Game_System
 
   # the jp rate
   # @return [Float]
-  def exp_rate
+  def jp_rate
     Game_Metrics.jp_rate
   end
 end

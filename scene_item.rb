@@ -113,6 +113,7 @@ module Vocab
   WEAPON_STATE = 'Infligge'
   ARMOR_STATE = 'Conferisce immunità'
   ARMOR_ELEMENT = 'Dimezza elemento'
+  ARMOR_ATTRIBUTE = 'Dimezza danni da'
   WEAPON_2H = 'Richiede due mani'
   WEAPON_DUAL_A = 'Doppio attacco'
   ARMOR_PREVENT_CRITICAL = 'Previene colpi critici'
@@ -135,16 +136,20 @@ module Vocab
   # * Restituisce i vocaboli dei rispettivi parametri
   # @return [String]
   #--------------------------------------------------------------------------
-  def self.hit;
-    'Mira';
+  def self.hit
+    'Mira'
   end
 
-  def self.eva;
-    'Evasione';
+  def self.eva
+    'Evasione'
   end
 
-  def self.cri;
-    'Critici';
+  def self.cri
+    'Critici'
+  end
+
+  def self.mag
+    'Furia Max'
   end
 
   #--------------------------------------------------------------------------
@@ -174,6 +179,8 @@ module Vocab
       return hp
     when :mp, :max_mp, :mmp, :maxmp
       return mp
+    when :max_anger, :mag
+      return mag
     else
       int_param(symbol)
     end
@@ -1242,16 +1249,38 @@ class Window_ItemInfo < Window_DataInfo
   end
 
   #--------------------------------------------------------------------------
-  # * Disegna le difese elementali
+  # * Disegna le difese elementali e attributi
   #--------------------------------------------------------------------------
   def draw_def_elements
     return if item.element_set.empty?
-    draw_detail(Vocab::ARMOR_ELEMENT)
-    icons = []
-    item.element_set.each { |element|
-      icons.push(element_icon(element))
-    }
-    draw_icon_set(icons)
+    draw_element_protections
+    draw_attribute_protections
+  end
+
+  # protezione dagli elementi
+  def draw_element_protections
+    elements = $data_system.magic_elements.select { |ele| item.element_set.include? ele.id}
+    return if elements.empty?
+    if elements.size == 1
+      element = elements.first
+      draw_detail(Vocab::ARMOR_ELEMENT, element.name, element.icon_index)
+    else
+      draw_detail(Vocab::ARMOR_ELEMENT)
+      draw_icon_set(elements.collect { |ele| ele.icon_index})
+    end
+  end
+
+  # protezione dagli attributi
+  def draw_attribute_protections
+    attributes = $data_system.weapon_attributes.select { |a| item.element_set.include? a.id}
+    return if attributes.empty?
+    if attributes.size == 1
+      attr = attributes.first
+      draw_detail(Vocab::ARMOR_ATTRIBUTE, attr.name, attr.icon_index)
+    else
+      draw_detail(Vocab::ARMOR_ATTRIBUTE)
+      draw_icon_set(elements.collect { |attr| attr.icon_index})
+    end
   end
 
   #--------------------------------------------------------------------------
@@ -1387,12 +1416,10 @@ class Window_Item < Window_Selectable
 end
 
 class Game_Party < Game_Unit
-  alias inventory_item_number item_number unless $@
+  # restituisce il numero degli oggetti posseduti compresi quelli del gruppo
   # @param [RPG::Item,RPG::Armor,RPG::Weapon] item
-  # @param [Boolean] include_equips
-  # @return [Integer]
-  def item_number(item, include_equips = false)
-    inventory_item_number(item) + (include_equips ? members_item_number(item) : 0)
+  def all_item_number(item)
+    item_number(item) + members_item_number(item)
   end
 
   # @param [RPG::Item,RPG::Armor,RPG::Weapon] item

@@ -1,11 +1,11 @@
 #==============================================================================
-# ** Nuova schermata Status
+# **
 #------------------------------------------------------------------------------
 #
 #==============================================================================
 module StatusSettings
   DISPLAYED_STATS = [
-      :mhp, :mmp, :max_anger, :atk, :def, :spi, :agi, :cri, :hit, :eva,
+      :mhp, :mmp, :mag, :atk, :def, :spi, :agi, :cri, :hit, :eva,
       :cri_dmg, :odds, :res, :mdmg, :mp_cost_rate,
       :buff_modificator, :debuff_modificator,
       :state_inf_per, :state_inf_dur, :vampire_rate,
@@ -16,7 +16,7 @@ module StatusSettings
   ]
 
   HIDDEN_STATS_CHARGE = [:mmp, :win_mp]
-  HIDDEN_STATS_MP = [:anger_turn, :anger_incr, :anger_kill, :initial_anger, :max_anger]
+  HIDDEN_STATS_MP = [:anger_turn, :anger_incr, :anger_kill, :initial_anger, :mag]
   #--------------------------------------------------------------------------
   # * L'elenco delle difese agli stati alterati mostrabili
   #--------------------------------------------------------------------------
@@ -50,8 +50,6 @@ module StatusSettings
                :description => 'Punti vita massimi. Rappresentano la vita dell\'eroe ed i|danni che può subire prima di andare KO.'},
       :mmp => {:text => 'PM massimi',
                :description => 'Punti mana massimi.|Rappresentano l\'energia per utilizzare le abilità.'},
-      :mag => {:text => 'Ira massima',
-               :description => 'Rappresenta l\'ira massima che può accumulare.'},
       :atk => {:text => 'Attacco',
                :description => 'La potenza d\'attacco. Influisce sul danno del comando Attacca e le|abilità, e la probabilità di infliggere stati alterati con queste'},
       :def => {:text => 'Difesa',
@@ -127,8 +125,8 @@ module StatusSettings
                   :description => 'I PV che recupererai vincendo le battaglie.'},
       :win_mp => {:text => 'Ricarica su Vittoria',
                   :description => 'I PM che recupererai vincendo le battaglie.'},
-      :max_anger => {:text => 'Furia massima',
-                     :description=> 'Il massimo della Furia accumulabile'}
+      :mag => {:text => 'Furia Max',
+                     :description=> 'Rappresenta la quantità massima di Furia accumulabile.'}
 
   }
   #--------------------------------------------------------------------------
@@ -211,6 +209,7 @@ module StatusSettings
   MAX_PARAMS = {
       :maxhp => 9999,
       :maxmp => 9999,
+      :mag => 200,
       :atk => 999,
       :def => 999,
       :spi => 999,
@@ -399,7 +398,7 @@ class Game_System
   # @return [Actor_Role]
   #--------------------------------------------------------------------------
   def actor_role(symbol)
-    actor_roles.select{|x| x.name == symbol.to_s}.first
+    actor_roles.compact.select{|x| x.name == symbol.to_s}.first
   end
 end
 
@@ -468,7 +467,7 @@ module ActorRoles
   # @return [Actor_Role]
   #--------------------------------------------------------------------------
   def self.role_from_file(file)
-    return nil unless File.extname(file) =~ /\.txt/i
+    return nil unless File.extname(file) =~ /\.xml/i
     text = text_from_file(file)
     begin
       role = parse_role(text, File.basename(file, '.*'))
@@ -497,11 +496,11 @@ module ActorRoles
   # @raise [ParseError]
   #--------------------------------------------------------------------------
   def self.parse_role(text, name)
-    raise ParseError unless text =~ /[.]*<title>(.+)<\/title>[.]*/i
+    raise ParseError unless text =~ /[.]*<title>(.+)<\/title>[.]*/mi
     title = $1
-    raise ParseError unless text =~ /[.]*<descr>(.+)<\/descr>[.]*/i
+    raise ParseError unless text =~ /[.]*<descr>(.+)<\/descr>[.]*/mi
     descr = $1
-    raise ParseError unless text =~ /[.]*<param>(.+)<\/param>[.]*/i
+    raise ParseError unless text =~ /[.]*<param>(.+)<\/param>[.]*/mi
     param = $1
     Actor_Role.new(name, title, descr, param.split(/,[ ]*/))
   end
@@ -717,9 +716,9 @@ class Window_ActorStatus < Window_Base
   #--------------------------------------------------------------------------
   def draw_param(x, row, param, width = (contents_width / 2))
     if actor.charge_gauge? and param == :maxmp
-      param = :max_anger
+      param = :mag
     end
-    param_value = eval("actor.#{param}")
+    param_value = actor.send param
     y = row * line_height
     draw_param_gauge(x, y, width, param_value, param)
     draw_param_icon(x, y, param)
@@ -774,7 +773,7 @@ class Window_ActorStatus < Window_Base
   # @param [Integer] width
   #--------------------------------------------------------------------------
   def draw_param_value(x, y, param, width)
-    value = eval("actor.#{param}")
+    value = actor.send param
     change_color(normal_color)
     draw_text(x+24, y, width, line_height, value, 2)
   end
@@ -899,24 +898,25 @@ class Window_ActorStatus < Window_Base
   #--------------------------------------------------------------------------
   def param_color(stat)
     case stat
-      when :maxhp
-        colore = [2,176,230]
-      when :maxmp
-        colore = [239,0,124]
-      when :atk
-        colore = [205,0,0]
-      when :def
-        colore = [117,177,29]
-      when :spi
-        colore = [168,73,163]
-      when :agi
-        colore = [254,191,4]
-      when :hit, :eva,:cri,:odds
-        colore = [204,204,204]
-      else
-        colore = [128, 128, 128]
+    when :maxhp
+      Color::DEEPSKYBLUE
+    when :maxmp
+      Color::DEEPPINK
+    when :max_anger, :mag
+      Color::DARKGREEN
+    when :atk
+      Color::RED
+    when :def
+      Color::DARKSEAGREEN
+    when :spi
+      Color::MEDIUMORCHID
+    when :agi
+      Color::GOLD
+    when :hit, :eva,:cri,:odds
+      Color::LIGHTGRAY
+    else
+      Color::GRAY
     end
-    Color.new(colore[0],colore[1],colore[2])
   end
   #--------------------------------------------------------------------------
   # * Disegna l'esperienza dell'eroe
@@ -1060,7 +1060,7 @@ class Window_ActorParams < Window_Selectable
   # * Restituisce il parametro
   #--------------------------------------------------------------------------
   def get_param(symbol)
-    eval("actor.#{symbol}")
+    actor.send symbol
   end
   #--------------------------------------------------------------------------
   # * Aggiorna la finestra d'aiuto
@@ -1221,7 +1221,8 @@ class Window_Actor_StatusStats < Window_Selectable
     return if data(index).nil?
     text = Y6::PERFORMANCE::PERFORM_VOCAB[@data[index]]
     @actor.clear_battle_performance_stats
-    value = eval("@actor.performance[:#{@data[index].to_s}]")
+    #value = eval("@actor.performance[:#{@data[index].to_s}]")
+    value = @actor.performance[@data[index].to_s.to_sym]
     return if value.nil?
     icon = $imported['Y6-Iconview'] ? Icon.performance(@data[index]) : 0
     draw_icon(icon, rect.x + 24, rect.y)
@@ -1547,22 +1548,22 @@ class Scene_NewStatus < Scene_MenuBase
   def update_vista
     hide_all_windows
     case @command_window.item
-      when :review
-        @overview_window.visible = true
-        @c_help_window.visible = true
-      when :params
-        @help_window.visible = true
-        @params_window.visible = true
-      when :role
-        @role_window.visible = true
-      when :stats
-        @help_window.visible = true
-        @stats_window.visible = true
-      when :states
-        @help_window.visible = true
-        @states_window.visible = true
-      else
-        @overview_window.visible = true
+    when :review
+      @overview_window.visible = true
+      @c_help_window.visible = true
+    when :params
+      @help_window.visible = true
+      @params_window.visible = true
+    when :role
+      @role_window.visible = true
+    when :stats
+      @help_window.visible = true
+      @stats_window.visible = true
+    when :states
+      @help_window.visible = true
+      @states_window.visible = true
+    else
+      @overview_window.visible = true
     end
   end
   #--------------------------------------------------------------------------
@@ -1572,22 +1573,22 @@ class Scene_NewStatus < Scene_MenuBase
     hide_all_windows_smooth
     update_vista
     case @command_window.item
-      when :review
-        @c_help_window.open
-        @overview_window.smooth_move(0, @actor_window.by, smooth_speed)
-      when :params
-        @help_window.open
-        @params_window.smooth_move(0, @help_window.by, smooth_speed)
-      when :role
-        @role_window.smooth_move(0, @actor_window.by, smooth_speed)
-      when :stats
-        @help_window.open
-        @stats_window.smooth_move(0, @help_window.by, smooth_speed)
-      when :states
-        @help_window.open
-        @states_window.smooth_move(0, @help_window.by, smooth_speed)
-      else
-        @overview_window.smooth_move(0, @actor_window.by, smooth_speed)
+    when :review
+      @c_help_window.open
+      @overview_window.smooth_move(0, @actor_window.by, smooth_speed)
+    when :params
+      @help_window.open
+      @params_window.smooth_move(0, @help_window.by, smooth_speed)
+    when :role
+      @role_window.smooth_move(0, @actor_window.by, smooth_speed)
+    when :stats
+      @help_window.open
+      @stats_window.smooth_move(0, @help_window.by, smooth_speed)
+    when :states
+      @help_window.open
+      @states_window.smooth_move(0, @help_window.by, smooth_speed)
+    else
+      @overview_window.smooth_move(0, @actor_window.by, smooth_speed)
     end
   end
   #--------------------------------------------------------------------------
