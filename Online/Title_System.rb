@@ -5,10 +5,10 @@ module Player_Titles
       3  => ['Esorcista','Ottenuto per aver ucciso più di 100 non-morti.'],
       4  => ['Ammazzadraghi','Ottenuto per aver ucciso più di 100 draghi.',2],
       5  => ['Incantatore estremo','Ottenuto per aver potenziato un\'arma al livello 10'],
-      6  => ['Spendaccione','Ottenuto per aver speso più di X ai negozi.'],
+      6  => ['Spendaccione','Ottenuto per aver speso più di 1.000.000 ai negozi.'],
       7  => ['Cercatore','Ottenuto per aver trovato tutti i gettoni kora-kora',2],
       8  => ['RPG2S Staff','Fai parte dello staff di RPG2S! Wow!',4],
-      9  => ['Il devastatore','Ottenuto perché sei riuscito ad infliggere|99999 danni in un solo colpo!',3],
+      9  => ['Devastatore','Ottenuto perché sei riuscito ad infliggere|99.999 danni in un solo colpo!',3],
       10 => ['Fantallenatore','Ottenuto per aver conquistato tutte le Dominazioni.|Gotta catch\'em all!',2],
       11 => ['Serpente Solido','Ottenuto per essere riuscito ad infiltrarti nell\'aereonave|senza essere stato scoperto.',2],
       12 => ['Alchimista d\'acciaio','Ottenuto per aver elaborato|oltre 1000 oggetti con l\'alchimia.',2],
@@ -35,16 +35,21 @@ module Player_Titles
   def self.get_title(title_id)
     return nil if title_id.nil? or !LIST.include?(title_id)
     desc = LIST[title_id]
-    type = desk[2] ? desc[2] : 1
+    type = desc[2] ? desc[2] : 1
     Player_Title.new(title_id, desc[0], desc[1], type)
   end
 end
 
 class Player_Title
+  # @return [String]
   attr_reader :name
+  # @return [String]
   attr_reader :description
+  # @return [Integer]
   attr_reader :id
+  # @return [Integer]
   attr_reader :type
+
   # @param [Integer] id
   # @param [String] name
   # @param [String] description
@@ -57,11 +62,11 @@ class Player_Title
   end
 end
 
-class Game_Player
+class Game_System
   attr_accessor :current_title_id
 
   # restituisce il titolo selezionato
-  # @return [Player_Title]
+  # @return [nil,Player_Title]
   def current_title
     return nil if @current_title_id.nil?
     Player_Titles.get_title @current_title_id
@@ -71,25 +76,60 @@ class Game_Player
   # @return [Array<Player_Title>]
   def titles
     @titles ||= []
-    @tites.collect{|title_id| Player_Titles.get_title(title_id)}
+    @cached_titles ||= []
+    @titles.collect{|title_id| Player_Titles.get_title(title_id)}
   end
 
   # sblocca il titolo al giocatore
   def unlock_title(title_id)
     @titles ||= []
+    @cached_titles ||= []
     return if @titles.include?(title_id)
     @titles.push(title_id)
+    @cached_titles.push(title_id)
+  end
+
+  # @return [Array<Integer>]
+  def online_titles
+    response = Online.get(:player, :titles, {:player_id => @player_id})
+    return [] unless response.ok?
+    JSON.decode(response.body).map{|title_id| title_id.to_i }
+  end
+
+  def refresh_titles
+    return unless can_upload?
+    @titles |= online_titles
+  end
+
+  def upload_titles
+    return unless can_upload?
+    @cached_titles ||= {}
+    return if @cached_titles.empty?
+    params = {
+        :player_id => @player_id,
+        :game_token => game_token,
+        :title_ids => @cached_titles * ','
+    }
+    response = Online.upload(:player, :titles, params)
+    @cached_titles.clear if response.ok?
   end
 end
 
 class Window_PlayerTitles < Window_Selectable
   def initialize(x, y, width, height)
     super(x, y, width, height)
-    
+    refresh
+  end
+
+  def refresh
+    super
+    contents.clear
+    make_item_list
+    draw_all_items
   end
 
   def make_item_list
-    @data = $game_player.titles
+    @data = $game_system.titles
   end
 
   def item_max
@@ -108,6 +148,8 @@ class Window_PlayerTitles < Window_Selectable
       crisis_color
     when 4
       power_down_color
+    else
+      normal_color
     end
   end
 
