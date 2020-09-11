@@ -1,4 +1,3 @@
-require 'rm_vx_data' if false
 #===============================================================================
 # Personalizzazione controller di Holy87
 # Difficoltà utente: ★
