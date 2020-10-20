@@ -59,8 +59,16 @@ $imported["H87_Popup"] = 2.0
 # * Classe Game_System
 #===============================================================================
 class Game_System
+  alias h87_popup_oal on_after_load unless $@
+
   def popup_disabled?
     $game_switches[Popup_Settings::POPUP_SWITCH_DISABLE]
+  end
+
+  # cancella tutti i popup al caricamento della partita.
+  def on_after_load
+    h87_popup_oal
+    $game_map.init_popups
   end
 end
 
