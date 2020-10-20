@@ -65,7 +65,7 @@ class Face_Cache
   # Restituisce tutte le bitmap degli avatar in un array
   # @return [Array<Bitmap>]
   def all_faces
-    item_max.times.map { |i| face(i) }
+    (0..item_max - 1).map{ |i| face(i) }
   end
 
   # Restituisce un volto generico oscurato
@@ -83,7 +83,7 @@ class Face_Cache
   def load_face(avatar_id, size)
     faceset_bitmap = Cache.face(@images[avatar_id/8])
     face_bitmap = Bitmap.new(96,96)
-    face_index = avatar_id%8
+    face_index = avatar_id % 8
     rect = Rect.new(0, 0, 0, 0)
     rect.x = face_index % 4 * 96 + (96 - size) / 2
     rect.y = face_index / 4 * 96 + (96 - size) / 2

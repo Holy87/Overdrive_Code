@@ -191,12 +191,18 @@ class Window_Category < Window_Selectable
   #     y: pos y iniziale
   #--------------------------------------------------------------------------
   def initialize(x, y, spacing = 32)
-    super(x,y, Graphics.width, fitting_height(1), spacing)
+    @spacing = spacing
+    super(x,y, Graphics.width, fitting_height(1))
     @index = 0
     self.active = false
     self.openness = 0
     refresh
   end
+
+  def spacing
+    @spacing
+  end
+
   #--------------------------------------------------------------------------
   # * Refresh
   #--------------------------------------------------------------------------
@@ -222,20 +228,20 @@ class Window_Category < Window_Selectable
   # * Disegna gli oggetti
   #--------------------------------------------------------------------------
   def draw_items
-    for i in 0..@data.size - 1
+    (0..@data.size - 1).each { |i|
       next if @data[i].nil?
       draw_item(i)
-    end
+    }
   end
   #--------------------------------------------------------------------------
   # * Restituisce un array di categorie
   #--------------------------------------------------------------------------
   def categories_from_hash(hash)
     cat = []
-    for i in 1..hash.size
+    (1..hash.size).each { |i|
       cat.push(Item_Category.new(hash[i][0], hash[i][1]))
-    end
-    return cat
+    }
+    cat
   end
   #--------------------------------------------------------------------------
   # * Disegna l'oggetto
@@ -251,7 +257,7 @@ class Window_Category < Window_Selectable
   # * Ottiene l'oggetto
   #--------------------------------------------------------------------------
   def item
-    return @data[self.index]
+    @data[self.index]
   end
   #--------------------------------------------------------------------------
   # * Imposta la finestra degli oggetti da aggiornare
@@ -273,7 +279,7 @@ class Window_Category < Window_Selectable
   # * Aggiornamento della lista
   #--------------------------------------------------------------------------
   def update_list
-    Sound.play_decision
+    Sound.play_ok
     @item_list.set_list(item.symbol)
     self.active = false
     @item_list.active = true
@@ -327,9 +333,9 @@ class Window_List < Window_Selectable
   #--------------------------------------------------------------------------
   def draw_items
     return if @data.nil?
-    for i in 0..@data.size - 1
+    (0..@data.size - 1).each { |i|
       draw_item(i)
-    end
+    }
   end
   #--------------------------------------------------------------------------
   # * Disegna l'oggetto
@@ -343,7 +349,7 @@ class Window_List < Window_Selectable
   #--------------------------------------------------------------------------
   def item
     return [] if @data.nil?
-    return @data[self.index]
+    @data[self.index]
   end
   #--------------------------------------------------------------------------
   # * Aggiunge i metodi di x e y iniziali del viewport

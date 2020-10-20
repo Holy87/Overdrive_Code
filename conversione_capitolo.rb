@@ -14,138 +14,142 @@
 #  Una serie di informazioni chiave per convertire i salvataggi
 #==============================================================================
 module SC_Mod
-  TELEPORTS={
-      [309,286]=>[79,85],#baduelle
-      [310,286]=>[79,85],#baduelle
-      [319,284]=>[79,85],#baduelle
-      [125,275]=>[21,95],#bejed
-      [260,270]=>[58,85],#caverne est
-      [253,267]=>[48,85],
-      [258,291]=>[59,89],#ponte w
-      [260,291]=>[61,89],#ponte e
-      [184,297]=>[44,96],#billy
-      [198,223]=>[50,69],#ponte g
-      [164,225]=>[42,76],#selva
-      [147,264]=>[20,85],#sirenas
-      [173,85]=>[42,33],#cast flore
-      [174,85]=>[42,33],
-      [164,94]=>[30,36],
-      [111,107]=>[22,24],#entr cicla
-      [106,103]=>[20,21],#uscita
-      [107,97]=>[23,19],#pigw
-      [131,327]=>[36,106],#vamp
-      [137,331]=>[44,105],#carpia
-      [138,331]=>[44,105],
-      [148,341]=>[46,106],#molo n
-      [159,346]=>[51,109],#modo s
-      [137,392]=>[24,123],#f-e
-      [138,392]=>[25,123],#f-e
-      [174,402]=>[47,142],#porto
-      [429,382]=>[145,151],#yugup
-      [435,375]=>[147,145],#yugu
-      [452,315]=>[145,131],#kaji
-      [320,120]=>[115,36],#porto elm
-      [387,124]=>[138,44],#adele
-      [459,226]=>[125,88],#eremita
-      [453,173]=>[157,71],#torre
-      [440,171]=>[145,67],#miniera
-      [439,167]=>[138,62],#farse
-      [430,112]=>[155,40],#balthazar
-      [403,100]=>[143,34],#for
-      [403,101]=>[143,34],#for
-      [403,102]=>[143,34],#for
-      [403,103]=>[143,34],#for
-      [403,104]=>[143,34],#for
-      [400,100]=>[143,34],#for
-      [400,101]=>[143,34],#for
-      [400,102]=>[143,34],#for
-      [400,103]=>[143,34],#for
-      [400,104]=>[143,34],#for
-      [365,87]=>[130,26],#doga
-      [365,85]=>[130,24],
-      [330,83]=>[120,26],#grotta
-      [329,70]=>[123,21],
-      [322,51]=>[121,16],#neva
-      [317,46]=>[119,11],#porton
-      [286,56]=>[98,20],#jarva
-      [366,58]=>[141,21],#bosco
-      [368,58]=>[143,21],
-      [391,73]=>[157,20]
+
+  # ID switch attivato quando aggiornato dal cap. 3 al 4
+  FROM_OLD_CHAPTER_SW = 620
+
+  TELEPORTS = {
+      [309, 286] => [79, 85], #baduelle
+      [310, 286] => [79, 85], #baduelle
+      [319, 284] => [79, 85], #baduelle
+      [125, 275] => [21, 95], #bejed
+      [260, 270] => [58, 85], #caverne est
+      [253, 267] => [48, 85],
+      [258, 291] => [59, 89], #ponte w
+      [260, 291] => [61, 89], #ponte e
+      [184, 297] => [44, 96], #billy
+      [198, 223] => [50, 69], #ponte g
+      [164, 225] => [42, 76], #selva
+      [147, 264] => [20, 85], #sirenas
+      [173, 85] => [42, 33], #cast flore
+      [174, 85] => [42, 33],
+      [164, 94] => [30, 36],
+      [111, 107] => [22, 24], #entr cicla
+      [106, 103] => [20, 21], #uscita
+      [107, 97] => [23, 19], #pigw
+      [131, 327] => [36, 106], #vamp
+      [137, 331] => [44, 105], #carpia
+      [138, 331] => [44, 105],
+      [148, 341] => [46, 106], #molo n
+      [159, 346] => [51, 109], #modo s
+      [137, 392] => [24, 123], #f-e
+      [138, 392] => [25, 123], #f-e
+      [174, 402] => [47, 142], #porto
+      [429, 382] => [145, 151], #yugup
+      [435, 375] => [147, 145], #yugu
+      [452, 315] => [145, 131], #kaji
+      [320, 120] => [115, 36], #porto elm
+      [387, 124] => [138, 44], #adele
+      [459, 226] => [125, 88], #eremita
+      [453, 173] => [157, 71], #torre
+      [440, 171] => [145, 67], #miniera
+      [439, 167] => [138, 62], #farse
+      [430, 112] => [155, 40], #balthazar
+      [403, 100] => [143, 34], #for
+      [403, 101] => [143, 34], #for
+      [403, 102] => [143, 34], #for
+      [403, 103] => [143, 34], #for
+      [403, 104] => [143, 34], #for
+      [400, 100] => [143, 34], #for
+      [400, 101] => [143, 34], #for
+      [400, 102] => [143, 34], #for
+      [400, 103] => [143, 34], #for
+      [400, 104] => [143, 34], #for
+      [365, 87] => [130, 26], #doga
+      [365, 85] => [130, 24],
+      [330, 83] => [120, 26], #grotta
+      [329, 70] => [123, 21],
+      [322, 51] => [121, 16], #neva
+      [317, 46] => [119, 11], #porton
+      [286, 56] => [98, 20], #jarva
+      [366, 58] => [141, 21], #bosco
+      [368, 58] => [143, 21],
+      [391, 73] => [157, 20]
   }
 
   HASH = {
       2 => [:baduelle],
       5 => [:sirenas],
-      6 => [:bejed,:selva],
-      10=> [:monferras],
-      12=> [:florea,:ciclam],
-      15=> [:pigwarts],
-      20=> [:molosud,:carpia],
-      26=> [:piramid,:faide],
-      31=> [:fasbury],
-      32=> [:elminer],
-      33=> [:farse],
-      34=> [:elporto, :adele, :balthaz],
-      36=> [:balthacast],
-      43=> [:kumo, :yugure],
-      47=> [:dogan],
-      48=> [:neve],
-      49=> [:nevandra, :northur],
-      50=> [:boscnev],
-      51=> [:diamant]
+      6 => [:bejed, :selva],
+      10 => [:monferras],
+      12 => [:florea, :ciclam],
+      15 => [:pigwarts],
+      20 => [:molosud, :carpia],
+      26 => [:piramid, :faide],
+      31 => [:fasbury],
+      32 => [:elminer],
+      33 => [:farse],
+      34 => [:elporto, :adele, :balthaz],
+      36 => [:balthacast],
+      43 => [:kumo, :yugure],
+      47 => [:dogan],
+      48 => [:neve],
+      49 => [:nevandra, :northur],
+      50 => [:boscnev],
+      51 => [:diamant]
   }
 
   MODDED_WEAPONS = {
-      212 =>   8.0001,
-      215 =>   9.0064,
-      202 =>  11.0098,
-      203 =>  11.0097,
-      204 =>  11.0099,
-      234 =>  13.0013,
-      235 =>  13.0037,
-      251 =>  15.0051,
-      252 =>  15.0059,
-      253 =>  15.0005,
-      243 =>  17.0016,
-      244 =>  17.0041,
-      263 =>  18.0049,
-      264 =>  18.0052,
-      205 =>  19.0020,
-      206 =>  19.0022,
-      207 =>  19.0042,
-      190 =>  22.0011,
-      248 =>  24.0056,
-      249 =>  24.0065,
-      250 =>  24.0042,
-      208 =>  28.0010,
-      209 =>  29.0010,
-      210 =>  30.0010,
-      211 =>  35.0001,
-      223 =>  36.0011,
-      224 =>  36.0016,
-      225 =>  36.0029,
-      232 =>  40.0037,
-      233 =>  40.0008,
-      216 =>  50.0002,
-      191 =>  53.0071,
-      192 =>  53.0072,
-      193 =>  53.0073,
-      236 =>  54.0038,
-      237 =>  54.0065,
-      254 =>  55.0057,
-      255 =>  55.0051,
-      199 =>  73.0017,
-      200 =>  73.0053,
-      201 =>  73.0027,
-      229 =>  74.0013,
-      230 =>  74.0014,
-      261 =>  74.0056,
-      262 =>  75.0065,
-      231 =>  90.0075,
-      238 =>  91.0064,
-      239 =>  91.0038,
-      265 =>  92.0041,
-      266 =>  92.0036,
+      212 => 8.0001,
+      215 => 9.0064,
+      202 => 11.0098,
+      203 => 11.0097,
+      204 => 11.0099,
+      234 => 13.0013,
+      235 => 13.0037,
+      251 => 15.0051,
+      252 => 15.0059,
+      253 => 15.0005,
+      243 => 17.0016,
+      244 => 17.0041,
+      263 => 18.0049,
+      264 => 18.0052,
+      205 => 19.0020,
+      206 => 19.0022,
+      207 => 19.0042,
+      190 => 22.0011,
+      248 => 24.0056,
+      249 => 24.0065,
+      250 => 24.0042,
+      208 => 28.0010,
+      209 => 29.0010,
+      210 => 30.0010,
+      211 => 35.0001,
+      223 => 36.0011,
+      224 => 36.0016,
+      225 => 36.0029,
+      232 => 40.0037,
+      233 => 40.0008,
+      216 => 50.0002,
+      191 => 53.0071,
+      192 => 53.0072,
+      193 => 53.0073,
+      236 => 54.0038,
+      237 => 54.0065,
+      254 => 55.0057,
+      255 => 55.0051,
+      199 => 73.0017,
+      200 => 73.0053,
+      201 => 73.0027,
+      229 => 74.0013,
+      230 => 74.0014,
+      261 => 74.0056,
+      262 => 75.0065,
+      231 => 90.0075,
+      238 => 91.0064,
+      239 => 91.0038,
+      265 => 92.0041,
+      266 => 92.0036,
       242 => 105.0033,
       198 => 106.0009,
       217 => 107.0009,
@@ -627,8 +631,8 @@ module SC_Mod
       186 => 194,
       188 => 187,
       473 => 475,
-      472=>474,
-      471=>473
+      472 => 474,
+      471 => 473
   }
 
   SHIFTED_WEAPONS = {
@@ -749,21 +753,19 @@ module SC_Mod
       9 => 133, 10 => 134, 11 => 135, 12 => 136, 13 => 137, 14 => 138
   }
 
-  #--------------------------------------------------------------------------
-  # * Aggiunge i luoghi visitati alla mappa leggendo le informazioni sul gioco.
-  #--------------------------------------------------------------------------
+  # Aggiunge i luoghi visitati alla mappa leggendo le informazioni sul gioco.
   def self.add_places
     v = $game_variables[72]
     (2..v).each do |i|
       next if HASH[i].nil?
-      for j in 0..HASH[i].size - 1 do
+      (0..HASH[i].size - 1).each { |j|
         $game_system.unlock_place(HASH[i][j])
-      end
+      }
     end
-    if $game_switches[425] || $game_variables[175]>2
+    if $game_switches[425] || $game_variables[175] > 2
       $game_system.unlock_place(:kaji)
     end
-    if $game_switches[326] || $game_variables[156]>2 || $game_variables[189]>2
+    if $game_switches[326] || $game_variables[156] > 2 || $game_variables[189] > 2
       $game_system.unlock_place(:piramid)
     end
     if $game_party.total_items(132) > $game_party.item_number($data_items[132]) || $game_variables[177] > 3
@@ -792,7 +794,7 @@ end
 #==============================================================================
 module DataManager
 
-  # * Restituisce true se il gioco ha bisogno di essere convertito al cap 4
+  # Restituisce true se il gioco ha bisogno di essere convertito al cap 4
   def self.need_convert_for_4?
     return true if old_exists_and_not_new
     load_h87settings
@@ -817,17 +819,19 @@ module DataManager
 end #datamanager
 
 class Scene_Title < Scene_Base
-  #--------------------------------------------------------------------------
-  # * Avvia la conversione se necessaria
-  #--------------------------------------------------------------------------
+  # Avvia la conversione se necessaria
   alias pgspg_start start unless $@
+
   def start
+    need_conversion = DataManager.need_convert_for_4?
     pgspg_start
-    if DataManager.need_convert_for_4?
+    if need_conversion
       $scene = Scene_Conversion.new
     end
   end
-end #scene_title
+end
+
+#scene_title
 
 #==============================================================================
 # ** Scene_Conversion
@@ -836,14 +840,12 @@ end #scene_title
 #==============================================================================
 class Scene_Conversion < Scene_MenuBase
 
-  #--------------------------------------------------------------------------
-  # * Inizio
-  #--------------------------------------------------------------------------
+  # Inizio
   def start
-    puts 'carica'
+    Logger.info 'carica'
     load_title_database
     #DataManager.load_database
-    puts 'caricato'
+    Logger.info 'caricato'
     super
     create_status_window
     create_conversion_scheduler
@@ -871,7 +873,12 @@ class Scene_Conversion < Scene_MenuBase
   def update_window_save_state
     @status_window.save_state = @conversion_scheduler.save_state
     @status_window.save_processed = @conversion_scheduler.process_state
+    @status_window.errors = @conversion_scheduler.errors
     sleep(0.01)
+  end
+
+  def achievement_popup_enabled?
+    false
   end
 
   def check_conversion_terminated
@@ -895,19 +902,25 @@ class Scene_Conversion < Scene_MenuBase
 
   # inizia la conversione
   def start_conversion
-    t = Thread.start {@conversion_scheduler.start_process}
-    #t.priority = 1
+    Thread.start { @conversion_scheduler.start_process }
   end
-end #scene_conversion
+end
 
+#scene_conversion
 
+#===============================================================================
+# ** Window_Conversion
+#-------------------------------------------------------------------------------
+# Finestra che mostra lo stato di conversione dei capitoli
+#===============================================================================
 class Window_Conversion < Window_Base
   def initialize(save_number)
-    super(0, 0, 350, fitting_height(4))
+    super(0, 0, 450, fitting_height(5))
     update_placement
     @save_number = save_number
     @save_state = 0
     @save_processed = 0
+    @save_error = 0
     @completed = false
     refresh
   end
@@ -919,34 +932,41 @@ class Window_Conversion < Window_Base
   end
 
   def line_1_text
-    @completed ? "Conversione completata." : "Conversione dei salvataggi"
+    with_errors = @save_error > 0 ? ' con errori' : ''
+    @completed ? "Conversione completata#{with_errors}." : "Conversione dei salvataggi"
   end
 
   def line_2_text
-    t1 = "Salvataggi in Documenti\\Overdrive"
+    t1 = "Tutti i tuoi savataggi sono stati spostati in"
     t2 = "Sto adattando i salvataggi al nuovo capitolo."
     @completed ? t1 : t2
+  end
+
+  def line_3_text
+    Homesave.saves_path
   end
 
   def draw_continue_info
     change_color crisis_color
     text = 'Premi il tasto        per continuare.'
-    contents.draw_text(line_rect(2),  text, 1)
+    rect = line_rect(3)
+    contents.draw_text(rect, text, 1)
     tw = text_size(text).width
     tx = (contents_width - tw) / 2
     ix = tx + text_size('Premi il tasto').width + 3
-    draw_key_icon(:C, ix, line_height * 2)
+    draw_key_icon(:C, ix, rect.y)
   end
 
   def draw_save_status_info
     contents.clear_rect(line_rect(3))
-    text = sprintf("Aggiornamento salvataggio %d di %d",@save_processed, @save_number)
+    text = sprintf("Aggiornamento salvataggio %d di %d", @save_processed, @save_number)
     draw_text(line_rect(3), text, 1)
   end
 
-  def draw_third_line
+  def draw_fourth_line
     if @completed
       draw_continue_info
+      draw_save_error_info
     else
       draw_save_state_bar
       draw_save_status_info
@@ -957,7 +977,8 @@ class Window_Conversion < Window_Base
     contents.clear
     draw_text(line_rect(0), line_1_text, 1)
     draw_text(line_rect(1), line_2_text, 1)
-    draw_third_line
+    draw_text(line_rect(2), line_3_text, 1)
+    draw_fourth_line
   end
 
   def save_state=(new_save_state)
@@ -974,10 +995,25 @@ class Window_Conversion < Window_Base
     draw_save_status_info
   end
 
+  def errors=(errors)
+    return if @save_error == errors
+    @save_error = errors
+    draw_save_error_info
+  end
+
   def draw_save_state_bar
     contents.clear_rect(line_rect(2))
-    rate = @save_state.to_f / 57.0
+    rate = @save_state.to_f / 58.0
     draw_gauge(0, line_height * 2, contents_width, rate, Color::WHITE, Color::WHITE)
+  end
+
+  def draw_save_error_info
+    rect = line_rect(4)
+    contents.clear_rect(rect)
+    return if @save_error == 0
+    change_color knockout_color
+    text = sprintf("%d salvataggi non sono stati convertiti correttamente.", @save_error)
+    draw_text(rect, text, 1)
   end
 
   def complete
@@ -994,84 +1030,88 @@ end
 class Conversion_Scheduler
   attr_reader :process_state
   attr_reader :save_state
+  attr_reader :errors
   # @return [Window_Conversion]
   attr_reader :window
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
-  #--------------------------------------------------------------------------
+  # Inizializzazione
   def initialize
     @process_started = false
     @process_executing = false
     @process_terminated = false
     @process_state = 0
     @save_state = 0
+    @errors = 0
     @players = {}
     @window = nil
   end
-  #--------------------------------------------------------------------------
-  # * imposta la barra di avanzamento
-  #--------------------------------------------------------------------------
+
+  # imposta la barra di avanzamento
   def set_window(window)
     @window = window
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se la conversione è iniziata
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se la conversione è iniziata
   def started?
     @process_started
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se il processo sta avvenendo
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se il processo sta avvenendo
   def executing?
     @process_executing
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se la conversione è terminata
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se la conversione è terminata
   def terminated?
     @process_terminated
   end
-  #--------------------------------------------------------------------------
-  # * Read Save Data
+
+  # Read Save Data
   #     file : file object for reading (opened)
-  #--------------------------------------------------------------------------
   #noinspection RubyResolve
   def read_save_data(file)
     #noinspection RubyUnusedLocalVariable
-    puts 'leggo i dati di gioco...'
-    characters           = Marshal.load(file)
+    Logger.info 'leggo i dati di gioco...'
+    characters = Marshal.load(file)
     Graphics.frame_count = Marshal.load(file)
-    @last_bgm            = Marshal.load(file)
-    @last_bgs            = Marshal.load(file)
-    $game_system         = Marshal.load(file)
-    $game_message        = Marshal.load(file)
-    $game_switches       = Marshal.load(file)
-    $game_variables      = Marshal.load(file)
-    $game_self_switches  = Marshal.load(file)
-    $game_actors         = Marshal.load(file)
-    $game_party          = Marshal.load(file)
-    $game_troop          = Marshal.load(file)
-    $game_map            = Marshal.load(file)
-    $game_player         = Marshal.load(file)
+    @last_bgm = Marshal.load(file)
+    @last_bgs = Marshal.load(file)
+    $game_system = Marshal.load(file)
+    $game_message = Marshal.load(file)
+    $game_switches = Marshal.load(file)
+    $game_variables = Marshal.load(file)
+    $game_self_switches = Marshal.load(file)
+    $game_actors = Marshal.load(file)
+    $game_party = Marshal.load(file)
+    $game_troop = Marshal.load(file)
+    $game_map = Marshal.load(file)
+    $game_player = Marshal.load(file)
     if $game_system.version_id != $data_system.version_id
       $game_map.setup($game_map.map_id)
       $game_player.center($game_player.x, $game_player.y)
     end
-    puts 'file di gioco caricati.'
+    Logger.info 'file di gioco caricati.'
   end
-  #--------------------------------------------------------------------------
-  # * Chiama l'inizio del processo
-  #--------------------------------------------------------------------------
+
+  # Chiama l'inizio del processo
   def start_process
     @process_started = true
     @process_executing = true
+    begin
+      process_move_game_settings
+      check_old_achievements_compatibility
+      $game_settings["chapter4"] = true
+    rescue => exception
+      Logger.error("Errore #{exception.class} su conversione data settings")
+      Logger.error(exception.message)
+      @process_executing = false
+      @process_terminated = true
+      return
+    end
     Dir.glob('Salvataggio*.rvdata').each_with_index do |file, index|
       @process_state = index
       process_save_data(file)
     end
-    process_move_game_settings
-    $game_settings["chapter4"]=true
+    Logger.info('Salvataggi processati.')
     @process_executing = false
     @process_terminated = true
   end
@@ -1095,7 +1135,7 @@ class Conversion_Scheduler
   def process_save_data(savename)
     index = savefile_index(savename)
     @save_state = 0
-    puts sprintf('processo il salvataggio %s', savename)
+    Logger.info sprintf('processo il salvataggio %s', savename)
     file = File.open(savename, "rb") rescue return
     read_save_data(file)
     file.close
@@ -1103,25 +1143,31 @@ class Conversion_Scheduler
     begin
       change_savedata(index)
     rescue
-      puts $!.message
-      puts $!.backtrace
+      @errors += 1
+      Logger.error($!.class)
+      Logger.error $!.message
+      Logger.error $!.backtrace
     end
     $game_system.default_save_version
     $game_system.conversion_bgm = @last_bgm
     $game_system.conversion_bgs = @last_bgs
-    check_and_save_folder(index)
-    puts sprintf('save state: %d', @save_state)
+    advance_step
+    unless check_and_save_folder(index)
+      Logger.error("Errore nel salvare allo slot #{index}")
+      @errors += 1
+    end
+    advance_step
+    Logger.info sprintf('step %d completato', @save_state)
   end
-  #--------------------------------------------------------------------------
-  # * Prende l'immagine vuota
-  #--------------------------------------------------------------------------
+
+  # Prende l'immagine vuota
   def process_image(scrname)
     Cache.load_bitmap("", scrname, 0)
   end
-  #--------------------------------------------------------------------------
-  # * Cambia i parametri del salvataggio.
-  #--------------------------------------------------------------------------
+
+  # Cambia i parametri del salvataggio.
   def change_savedata(index)
+    $game_switches[Online::ACTIVATION_SWITCH] = false
     $game_map.erase_events
     advance_step
     $game_party.check_weapon_sa
@@ -1148,21 +1194,27 @@ class Conversion_Scheduler
     handle_old_equips
     advance_step
     update_shop_states
+    advance_step
+    unlock_titles
     recover_all
+    update_new_data
     continue_chapter4 if $game_variables[72] >= 57
   end
-  #--------------------------------------------------------------------------
-  # * aggiorna il menu opzioni
-  #--------------------------------------------------------------------------
+
+  # aggiorna il menu opzioni
   def change_settings
-    puts 'cambio le impostazioni di gioco'
+    Logger.info 'cambio le impostazioni di gioco'
     $game_switches[267] = true
     $game_switches[268] = true
     $game_switches[269] = true
     $game_switches[598] = true
+    $game_switches[Gameplay_Settings::BATTLE_ANIM_SW] = false
+    $game_switches[Sprite_MiniMap::MINIMAP_SWITCH] = true
+    $game_switches[Sprite_MiniMap::MINIMAP_SIZE_SW] = false
     $game_switches[ActorCommandOptions::POSITION_SW] = true
     $game_switches[H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW] = true
-    value = 1
+    $game_switches[Online::ACTIVATION_SWITCH] = true
+    $game_system.autosave_setting = true
     case $game_party.total_max_level
     when 1..20
       value = 3
@@ -1172,16 +1224,55 @@ class Conversion_Scheduler
       value = 1
     end
     $game_variables[H87HUD_SETTINGS::HP_WIDTH_VAR] = value
+    #noinspection RubyResolve
     $game_switches[121] = $game_party.atb_custom[1]
   end
 
+  # Converte le informazioni degli obiettivi sbloccati sulla nuova versione.
+  def check_old_achievements_compatibility
+    return if $game_settings[:achievements]
+    $game_settings[:achievements] = {}
+    $game_settings.settings.each_pair do |key, value|
+      if /Ach[ ]*(\d+)/i.match(key.to_s)
+        $game_settings[:achievements][$1.to_i] = value
+      end
+    end
+    $game_settings.save
+  end
+
+  def update_new_data
+    Logger.info 'aggiorno i nuovi dati'
+    $game_switches[SC_Mod::FROM_OLD_CHAPTER_SW] = true
+    $game_system.is_legacy_save = true
+    if $game_party.nome_giocatore != nil
+      $game_system.player_name = $game_party.nome_giocatore[0,Settings::MAX_NICKNAME_LEN]
+    end
+  end
+
   def recover_all
+    Logger.info 'curo tutti'
     $game_party.all_members.each { |member| member.recover_all }
   end
 
   # fa avanzare lo stato della conversione di 1
   def advance_step
     @save_state += 1
+  end
+
+  def unlock_titles
+    Logger.info 'sblocco i titoli...'
+    $game_system.unlock_title(11, false) if $game_variables[67] <= 0 and $game_switches[215]
+    $game_system.unlock_title(22, false)
+    $game_system.unlock_title(23, false) if $game_switches[34]
+    $game_system.unlock_title(26, false) if $game_switches[369]
+    $game_system.unlock_title(27, false) if $game_switches[106]
+    $game_system.unlock_title(29, false) if $game_system.story_progress > 37
+    $game_system.unlock_title(30, false) if $game_party.total_battles >= 100
+    $game_system.unlock_title(31, false) if $game_party.total_battles >= 1000
+    $game_system.unlock_title(32, false) if $game_party.total_battles >= 10000
+    Player_Titles::BINDED_ACHIEVEMENTS.each_pair do |achievement_id, title_id|
+      $game_system.unlock_title(title_id, false) if H87_Achievements.get_achievement(achievement_id).unlocked?
+    end
   end
 
   def change_new_character_names
@@ -1192,16 +1283,14 @@ class Conversion_Scheduler
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Scopri gli oggetti per l'oggettario
-  #--------------------------------------------------------------------------
+  # Scopri gli oggetti per l'oggettario
   def discover_items_for_itempedia
-    puts 'sblocco gli oggetti oggettario'
+    Logger.info 'sblocco gli oggetti oggettario'
     $game_party.discovered_items
   end
 
   def update_shop_states
-    puts 'aggiorno i negozi'
+    Logger.info 'aggiorno i negozi'
     update_balthazar_shop
   end
 
@@ -1212,29 +1301,26 @@ class Conversion_Scheduler
     Roba_Personale.riempi_shop_balth(2) if $game_switches[433]
     Roba_Personale.riempi_shop_balth(3) if $game_variables[165] >= 5
   end
-  #--------------------------------------------------------------------------
-  # * scambia gli oggetti per la nuova posizione
-  #--------------------------------------------------------------------------
+
+  # scambia gli oggetti per la nuova posizione
   def exchange_items(id1, id2)
     number = $game_party.item_number($data_items[id1])
     return if number == 0
     $game_party.lose_item($data_items[id1], number)
     $game_party.gain_item($data_items[id2], number)
   end
-  #--------------------------------------------------------------------------
-  # * scambia le skill
-  #--------------------------------------------------------------------------
+
+  # scambia le skill
   def exchange_skills(actor, id1, id2)
     if actor.skills.include?(id1)
       actor.forget_skill(id1)
       actor.learn_skill(id2)
     end
   end
-  #--------------------------------------------------------------------------
-  # * rimuove gli oggetti non più esistenti
-  #--------------------------------------------------------------------------
+
+  # rimuove gli oggetti non più esistenti
   def rimuovi_oggetti_eliminati
-    puts 'rimuovo oggetti eliminati'
+    Logger.info 'rimuovo oggetti eliminati'
     (201..206).each { |i| $game_party.lose_item($data_items[i], 99) }
     $game_party.lose_item($data_items[211], 99)
     exchange_items(90, 209)
@@ -1282,7 +1368,7 @@ class Conversion_Scheduler
   end
 
   def handle_old_equips
-    puts 'elimino gli equipaggiamenti non usati'
+    Logger.info 'elimino gli equipaggiamenti non usati'
 
     $game_party.weapons.each do |weapon|
       n = $game_party.item_number(weapon)
@@ -1334,20 +1420,17 @@ class Conversion_Scheduler
     $game_party.gain_item(new_item, number)
   end
 
-  #--------------------------------------------------------------------------
-  # * Gestisce i punti di salvataggio cambiati sulla mappa
-  #--------------------------------------------------------------------------
+  # Gestisce i punti di salvataggio cambiati sulla mappa
   def check_dangerous_save_points
-    puts 'controllo i punti di salvataggio pericolosi'
+    Logger.info 'controllo i punti di salvataggio pericolosi'
     if $game_map.map_id == 144 #pigwarts P2
       $game_map.setup(412)
-      $game_player.moveto(3,7)
+      $game_player.moveto(3, 7)
       $game_player.refresh
     end
   end
-  #--------------------------------------------------------------------------
-  # * Cambia le abilità
-  #--------------------------------------------------------------------------
+
+  # Cambia le abilità
   def change_skills(actor)
     advance_step
     forget_skills(actor, SC_Mod::REMOVED_SKILLS)
@@ -1394,9 +1477,8 @@ class Conversion_Scheduler
       actor.earn_jp(jp)
     }
   end
-  #--------------------------------------------------------------------------
-  # * sposta le skill sulla nuova posizione
-  #--------------------------------------------------------------------------
+
+  # sposta le skill sulla nuova posizione
   def shift_skills(actor, skills)
     skills.each_pair { |skill_id, new_id|
       next unless actor.skill_learn?($data_skills[skill_id])
@@ -1404,60 +1486,41 @@ class Conversion_Scheduler
       actor.learn_skill(new_id)
     }
   end
-  #--------------------------------------------------------------------------
-  # * Cambia le informazioni sul party
-  #--------------------------------------------------------------------------
+
+  # Cambia le informazioni sul party
   def change_party_info
-    puts 'cambio le informazioni del gruppo'
+    Logger.info 'cambio le informazioni del gruppo'
     $game_party.monsters_defeated.each_pair do |id, number|
       $game_party.add_enemy_defeated(id, number)
     end
   end
-  #--------------------------------------------------------------------------
-  # * SALVA
-  #--------------------------------------------------------------------------
+
+  # SALVA
   def check_and_save_folder(index)
-    DataManager.save_game(index-1)
+    Logger.info sprintf('salvo il gioco allo slot %d', index)
+    result = DataManager.save_game(index - 1)
+    Logger.info 'salvato.'
+    result
   end
-  #--------------------------------------------------------------------------
-  # * VECCHIO METODO
-  #--------------------------------------------------------------------------
-  def check_and_save_folder_old
-    code = $game_party.id_partita
-    if @players[code] == nil
-      name = set_player_name($game_party.nome_giocatore)
-      @players[code] = [name, 1]
-      Dir.mkdir(Homepath.get_fpath+"/"+@players[code][0])
-    end
-    path = Homepath.get_fpath+"/"+@players[code][0]
-    num = @players[code][1] + 1
-    name = "Salvataggio " + num +".sav"
-    file = File.open(path+"/"+name, "wb")
-    write_save_data(file)
-    file.close
-    @players[code][1] = num
-  end
-  #--------------------------------------------------------------------------
-  # * Imposta il nome della cartella di salvataggio a seconda del giocatore.
+
+  # Imposta il nome della cartella di salvataggio a seconda del giocatore.
   #   È ricorsivo.
-  #--------------------------------------------------------------------------
   def set_player_name(player_name, found = 0)
-    found > 0 ? name = player_name+" "+found : name = player_name
+    found > 0 ? name = player_name + " " + found : name = player_name
     @players.each do |player|
-      return set_player_name(player_name, found+1) if player == name
+      return set_player_name(player_name, found + 1) if player == name
     end
     name
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna l'ultimo posto visitato per il teletrasporto
+
+  # Aggiorna l'ultimo posto visitato per il teletrasporto
   #   Adatta per la nuova mappa del mondo
-  #--------------------------------------------------------------------------
   def update_last_place(index)
     x = $game_variables[51]
     y = $game_variables[52]
     return if x == 0
     $game_variables[50] = 1
-    pos = [x,y]
+    pos = [x, y]
     if SC_Mod::TELEPORTS.include?(pos)
       $game_variables[51] = SC_Mod::TELEPORTS[pos][0]
       $game_variables[52] = SC_Mod::TELEPORTS[pos][1]
@@ -1467,17 +1530,16 @@ class Conversion_Scheduler
       $game_variables[52] = newpos[1]
     end
   end
-  #--------------------------------------------------------------------------
-  # * Trova il punto di teletrasporto più vicino
+
+  # Trova il punto di teletrasporto più vicino
   # Serve nel caso la posizione non venga trovata
-  #--------------------------------------------------------------------------
   def nearest_checkpoint(pos)
     teleports = []
     SC_Mod::TELEPORTS.each_key do |teleport|
       teleports.push(teleport)
     end
     min = 9999
-    minpos = [0,0]
+    minpos = [0, 0]
     x1 = pos[0]
     y1 = pos[1]
     (0..teleports.size - 1).each do |i|
@@ -1491,28 +1553,25 @@ class Conversion_Scheduler
     end
     SC_Mod::TELEPORTS[minpos]
   end
-  #--------------------------------------------------------------------------
-  # * Cambia la posizione dell'eroe nel caso si trovi nella vecchia mappa del
+
+  # Cambia la posizione dell'eroe nel caso si trovi nella vecchia mappa del
   #   mondo.
-  #--------------------------------------------------------------------------
   def change_position(index)
-    puts 'aggiorno la posizione del gruppo'
+    Logger.info 'aggiorno la posizione del gruppo'
     update_last_place(index)
     if $game_map.map_id == 2
       (5..8).each do |i|
         $game_map.screen.pictures[i].erase
       end
       $game_map.setup(1)
-      $game_player.moveto($game_variables[51],$game_variables[52])
+      $game_player.moveto($game_variables[51], $game_variables[52])
       $game_player.refresh
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * aggiorna le statistiche dei personaggi
-  #--------------------------------------------------------------------------
+  # aggiorna le statistiche dei personaggi
   def process_actors
-    puts 'aggiorno gli eroi'
+    Logger.info 'aggiorno gli eroi'
     change_new_character_names
     (1..15).each do |i|
       next if i == 4
@@ -1539,16 +1598,15 @@ class Conversion_Scheduler
     actor.process_old_element_affinity
     advance_step
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna le dominazioni
-  #--------------------------------------------------------------------------
+
+  # Aggiorna le dominazioni
   def process_dominations
-    puts 'processo le evocazioni'
+    Logger.info 'processo le evocazioni'
     EsperConfig::SW_Dom.each_key do |esp|
       $game_party.unlock_domination(esp) if $game_switches[EsperConfig::SW_Dom[esp]]
     end
     $game_switches[590] = true if $game_variables[72] >= 17
-    for i in 17..27
+    (17..27).each do |i|
       next if i == 26
       actor = $game_actors[i]
       passives = actor.passives.clone
@@ -1563,78 +1621,85 @@ class Conversion_Scheduler
       actor.check_boosts
     end
   end
-  #--------------------------------------------------------------------------
-  # * aggiorna le statistiche dell'evocazione
-  #--------------------------------------------------------------------------
+
+  # aggiorna le statistiche dell'evocazione
   def update_invocation(index)
-    return if !$game_party.domination_unlocked?(index)
+    return unless $game_party.domination_unlocked?(index)
     level = $game_party.max_level
     domination = $game_actors[index]
     case index
     when 17
-      domination.summon_times = level/3 + 2
+      domination.summon_times = level / 3 + 2
     when 18
-      domination.summon_times = level/4
+      domination.summon_times = level / 4
     when 19
-      domination.summon_times = level/3
+      domination.summon_times = level / 3
     when 20
-      domination.summon_times = level/6 + 1
+      domination.summon_times = level / 6 + 1
     when 21
-      domination.summon_times = level/5
+      domination.summon_times = level / 5
     when 22
-      domination.summon_times = level/6
+      domination.summon_times = level / 6
     when 23
-      domination.summon_times = level/4
+      domination.summon_times = level / 4
     when 24
-      domination.summon_times = level/6
+      domination.summon_times = level / 6
     when 25
-      domination.summon_times = level/5
+      domination.summon_times = level / 5
     when 27
-      domination.summon_times = level/7
+      domination.summon_times = level / 7
+    else
+      # type code here
     end
   end
-  #--------------------------------------------------------------------------
-  # * continua per il capitolo 4
-  #--------------------------------------------------------------------------
+
+  # continua per il capitolo 4
   def continue_chapter4
     $game_player.transparent = true
     $game_map.setup(11)
-    $game_player.moveto(1,1)
+    $game_player.moveto(1, 1)
     $game_system.conversion_bgm = nil
     $game_system.conversion_bgs = nil
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna la nebbia
-  #--------------------------------------------------------------------------
+
+  # Aggiorna la nebbia
   def update_fog
     $game_map.set_fog_data(FOG_SETUP::FOGS[$game_map.map_id])
   end
-  #--------------------------------------------------------------------------
-  # * Sblocca alla mappa i posti visitati
-  #--------------------------------------------------------------------------
+
+  # Sblocca alla mappa i posti visitati
   def unlock_places
     SC_Mod.add_places
   end
-end #conversion_scheduler
+
+  def update_settings
+    $game_switches[MapPopup_Options::MINIMAP_SWITCH] = true
+    $game_switches[H87HUD_SETTINGS::BEEP_ON_CRITICAL_SW] = true
+    $game_switches[ActorCommandOptions::POSITION_SW] = false
+  end
+end
+
+#conversion_scheduler
 
 #==============================================================================
 # ** H87_Settings
 #==============================================================================
 class H87_Settings
-  #--------------------------------------------------------------------------
-  # * Imposta il nuovo gioco sul capitolo 4
-  #--------------------------------------------------------------------------
+  # Imposta il nuovo gioco sul capitolo 4
   alias definit initialize unless $@
+
   def initialize
     definit
-    @settings["chapter4"]=true
+    @settings["chapter4"] = true
   end
 
   # usato per ottenere i vecchi salvataggi
   def legacy
     @type
   end
-end #h87_settings
+end
+
+#h87_settings
 
 class Game_Actor < Game_Battler
   def check_weapon_sa
@@ -1663,9 +1728,21 @@ class Game_Actor < Game_Battler
   end
 end
 
+class Game_System
+  attr_accessor :is_legacy_save
+  attr_accessor :new_chapter_introduction
+end
+
+class Game_Map
+  def erase_events
+    #noinspection RubyArgCount
+    @interpreter = Game_Interpreter.new(0, true)
+  end
+end
+
 class Game_Party < Game_Unit
   def check_weapon_sa
-    puts 'modifico le abilità speciali delle armi...'
+    Logger.info 'modifico le abilità speciali delle armi...'
     @weapons.each_key do |weap_id|
       if SC_Mod::MODDED_WEAPONS[weap_id] != nil
         number = @weapons[weap_id]

@@ -21,16 +21,19 @@
     ● Altro ancora!
  ==============================================================================
   ■ Changelog
+    ● V 1.8.1
+      - Possibilità di gestire i cookie
     ● V 1.8.0
-      - Cambia i metodi to_s di Hash per mostrarli meglio su stampa
       - Ottiene informazioni sul mouse (posizione, click, visibilità...)
       - Supporto HTTPS per richieste web POST
       - HTTP.send_post_request DEPRECATO
       - await_response_async DEPRECATO
+      - Nuovo sistema per gestire le richieste dal web! (vedi doc.)
       - Nuovi metodi per richieste web:
         HTTP.get, HTTP.post, HTTP.put, HTTP.delete
         Queste restituiranno un oggetto Response (vedi documentazione sotto)
       - Metodo per donwload dei file migliorato
+      - Cache.web_picture per caricare una picture direttamente da internet
       - Aggiunta dei metodi minutes, hours e days negli integer (vedi esempi)
       - La versione del gioco può essere inserita nel file Game.ini
         invece che nel file dedicato Version.ini
@@ -177,10 +180,9 @@
       partition: 1 -> restituisce il minuto attuale 0~59
       partition: 2 -> restituisce i secondi 0~59
 
-    ● Win.language
-      Restituisce un codice con la lingua del sistema in uso. Per l'elenco delle
-      lingue con i rispettivi codici vedere questo link:
-      http://support.microsoft.com/kb/193080
+    ● Win.locale_name
+      Restituisce la localizzazione corrente del sistema. Ad es.
+      Win.locale_name -> 'it-IT'
 
     ● Win.screen_resolution
       restituisce un array di due interi contenenti la risoluzione in lunghezza
@@ -221,45 +223,96 @@
       restituiscono minuti, giorni ed ore come numero di secondi. Esempio:
       5.minutes => 300 (300 secondi costituiscono 5 minuti)
       10.hours => 36000
+      può essere comodo per calcolare il tempo di gioco da Graphics.frame_count.
 
   ▼ Internet e HTTP
 
-    ----------------------------------------------------------------------------
-    * Metodi semplificati per operazioni asincrone
-    ----------------------------------------------------------------------------
-    I metodi semplificati permettono una facile gestione dei download e delle
-    risposte su internet in modo da usare meno codice possibile ed essere più
-    efficienti. Questi metodi possono essere usati solo in una Scene, Window o
-    nelle classi dove viene incluso il modulo Async_Downloads.
+    ● HTTP.domain
+      Restituisce il dominio principale del tuo gioco (configurabile in basso)
+      Questa opzione è molto utile quando devi trasferire il sito su un altro
+      dominio e non devi cambiare tutte le stringhe di gioco.
 
-    ● send_post_request(url, parametri[, https])
-      Invia una richiesta POST all'url indicato inviando i parametri e ne
-      restituisce la risposta sottoforma di stringa.
-      Esempio:
-      parametri = {"user" => "Francesco", "password" => "banana"}
-      print send_post_request(www.miosito.com/login.php, parametri)
-      imposta https a true se si usufruisce di una connessione HTTPS
+    GET, POST, PUT, DELETE
+    In genere questi sono i metodi HTTP che vengono utilizzati per le richieste
+    web (ce ne sono altri, ma per semplificare ho limitato questi 4)
+    GET serve per ottenere le informazioni
+    POST serve per inviare delle informazioni (per la modifica, ad esempio)
+    PUT serve per creare qualcosa di nuovo
+    DELETE serve per cancellare
 
-    ● download_async(url, metodo[, priorità, cartella])
-      Avvia il download di un file da url. Lancia automaticamente il metodo
-      nome_metodo quando il download è completato
-      (il nome del metodo dev'essere passato come simbolo)
-      Esempi:
-      download_async("www.miosito.com/immagine.jpg", method(:carica_immagine))
-      (bisogna anche definire il metodo carica_immagine)
-      Il download del file è molto lento per non alterare la fluidità del gioco.
-      Se vuoi velocizzare il download, metti true nel campo priorità.
+    Questi metodi sono solo delle convenzioni, nulla ti vieta di usare GET
+    ovunque tu voglia (a patto di rispettare i requisiti del server che chiami)
 
-    ● get_response_async(url, metodo, priorità)
-      Avvia la ricezione della risposta dall'indirizzo dell'url, ed avvia il
-      metodo definito da method_name nonappena la risposta è stata ricevuta.
-      A differenza del precedente, il metodo da richiamare deve avere un
-      parametro in ingresso, che è la stringa della risposta.
-      All'interno dell'URL si possono anche inserire i parametri per una
-      richiesta di tipo GET (ad esempio, login.php?user=francesco&password=banana)
-      Purtroppo RPG Maker non gestisce correttamente il multithreading, quindi
-      ci sarà sempre un blocco del gioco mentre invia la risposta, che dipende
-      dalle prestazioni del server.
+    ● HTTP.get(url[, parametri])
+      Invia una richiesta GET ad un server remoto tramite url e la restituisce
+      in un oggetto HTTP::Response (vedi in basso)
+      I parametri sono opzionali e consistono in un hash di valori. Esempio:
+      url = HTTP.domain + 'get_status.php'
+      params = {user_name: 'Pippo Baudo', password: '12345'}
+      response = HTTP.get(url, params)
+
+      La chiamata verrà converita in http://www.miosito.com/get_status.php?user_name=Pippo+Baudo&passord=12345
+      L'oggetto Response conterrà il risultato della richiesta.
+
+    ● HTTP.post, HTTP.put, HTTP.delete
+      Si usano allo stesso modo della get, con la differenza che i parametri
+      non vengono aggiunti all'URL ma nell'header della richiesta HTTP in modo da
+      non avere limiti di spazio e non rendere visibili le informazioni dall'url.
+
+    ● Come gestire le risposte
+      Come detto in precedenza, le chiamate HTTP restituiscono un oggetto Response.
+      response = response = HTTP.get(url, params)
+      - response.ok?: ti dice se la richiesta è andata a buon fine ed hai ottenuto
+        i dati della risposta (praticamente se il codice è 200)
+      - response.code: restituisce il codice della risposta (ad es., 200 se tutto
+        OK, 404 se non trovato ecc...)
+      - response.body: restituisce il contenuto della risposta (il messaggio)
+      - response.json?: ti dice se hai ricevuto un JSON come risposta
+      - response.description: ti stampa il codice e la sua spiegazione (es. 200 OK, 404 NOT FOUND...)
+
+    ● HTTP.download(url[, save_path, filename, secure])
+      - Scarica un file in modo asincrono (cioè che il gioco non attende che si scarica)
+        url: url del file da scaricare
+      - save_path: opzionale, indica la cartella dove scaricare il file (se non metti nulla,
+        è la cartella root del progetto)
+      - filename: opzionale, il nome del file scaricato. Se non inserito, lo script proverà
+        a ricavarlo dall'URL.
+      Il download restituirà un oggetto di tipo HTTP::Request.
+      Questo oggetto contiene la tracciabilità del download (stato di completamento, thread,
+      risposta ecc...)
+      request = HTTP.download('http://www.miosito.com/gallery/pippo.jpg', 'Pippo.jpg')
+      request.terminated indica se il download è terminato (true) oppure no (false)
+      request.size ti dirà (in Byte) quanto pesa il download.
+      request.download_rate ti indicherà la percentuale di completamento (da 0.0 a 1.0)
+      request.abort annullerà il download
+      request.response restituirà la risposta.
+
+    ● HTTP.get_cookies([url])
+      ottiene un Hash con i cookie memorizzati del sito. Se il parametro url è omesso,
+      viene preso automaticamente quello specificato in HTTPDOMAIN.
+      esempio:
+      HTTP.get_cookies('http://www.rpg2s.net') => {'PHPSESSID' => 'agg454g6hs66gsvnk'}
+
+    ● HTTP.set_cookie(cookie, valore[, url])
+      Imposta un cookie per un sito specifico.
+
+    ● HTTP.delete_cookie(cookie[, url])
+      Cancella il cookie specificato.
+
+    ● Browser.open(url)
+      apre il browser ad un sito scelto. Ricordati che se l'url è troppo grande,
+      potrebbe non avviare il sito. In questo caso ti consiglio di usare tinyurl
+      o goo.gl per rimpicciolire il link.
+
+    Questi sono metodi semplificati all'interno delle Scene_MenuBase, in quanto
+    non dovrai occuparti di gestire il download in modo complicato.
+
+    ● download_async(url, metodo[, cartella])
+      scarica dall'url. Quando il download termina, viene chiamato
+      il metodo definito da metodo. Se il metodo in questione accetta
+      un parametro, gli verrà passato l'url del file. Se ne accetta due,
+      gli verrà passato anche l'oggetto della risposta.
+      Ricordati che il riferimento al metodo viene dato con method(:nome_metodo).
 
     ● abort_download(nomefile)
       Annulla il download di nomefile.
@@ -267,11 +320,32 @@
     ● download_status(filename)
       Restituisce un numero intero da 0 a 100 rappresentante lo stato di download.
 
+    ● download_completed?(filename)
+      Determina se il download del file è stato completato.
+
+    ----------------------------------------------------------------------------
+    * Ottenere immagini dal web
+    ----------------------------------------------------------------------------
+      Hai presente quando, chiamando Cache.picture(nomefile) ottieni la bitmap
+      del file? Ecco, ora puoi fare lo stesso, ma invece di caricarla dal progetto,
+      la scarica direttamente da internet!
+
+    ● Cache.web_picture(url[, nomefile])
+      Scarica, mette in cache e restituisce l'immagine dal web come bitmap.
+      Se il nomefile non è specificato, verrà assegnato automaticamente.
+      Le immagini vengono salvate nella cartella Graphics/Cache.
+      Esempio
+      sprite = Sprite.new
+      sprite.bitmap = Cache.web_picture('www.miosito.com/foto_marmotta.jpg')
+      Ecco fatto! Semplice, no?
+
+      Puoi far cancellare la cache con Cache.clear_cache_folder.
+
     ----------------------------------------------------------------------------
     * Immagine del giorno di Bing
     ----------------------------------------------------------------------------
-    Bing propone ogni giorno una nuova foto dal mondo. Puoi ottenere quest'im-
-    magine dal modulo Cache:
+      Bing propone ogni giorno una nuova foto dal mondo. Puoi ottenere quest'im-
+      magine dal modulo Cache:
 
     ● Cache.bing_daily
       ti restituirà una Bitmap pronta per l'utilizzo (restituisce nil se ci sono
@@ -295,88 +369,6 @@
     ● Cache.bing_daily_copyright
       Puoi ottenere l'origine dell'immagine (soggetto, autore e copyright)
       Attenzione: da usare dopo aver preso l'immagine!
-
-    ----------------------------------------------------------------------------
-    * Metodi più complessi per la gestione completa dei download
-    ----------------------------------------------------------------------------
-    Questi metodi possono essere usati ovunque e permettono una gestione più
-    complessa e funzionale dei download. Possono anche essere usati affiancati
-    ai metodi più semplici.
-
-    ● await_response(url)
-      Avvia la ricezione della risposta e restituisce direttamente la stringa
-      senza attesa. Può bloccare l'esecuzione del gioco per qualche secondo,
-      perciò meglio metterlo durante caricamenti o cambi di schermata.
-      Esempio:
-      print await_response(www.miosito.com)
-      Una cosa del genere stamperà tutto il codice HTML della pagina.
-
-    ● HTTP.domain
-      restituisce il dominio principale del tuo server (configura in basso).
-      usalo nelle locazioni internet in modo da cambiare velocemente dominio
-
-    ● HTTP.download(percorsofile[,destinazione[,bassa priorità]])
-      Scarica il file dal percorso. Se il percorso di destinazione è omesso,
-      verrà scaricato nella cartella del gioco (cioè "./") Esempio:
-      HTTP.download("http://www.miosito.it/immagine.png","./Graphics/Pictures")
-        scaricherà immagine.png nella cartella Graphics/Pictures del gioco.
-      HTTP.download("http://www.miosito.it/immagine.png")
-        scaricherà immagine.png nella cartella del gioco.
-      HTTP.download(HTTP.domain+"/immagine.png", Win.getFolderPath(:dskt))
-        scaricherà immagine.png da http://www.miosito.it sul desktop.
-      Imposta true in bassa priorità per velocizzare il gioco durante il download
-      (il download sarà più lento)
-
-    ● HTTP.get_server_response(url, response_name)
-      Ottiene la risposta o legge il contenuto di un indirizzo web e lo memorizza
-      nel proprio contenitore. url è l'indirizzo, mentre response_name è un
-      identificatore per ritrovarlo.
-
-    ● HTTP.await_response(url)
-      come await_response senza HTTP
-
-    ● HTTP.response(response_name)
-      Restituisce il testo letto da get_server_response. Usalo dopo aver
-      prima controllato che il download sia stato effettuato
-
-    ● HTTP.downloaded?(nomefile)
-      Restituisce true se il file che si sta scaricando è stato scaricato
-      completamente. Restituisce false se non è stato neanche iniziato o se è
-      ancora in corso. Al posto di nomefile si può mettere il nome della risposta
-      per controllare se è stata ricevuta quando si usa get_server_response e
-      prima di utilizzare HTTP.response.
-
-    ● HTTP.progress(nomefile)
-      Restituisce la percentuale di scaricamento del file in un float compreso
-      tra 0.0 e 100.0. Restituisce 0 se il download non è cominciato.
-
-    ● HTTP.filesize(nomefile)
-      restituisce la grandezza del file in bit: dividi per 8 per ottenere i byte.
-
-    ● HTTP.sizeloaded(nomefile)
-      restituisce il numero di bit scaricati del file: dividi per 8 per ottenere
-      i byte.
-
-    ● HTTP.time_passed(nomefile)
-      restituisce il tempo in secondi del tempo che ha richiesto il download.
-      Restituisce 0 se il download non è completato o non esiste.
-
-    ● HTTP.downloads
-      restituisce un hash contenente l'elenco dei download
-
-    ● HTTP.completed
-      restituisce il numero dei download completati
-
-    ● HTTP.get_file_size(url)
-      restituisce la grandezza del file senza scaricarlo
-
-    ● HTTP.file_good?(nomefile)
-      controlla se il file è stato scaricato correttamente
-
-    ● Browser.open(url)
-      apre il browser ad un sito scelto. Ricordati che se l'url è troppo grande,
-      potrebbe non avviare il sito. In questo caso ti consiglio di usare tinyurl
-      o goo.gl per rimpicciolire il link.
 =end
 
 #==============================================================================
@@ -389,7 +381,7 @@ module H87_ModConfig
 end
 
 $imported = {} if $imported == nil
-$imported['H87_UniversalModule'] = 1.8
+$imported['H87_UniversalModule'] = 1.81
 
 #==============================================================================
 # ** Win
@@ -445,6 +437,9 @@ module Win
   ERROR_INVALID_HANDLE = 6
   ERROR_NOT_ENOUGH_MEMORY = 8
   ERROR_OUTOFMEMORY = 14
+
+  # max length of filename
+  MAX_PATH = 255
 
   # Constants
   SM_CYFULLSCREEN = 17 # The height of the client area for a full-screen window
@@ -552,6 +547,7 @@ module Win
         path = homepath + "/Local Settings/Temporary Internet Files"
         return unless File.directory?(path)
       end
+      #noinspection Rails3Deprecated
       fetch_folder_for_delete(path, filename)
     else
       path = homepath + '/AppData/Local/Microsoft/Windows/Temporary Internet Files/Content.IE5'
@@ -1046,6 +1042,8 @@ module HTTP
   HttpQueryInfo = Win32API.new('wininet', 'HttpQueryInfo', 'LLPPP', 'I')
   HttpOpenRequest = Win32API.new('wininet', 'HttpOpenRequestA', 'pppppplp', 'l')
   HttpSendRequest = Win32API.new('wininet', 'HttpSendRequestA', 'PPLPL', 'L')
+  HttpInternetGetCookie = Win32API.new('wininet', 'InternetGetCookieA', 'PPPP', 'I')
+  HttpInternetSetCookie = Win32API.new('wininet', 'InternetSetCookieA', 'PPP', 'I')
 
   # launches an HTTP GET request
   # @param [String] url
@@ -1053,7 +1051,7 @@ module HTTP
   # @return [Response]
   def self.get(url, params = {}, secure = false)
     url += '?' + prepare_request(params) if params.size > 0
-    send_request url, :get, {}, secure
+    send_request Request.new(url), :get, {}, secure
   end
 
   # launches an HTTP POST request
@@ -1061,7 +1059,7 @@ module HTTP
   # @param [Hash] params
   # @return [Response]
   def self.post(url, params, secure = false)
-    send_request url, :post, params, secure
+    send_request Request.new(url), :post, params, secure
   end
 
   # launches an HTTP PUT request
@@ -1069,7 +1067,7 @@ module HTTP
   # @param [Hash] params
   # @return [Response]
   def self.put(url, params, secure = false)
-    send_request url, :put, params, secure
+    send_request Request.new(url), :put, params, secure
   end
 
   # launch an HTTP DELETE request
@@ -1077,7 +1075,7 @@ module HTTP
   # @param [Hash] params
   # @return [Response]
   def self.delete(url, params, secure = false)
-    send_request url, :delete, params, secure
+    send_request Request.new(url), :delete, params, secure
   end
 
   # saves a file async and returns the data request.
@@ -1086,22 +1084,21 @@ module HTTP
   # @param [String] url
   # @param [String] save_path
   # @param [String] filename
-  # @param [Method] callback
-  def self.download(url, save_path = './', filename = nil, callback = nil, secure = false)
+  def self.download(url, save_path = './', filename = nil, secure = false)
     request = Request.new(url, filename)
-    filename = url_info(url) if filename.nil?
-    @http_requests ||= {}
-    @completed ||= []
-    @http_requests[filename] = request
-    @completed[filename] = false
+    filename = url_info(url)[:filename] if filename.nil?
     request.uri = url
-    request.thread = Thread.start(request, url, save_path, filename, secure) do |request, url, save_path, filename, secure|
-      open_resource(request, url, [INTERNET_FLAG_RELOAD], secure)
-      if request.response.ok?
-        save_file(save_path, filename, request.response.body)
+    request.thread = Thread.start(request, save_path, filename, secure) do |request, save_path, filename, secure|
+      begin
+        send_request(request, :get, {}, secure)
+        if request.response.ok?
+          save_file(save_path, filename, request.response.body)
+          request.terminated = true
+        end
+      rescue
+        Logger.error($!)
+        request.terminated = true
       end
-      @http_requests.delete[filename]
-      @completed[filename] = true
     end
     request
   end
@@ -1109,25 +1106,23 @@ module HTTP
 
   # @return [HTTP::Request]
   # @param [String] url
-  # @param [Method] callback
   # @param [Boolean] secure
-  def self.read_async(url, callback = nil, secure = false)
+  def self.read_async(url, secure = false)
     request = Request.new(url)
-    @http_requests ||= {}
-    @completed ||= []
-    @http_requests[url] = request
-    @completed[url] = false
-    request.uri = url
-    request.thread = Thread.start(request, url, secure) do |request, url, secure|
-      open_resource(request, url, [INTERNET_FLAG_RELOAD], secure)
-      @http_requests.delete[url]
-      @completed[url] = true
+    request.thread = Thread.start(request, secure) do |request, secure|
+      begin
+        send_request(request, :get, {}, secure)
+      rescue => error
+        Logger.error(error.class, error.message)
+      ensure
+        request.terminated = true
+      end
     end
     request
   end
 
   # launches a request with more options
-  # @param [String] url
+  # @param [HTTP::Request] request
   # @param [Symbol, String] method
   # @param [Hash] params
   # @param [Array<Integer>] flags
@@ -1143,10 +1138,11 @@ module HTTP
     headers = 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8'
     port = force_https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT
     service = INTERNET_SERVICE_HTTP
-    request = prepare_request(params)
+    request_params = prepare_request(params)
     flags.push(INTERNET_FLAG_SECURE) if force_https
     opts = flags.uniq.inject(0) { |o, flag| o | flag }
     response = Response.new
+    request.response = response
 
     session = InternetConnectA.call(InternetOpenA, server, port, nil, nil, service, 0, 1)
 
@@ -1159,10 +1155,10 @@ module HTTP
 
     h_file = HttpOpenRequest.call(session, method.to_s.upcase, root, nil, nil, accept, opts, 0)
 
-    if HttpSendRequest.call(h_file, headers, headers.size, request, request.size)
+    if HttpSendRequest.call(h_file, headers, headers.size, request_params, request_params.size)
       response.code = status_code h_file
       response.size = content_size h_file
-      response.body = internet_read_file h_file
+      internet_read_file h_file, response.body
     else
       response.code = Win::GetLastError.call
       response.body = "Error while sending request (code: #{response.code})."
@@ -1205,10 +1201,6 @@ module HTTP
     response
   end
 
-  def self.requests
-    @http_requests ||= {}
-  end
-
   # Sends a post-type request.
   # @param [String] url
   # @param [Hash] params
@@ -1216,7 +1208,7 @@ module HTTP
   # @return [String]
   # @deprecated use HTTP::post instead
   def self.send_post_request(url, params = {}, force_https = false)
-    send_request(url, :post, params, force_https).body
+    post(url, params, force_https).body
   end
 
   # Gets the url info
@@ -1225,9 +1217,9 @@ module HTTP
   def self.url_info(uri)
     address = uri.gsub(/^http[s]?:\/\//i, '').split('/')
     {
-        server: address[0],
-        root: address.size > 1 ? address[1..address.size].join('/') : address[0],
-        filename: address[-1],
+        :server => address[0],
+        :root => address.size > 1 ? address[1..address.size].join('/') : address[0],
+        :filename => address[-1],
 
     }
   end
@@ -1247,6 +1239,7 @@ module HTTP
     if File.directory?(folder)
       obj = File.open(folder + filename, 'wb') << data
       obj.close #chiusura del file
+      Logger.info("File saved: #{folder + filename}")
     else
       string = '%s is not a valid folder, so %s will not be saved.'
       Logger.warning sprintf(string, folder, filename)
@@ -1294,20 +1287,6 @@ module HTTP
     http_query_info file, HTTP_QUERY_CONTENT_LENGTH
   end
 
-  # Ottiene la dimensione di un file remoto in modo asincrono
-  def self.get_file_size_async(url)
-    @filesize = {} if @filesize.nil?
-    Thread.start(url) { |url|
-      @filesize[url] = get_file_size(url)
-    }
-  end
-
-  # Restituisce true se la dimensione del file è stata ottenuta
-  def self.size_get?(url)
-    return false if @filesize.nil?
-    return @filesize[url] != nil?
-  end
-
   # Ottiene la dimensione di un file remoto
   def self.get_file_size(url)
     file = InternetOpenUrl.call(InternetOpenA, url, nil, 0, 0, 0)
@@ -1334,75 +1313,46 @@ module HTTP
     get(url).body
   end
 
+  def self.get_cookies_raw(url = domain_wo_forward_slash)
+    buffer = " " * 255
+    if HttpInternetGetCookie.call(url, nil, buffer, "255")
+      return buffer.strip
+    else
+      return ''
+    end
+  end
+
+
+  # Ottiene i cookie memorizzati nel computer come Hash.
+  # @param [String] site
+  # @param [String, nil] url
+  # @return [Hash]
+  def self.get_cookies(url = domain_wo_forward_slash)
+    cookies = {}
+    get_cookies_raw(url).split(/;[ ]*/).each do |cookie|
+      if cookie =~ /^(\w+)=(.+)/
+        cookies[$1] = $2
+      end
+    end
+    cookies
+  end
+
+  # @param [String] cookie_name
+  # @param [String] value
+  # @param [String, nil] url
+  def self.set_cookie(cookie_name, value, url = domain_wo_forward_slash)
+    HttpInternetSetCookie.call(url, cookie_name, value)
+  end
+
+  # Cancella il valore di un cookie
+  # @param [String] cookie_name
+  # @param [String, nil] url
+  def self.delete_cookie(cookie_name, url = domain_wo_forward_slash)
+    set_cookie(cookie_name, "deleted;expires=Mon, 01 Jan 0001 00:00:00 GMT", url)
+  end
+
   class << self
     alias await_response await_get_server_response
-  end
-  # Restituisce true se il file è scaricato.
-  # filename: nome del file
-  def self.downloaded?(filename)
-    return false if @received.nil?
-    return false if @received[filename].nil?
-    return false if @size[filename].nil?
-    return true if @received[filename] >= @size[filename]
-    return true if progress(filename) >= 100
-    return true if progress(filename).to_s == "NaN"
-    return true if @completed[filename]
-    false
-  end
-
-  # Restituisce la grandezza del file da scaricare in byte
-  # filename: nome del file
-  def self.filesize(filename)
-    return 0 if @size.nil?
-    return 0 if @size[filename].nil?
-    return @size[filename]
-  end
-
-  # Restituisce la quantità di byte scaricati
-  # filename: nome del file
-  # @deprecated usa il parametro dalla request restituita
-  def self.sizeloaded(filename)
-    requests[filename]
-    #TODO: Continuare
-  end
-
-  # Restituisce la percentuale di progresso del download
-  # filename: nome del file
-  def self.progress(filename)
-    @received = {} if @received.nil?
-    return 0 if @received[filename].nil?
-    return @received[filename].to_f / @size[filename] * 100
-  end
-
-  # Restituisce l'hash dei download
-  def downloads
-    return {} if @downloads.nil?
-    @downloads
-  end
-
-  # Restituisce il numero di secondi che ci sono voluti per scaricare
-  def self.time_passed(filename)
-    return 0 if @timepassed[filename] == nil
-    return @timepassed[filename]
-  end
-
-  # Restituisce il numero dei download completati
-  def self.completed
-    return 0 if @downloaded.nil?
-    return @downloaded
-  end
-
-  # Restituisce la risposta dal server
-  #   response_name: id della risposta
-  def self.response(response_name)
-    return 0 if @message.nil? || @message[response_name].nil?
-    return @message[response_name]
-  end
-
-  # Restituisce i download
-  def self.downloads
-    @downloads ||= {}
-    return @downloads
   end
 
   # Restituisce il dominio principale
@@ -1410,27 +1360,10 @@ module HTTP
     H87_ModConfig::HTTPDOMAIN
   end
 
-  # Controlla se il file scaricato è buono e restituisce true o false
-  def self.file_good?(filename)
-    if File.exist?(filename) #apre il file in sola lett.
-      File.open(filename, "r") do |f|
-        f.lineno = 1 # imposta la riga n.1
-        txt = f.gets
-        return check_response(txt)
-      end
-    else
-      return false
-    end
+  def self.domain_wo_forward_slash
+    return domain if domain[-1] != '/'
+    domain[0..-2]
   end
-
-  # Restituisce true se il testo non è vuoto
-  def self.check_response(text)
-    return false if text == "" or text.nil?
-    first = text[0].chr
-    return false if first == "" or first == nil
-    return true
-  end
-
 
   class Response
     attr_accessor :code
@@ -1480,7 +1413,7 @@ module HTTP
 
 
   class Request
-    attr_accessor :state
+    attr_accessor :terminated
     # @return [String]
     attr_accessor :uri
     # @return [Thread]
@@ -1496,10 +1429,29 @@ module HTTP
     def initialize(uri, filename = nil)
       @uri = uri
       @thread = nil
-      @state = :ready
-      @byte_downloaded = 0
-      @response = HTTP::Response.new
+      @terminated = false
       @filename = filename || HTTP.url_info(uri)[:filename]
+    end
+
+    def byte_downloaded
+      return 0 if response.nil?
+      response.body.size
+    end
+
+    def size
+      return 0 if response.nil?
+      response.size
+    end
+
+    def download_rate
+      return 0 if size == 0
+      [byte_downloaded.to_f / size, 1.0].min
+    end
+
+    def abort
+      return if @terminated
+      return if self.thread.nil?
+      self.thread.kill
     end
   end
 end
@@ -1515,16 +1467,21 @@ module Async_Downloads
   #   method_name:  nome del metodo, in simbolo (ad es. :apri)
   #   low:          true se è a bassa incidenza, false altrimenti
   #   folder:       percorso del file di salvataggio
+  # @param [String] url
+  # @param [] method
+  # @param [String] folder
+  # @param [TrueClass] https
+  # @return [HTTP::Request]
   def download_async(url, method, folder = "./", https = true)
     filename = url.split('/')[-1]
     if filename.downcase.include? ".php"
-      puts "Questo URL chiama un file PHP, pertanto non verrà salvato."
-      puts "Utilizzare invece il metodo get_repsonse_async."
+      Logger.warning 'This download is a call to a PHP File and should not be saved'
       return
     end
     @async_downloads = {} if @async_downloads.nil?
-    @async_downloads[filename] = method
-    HTTP.download(url, folder, nil, https)
+    @async_downloads[filename] = HTTP.download(url, folder, nil, https)
+    @async_downloads[filename].callback_method = method
+    @async_downloads[filename]
   end
 
   # @return [Hash{Symbol->HTTP::Request}]
@@ -1537,28 +1494,23 @@ module Async_Downloads
   # @param [String] url
   # @return [String]
   # @raise [InternetConnectionException]
+  # @deprecated use HTTP.get
   def await_response(url)
     HTTP.get(url).body
   end
 
   # Controlla i download e lancia il metodo associato se completato.
   def check_async_downloads
-    return if @async_downloads.nil? || @async_downloads.size == 0
-    @async_downloads.each_key do |key|
-      if HTTP.downloaded?(key)
-        @async_downloads[key].call
-        @async_downloads.delete(key)
-      end
-    end
-  end
-
-  # Controlla le risposte e lancia il metodo associato quando ricevuta.
-  def check_async_requests
-    return if @async_responses.nil? || @async_responses.size == 0
-    @async_responses.each_key do |key|
-      if HTTP.downloaded?(key) && HTTP.response(key) != nil
-        @async_responses[key].call(HTTP.response(key))
-        @async_responses.delete(key)
+    async_downloads.each_pair do |key, request|
+      next unless request.terminated
+      @async_downloads.delete(key)
+      case request.callback_method.arity
+      when 1
+        request.callback_method.call(key)
+      when 2
+        request.callback_method.call(key, request.response)
+      else
+        request.callback_method.call
       end
     end
   end
@@ -1566,7 +1518,8 @@ module Async_Downloads
   # Cancella un download o l'attesa di una risposta
   #   filename: nome del file o id della risposta
   def abort_download(filename)
-    Thread.kill(HTTP.downloads[filename])
+    return if async_downloads[filename].nil?
+    async_downloads[filename].abort
   end
 
   # Restituisce la percentuale di download da 0 a 100
@@ -1574,8 +1527,23 @@ module Async_Downloads
   # @param [String] filename
   # @return [Integer]
   def download_status(filename)
-    status = HTTP.progress(filename)
+    return 1 if async_downloads[filename].nil?
+    status = async_downloads[filename].download_rate * 100
     [[0, status].max, 100].min.to_i
+  end
+
+  # @param [String] filename
+  def download_completed?(filename)
+    return true if async_downloads[filename].nil?
+    async_downloads[filename].terminated
+  end
+
+  # @param [String] url
+  # @param [Object] method
+  # @param [FalseClass] _priority
+  # @deprecated use HTTP.get instead
+  def get_response_async(url, method, _priority = false)
+    method.call(HTTP.get(url).body)
   end
 end
 
@@ -1713,7 +1681,7 @@ class Game_Version
     @build = 0
     @revision = 0
     version_string.gsub!(/\s\n\r/, '')
-    return unless version_string =~ /[\d]+([.[\d]]*)/
+    return unless version_string =~ /[\d]+([.\d]*)/
     version_string = version_string.split('.')
     @major = version_string[0].to_i
     return if version_string[1].nil?
@@ -1847,88 +1815,113 @@ end
 # Aggiunta della possibilità di scaricare l'immagine del giorno.
 #==============================================================================
 module Cache
+  # downloads an image from the web.
+  # @param [String] url
+  # @param [String] filename
+  # @return [Bitmap]
+  def self.web_picture(url, filename = nil)
+    filename = name_from_url(url) if filename.nil?
+    @web_cache ||= {}
+    @web_cache[filename] = web_bitmap(url, filename) unless in_download_cache?(filename)
+    @web_cache[filename]
+  end
+
+  def self.in_download_cache?(key)
+    @web_cache[key] != nil and !@web_cache[key].disposed?
+  end
+
   # Restituisce l'immagine del giorno di Bing come bitmap.
   #   È possibile specificare una risoluzione. Risoluzioni supportate:
   #   QVGA, VGA, SVGA, XGA, WXGA, HD768, FULLHD, WUXGA
   # @param [String] resolution
   # @return [Bitmap]
   def self.bing_daily(resolution = Resolution::VGA)
-    if bing_daily_ready?(resolution)
-      return @bing_daily[resolution]
-    end
-    @bing_info = get_bing_xml if @bing_info.nil?
-    if @bing_info != nil
-      @bing_daily_copyright = @bing_info[:copyright]
-      image_name = @bing_info[:filename] + "_#{resolution}.jpg"
-      url = "http://www.bing.com#{@bing_info[:url]}_#{resolution}.jpg"
-      response = HTTP.download(url, bing_download_folder).response
-      loop do
-        break if response.progress >= 1
-      end
-      if response.ok?
-        bitmap = load_bitmap(bing_download_folder, image_name)
-        @bing_daily ||= {}
-        @bing_daily[resolution] = bitmap
-        bitmap
-      else
-        puts '[ERROR] for Bing Image ' + url
-      end
-    else
-      nil
-    end
+    return empty_bitmap if bing_daily_metadata[:url_base].empty?
+    url = "https://www.bing.com#{bing_daily_metadata[:url_base]}_#{resolution}.jpg"
+    web_picture(url)
   end
 
-  # Restituisce la cartella di download dell'immagine
   # @return [String]
-  def self.bing_download_folder;
-    './Graphics/Pictures/Bing';
+  def self.cache_folder
+    './Graphics/Cache/'
+  end
+
+  # delete ALL files in the Cache folder
+  def self.clear_cache_folder
+    Dir.foreach(cache_folder) do |file|
+      next if file == '.'
+      next if file == '..'
+      next if File.directory?(cache_folder + '/' + file)
+      File.delete(cache_folder + '/' + file)
+    end
   end
 
   # Restituisce il copyright dell'immagine del giorno. usare solo se già
   #   scaricata l'immagine!
   # @return [String]
   def self.bing_daily_copyright
-    if @bing_daily_copyright
-      @bing_daily_copyright
-    else
-      @bing_info = get_bing_xml
-      if @bing_info.nil?
-        ''
-      else
-        @bing_daily_copyright = @bing_info[:copyright]
-        @bing_daily_copyright
-      end
-    end
+    @bing_metadata[:copyright]
   end
 
   # Ottiene il feed xml dell'immagine di Bing e ne restituisce un hash con
   #   informazioni, oppure nil se la connessione non è riuscita
   # @return [Hash]
-  def self.get_bing_xml
-    lang = $imported['H87_Localization'] ? H87Localization.system_language : 'en-US'
+  def self.bing_daily_metadata
+    @bing_metadata ||= download_bing_daily_metadata
+  end
+
+  private
+
+  # @param [String] url
+  # @param [String] filename
+  # @return [Bitmap]
+  def self.web_bitmap(url, filename)
+    Dir.mkdir(cache_folder) unless File.directory?(cache_folder)
+    return load_bitmap(cache_folder, filename) if File.exist?(cache_folder + filename)
+    request = HTTP.download(url, cache_folder, filename)
+    loop { break if request.terminated }
+    response = request.response
+    if response.ok?
+      bitmap = Bitmap.new(cache_folder + filename)
+    else
+      Logger.error 'Error downloading from ' + url
+      bitmap = empty_bitmap
+    end
+    bitmap
+  end
+
+  def self.download_bing_daily_metadata
+    lang = Win.locale_name
     url = "http://www.bing.com/HPImageArchive.aspx?format=xml&idx=0&n=1&mkt=#{lang}"
     response = HTTP.get(url, {}, true)
     if response.ok?
       info = {}
-      if response.body =~ /<urlBase>(.+)<\/urlBase>/i
-        info[:url] = $1
-        info[:filename] = File.basename(info[:url]).gsub(/[\/?!]/, '')
-      end
-
-      if response =~ /<copyright>(.+)<\/copyright>/i
-        info[:copyright] = $1
-      else
-        info[:copyright] = ''
-      end
+      info[:url_base] = read_xml(response.body, 'urlBase')
+      info[:copyright] = read_xml(response.body, 'copyright')
+      info[:headline] = read_xml(response.body, 'headline')
+      info[:start_date] = read_xml(response.body, 'startdate')
+      info
     else
-      return nil
+      {}
     end
-    info
   end
 
-  # Controlla se l'immagine del giorno è scaricata
-  def self.bing_daily_ready?(resolution = Resolution::VGA)
-    @bing_daily != nil && @bing_daily[resolution.to_sym] != nil
+  # reads a node value from xml text
+  # @param [String] xml_str
+  # @param [Object] node
+  def self.read_xml(xml_str, node)
+    xml_str =~ /<#{node}>(.+)<\/#{node}>/i ? $1 : ''
+  end
+
+  # @param [String] url
+  # @return [String]
+  def self.name_from_url(url)
+    if url =~ /([A-Za-zÀ-ÖØ-öø-ÿ0-9]+).(png|jpg|jpeg|bmp)($|\?|&)/
+      $1 + '.' + $2
+    else
+      # fallback method
+      base64_encode(url) + '.jpg'
+    end
   end
 end
 
@@ -1965,25 +1958,12 @@ class Scene_Base
   def update
     h87_module_update
     check_async_downloads #controlla i download
-    check_async_requests #controlla le richieste
   end
-end #scene_base
+end
 
 #==============================================================================
-# ** Inclusione dei metodi asincroni in Window_Base
+# ** Integer
 #==============================================================================
-class Window_Base
-  include Async_Downloads # inclusione del modulo
-  # Alias del metodo d'aggiornamento
-  alias h87_module_update update unless $@
-
-  def update
-    h87_module_update
-    check_async_downloads #controlla i download
-    check_async_requests #controlla le richieste
-  end
-end #scene_base
-
 class Integer
   # returns minutes in seconds
   # @return [Integer]
@@ -1997,7 +1977,6 @@ class Integer
     self * 3600
   end
 
-  # @return [Integer]
   def seconds
     self
   end
@@ -2077,40 +2056,25 @@ class Time
   end
 end
 
-#==============================================================================
-# ** Hash
-#------------------------------------------------------------------------------
-# changed to_s method to better print
-#==============================================================================
-class Hash
-  # hsh.to_s     -> string
-  # hsh.inspect  -> string
-  #
-  # Return the contents of this hash as a string.
-  #
-  #     h = { "c" => 300, "a" => 100, "d" => 400, "c" => 300  }
-  #     h.to_s   #=> "{\"c\"=>300, \"a\"=>100, \"d\"=>400}"
-  def to_s
-    '{' + (self.inject([]) do |a, (key, value)|
-      a.push(sprintf('%s=>%s', key, value))
-    end * ',') + '}'
-  end
-end
-
-#==============================================================================
-# ** Array
-#------------------------------------------------------------------------------
-# changed to_s method to better print
-#==============================================================================
-class Array
-  # ary.inspect  -> string
-  # ary.to_s     -> string
-  #
-  # Creates a string representation of +self+.
-  #
-  #    [ "a", "b", "c" ].to_s     #=> "[\"a\", \"b\", \"c\"]"
-  def to_s
-    '[' + (self * ',') + ']'
+if on_vx?
+  #==============================================================================
+  # ** Hash
+  #------------------------------------------------------------------------------
+  # changed to_s method to better print
+  #==============================================================================
+  class Hash
+    # hsh.to_s     -> string
+    # hsh.inspect  -> string
+    #
+    # Return the contents of this hash as a string.
+    #
+    #     h = { "c" => 300, "a" => 100, "d" => 400, "c" => 300  }
+    #     h.to_s   #=> "{\"c\"=>300, \"a\"=>100, \"d\"=>400}"
+    def to_s
+      '{' + (self.inject([]) do |a, (key, value)|
+        a.push(sprintf('%s=>%s', key, value))
+      end * ',') + '}'
+    end
   end
 end
 

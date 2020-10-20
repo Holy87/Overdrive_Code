@@ -42,9 +42,8 @@
 module Drop_Modifier_Settings
   # ** ONLINE **
   # Vuoi poter modificare il drop rate via internet?
-  USE_ONLINE_FEATURES = false
-  # Determina l'URL della chiamata per ottenere i dati su drop, exp, oro e JP
-  ONLINE_DATA_ENDPOINT = HTTP.domain + '/metrics.php'
+  USE_ONLINE_FEATURES = true
+
   # Configura le chiavi json dell'enpoint
   DATA_BUCKETS = {
       :exp_rate => 'exp_rate',
@@ -120,16 +119,34 @@ module Game_Metrics
     }
 
     return @metrics unless USE_ONLINE_FEATURES
+    if $game_system.nil?
+      p 'GAME SYSTEM NOT LOADED, CANNOT DOWNLOAD METRICS'
+      return @metrics
+    end
 
-    server_data = await_response ONLINE_DATA_ENDPOINT
-    server_data = JSON.decode(server_data)
-    data_buckets = DATA_BUCKETS
+    return unless $game_system.can_upload?
 
-    @metrics[:exp] = server_data[data_buckets[:exp_rate]] || @metrics[:exp]
-    @metrics[:gold] = server_data[data_buckets[:gold_rate]] || @metrics[:gold]
-    @metrics[:drop] = server_data[data_buckets[:drop_rate]] || @metrics[:drop]
-    @metrics[:jp] = server_data[data_buckets[:jp_rate]] || @metrics[:jp]
+    server_data = download_server_metrics
+    @metrics[:exp] = online_data(server_data, :exp_rate) || @metrics[:exp]
+    @metrics[:gold] = online_data(server_data, :gold_rate) || @metrics[:gold]
+    @metrics[:drop] = online_data(server_data, :drop_rate) || @metrics[:drop]
+    @metrics[:jp] = online_data(server_data, :jp_rate) || @metrics[:jp]
     @metrics
+  end
+
+  # @param [Hash] server_data
+  # @param [Symbol] symbol
+  # @return [Float,nil]
+  def self.online_data(server_data, symbol)
+    return nil unless server_data[DATA_BUCKETS[symbol]]
+    server_data[DATA_BUCKETS[:exp_rate]] / 100.0
+  end
+
+  # @return [Hash]
+  def self.download_server_metrics
+    response = Online.get(:application, :game_rates)
+    return {} unless response.ok?
+    JSON.decode response.body
   end
 end
 
@@ -202,7 +219,7 @@ class RPG::Enemy::DropItem
   end
 
   # restituisce l'istanza dell'oggetto del drop
-  # @return [RPG::Item,RPG::Weapon,RPG::Armor]
+  # @return [RPG::Item,RPG::Weapon,RPG::Armor,nil]
   def item
     case @kind
     when 1

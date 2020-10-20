@@ -82,7 +82,7 @@ class Scene_Player < Scene_MenuBase
   def create_avatars_window
     y = @command_window.bottom_corner
     h = Graphics.height - y
-    @avatar_window = Window_Avatar.new(0, y, Graphics.width, h)
+    @avatar_window = Window_AvatarList.new(0, y, Graphics.width, h)
     @avatar_window.visible = false
     @avatar_window.index = player.avatar
     @avatar_window.set_handler(:ok, method(:choose_avatar))

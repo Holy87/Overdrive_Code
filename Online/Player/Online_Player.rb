@@ -9,13 +9,15 @@ class Online_Player
   attr_accessor :avatar #ID Avatar
   attr_accessor :banned #Stato di ban
   attr_accessor :level #Livello raggiunto
-  attr_accessor :playtime #Tempo di gioco
   attr_accessor :storymode #Stato della storia
   attr_accessor :quests #Missioni secondarie
   attr_accessor :fame #fama
   attr_accessor :infame #infamia
   attr_accessor :title_id #ID del titolo
-  attr_accessor :points # punteggio del giocatore
+  attr_accessor :exp # esperienza raggiunta dal giocatore
+  attr_accessor :gold # oro attuale del giocatore
+  attr_accessor :hours # ore di gioco totali
+  attr_accessor :minutes # minuti di gioco totali
   #--------------------------------------------------------------------------
   # * Inizializzazione
   # @param [Hash] player_data
@@ -33,7 +35,8 @@ class Online_Player
     @fame = player_data['fame']
     @infame = player_data['infame']
     @title_id = player_data['title_id']
-    @points = player_data['points'] || 0
+    @exp = player_data['exp'] || 0
+    @gold = player_data['gold'] || 0
   end
 
   #--------------------------------------------------------------------------
@@ -52,10 +55,15 @@ class Online_Player
   # @param [Integer] player_id
   # @return [Online_Player]
   def self.get(player_id)
-    response = Online.get :player, :get_player, {:player_id => player_id}
+    begin
+      response = Online.get :player, :get_player, {:player_id => player_id}
+    rescue => error
+      Logger.error(error.message)
+      return nil
+    end
     return nil unless response.ok?
     return nil unless response.json?
-    return Online_Player.new(JSON.decode(response.body))
+    return Online_Player.new(response.decode_json)
   end
 
   # scarica i dati di un giocatore da internet e restituisce l'oggetto cercando il nome

@@ -9,7 +9,7 @@ module PlayerInfo_Settings
   V_FAME = 'Fama'
   V_INFM = 'Infamia'
   V_TITL = 'Titolo'
-  V_NOTT = 'Nessuno'
+  V_NOTT = 'Nessun titolo'
 end
 
 #===============================================================================
@@ -71,7 +71,7 @@ class Window_PlayerInfo < Window_Base
   # @param [Integer] y
   # @param [Integer] w  larghezza della finestra
   def initialize(x, y, w)
-    super(x, y, w, fitting_height(6))
+    super(x, y, w, fitting_height(5))
     refresh
   end
 
@@ -80,64 +80,90 @@ class Window_PlayerInfo < Window_Base
     contents.clear
     return unless player
     draw_avatar(player.avatar, 0, 0)
+    draw_actor_level(player, 0, line_height * 4)
     draw_basic_info(100, 0, contents.width - 100)
-    draw_player_title(0, line_height * 2)
-    draw_play_data(100, line_height * 3, contents.width - 100)
-    draw_fame_data(0, line_height * 5, contents.width)
+    draw_play_data(100, 1, contents.width - 100)
+    draw_exp_and_gold(100, 3, contents_width - 100)
+    draw_fame_data(100, 4, contents.width - 100)
+  end
+
+  def update
+    super
+    update_cancel_handler
   end
 
   # Disegna le informazioni principali
   # @param [Integer] x
-  # @param [Integer] y
+  # @param [Integer] line
   # @param [Integer] width
-  def draw_basic_info(x, y, width)
-    change_color(system_color)
-    xx = width / 2
-    draw_data(x, y, xx, Vocab::pi_name, player.name)
-    draw_data(x + xx, y, xx, Vocab::level, player.level)
-    draw_data(x, y + line_height, xx, Vocab::pi_points, player.points)
-    draw_data(x + xx, y + line_height, xx, Vocab::pi_board, Vocab::pi_not_classified)
+  def draw_basic_info(x, line, width)
+    draw_player_name(x, line)
+    draw_player_title(x, line, width)
+  end
+
+  def draw_player_name(x, line)
+    change_color normal_color
+    draw_text(x, line_height * line, contents_width, line_height, player.name)
   end
 
   # Disegna il titolo dell'eroe
-  def draw_player_title(x, y, width = contents_width)
-    change_color(system_color)
-    draw_text(x, y, width, line_height, Vocab::player_title)
-    xx = text_size(Vocab::player_title).width + 10
-    ww = width - xx
-    xx += x
+  def draw_player_title(x, line, width = contents_width)
+    return if player.title.nil?
+    y = line_height * line
+    x += text_size(player.name).width
+    draw_text(x, y, width, line_height, ' - ')
+    x += text_size(' - ').width
     if player.title.nil?
       change_color(normal_color, false)
       text = Vocab::player_notitle
     else
       text = player.title.name
-      case player.title.type
-      when 1
-        change_color(normal_color)
-      when 2
-        change_color(crisis_color)
-      when 3
-        change_color(knockout_color)
-      when 4
-        change_color(power_up_color)
-      else
-        change_color(normal_color)
-      end
+      change_color(title_color(player.title.type))
     end
-    draw_text(xx, y, ww, line_height, text)
+    draw_text(x, y, width, line_height, text)
+    change_color normal_color
   end
 
   # Disegna i dati di gioco principali
   # @param [Integer] x
-  # @param [Integer] y
+  # @param [Integer] line
   # @param [Integer] width
-  def draw_play_data(x, y, width)
+  def draw_play_data(x, line, width)
+    y = line * line_height
     draw_playtime(x, y, width)
     max_story = $game_system.max_story
-    draw_data_gauge(x, y + line_height, width / 2, Vocab::pi_storyboard, player.storymode, max_story)
+    draw_data_gauge(x, y + line_height, width / 2, Vocab::pi_storyboard, player.storymode, max_story, :percentage)
     x2 = x + width / 2
     w2 = width / 2
-    draw_data_gauge(x2, y + line_height, w2, Vocab::pi_quests, player.quests, 50, true)
+    #TODO: impostare il numero massimo di quest come da scritpt delle missioni
+    draw_data_gauge(x2, y + line_height, w2, Vocab::pi_quests, player.quests, 50, :divisor)
+  end
+
+  def draw_exp_and_gold(x, line, width)
+    y = line * line_height
+    x2 = x + width / 2
+    w2 = width / 2
+    #noinspection RubyResolve
+    draw_data(x, y, width / 2, Vocab.exp_a, player.exp)
+    draw_data(x2, y, w2, $data_system.gold_icon, player.gold)
+  end
+
+  # @param [Method] method
+  def set_cancel_handler(method)
+    @cancel_handler = method
+  end
+
+  def update_cancel_handler
+    return unless open?
+    return unless @cancel_handler
+    call_cancel_handler if Input.trigger?(:B)
+  end
+
+  def call_cancel_handler
+    close
+    Sound.play_cancel
+    Input.update
+    @cancel_handler.call
   end
 
   # Disegna il tempo di gioco
@@ -145,19 +171,20 @@ class Window_PlayerInfo < Window_Base
   # @param [Integer] y
   # @param [Integer] width
   def draw_playtime(x, y, width)
-    draw_bg_rect(x, y, width, line_height)
+    #draw_bg_rect(x, y, width, line_height)
     desc = Vocab::pi_playtime
-    text = sprintf(desc, player.playtime[:h], player.playtime[:m])
+    text = sprintf(desc, player.hours, player.minutes)
     draw_text(x, y, width, line_height, text, 1)
   end
 
   # Disegna i dati di fama e infamia
   # @param [Integer] x
-  # @param [Integer] y
+  # @param [Integer] line
   # @param [Integer] width
-  def draw_fame_data(x, y, width)
-    draw_fame(x, y, width / 2 - 5)
-    draw_infame(x + width / 2 + 5, y, width / 2)
+  def draw_fame_data(x, line, width)
+    y = line * line_height
+    draw_fame(x, y, width / 2)
+    draw_infame(x + width / 2, y, width / 2)
   end
 
   # Disegna la fama del giocatore
@@ -165,13 +192,7 @@ class Window_PlayerInfo < Window_Base
   # @param [Integer] y
   # @param [Integer] width
   def draw_fame(x, y, width)
-    draw_bg_rect(x, y, width, line_height)
-    tx = Vocab::fame
-    color = mp_gauge_color1
-    draw_gauge_b(x + 5, y, width - 10, line_height, player.fame, 100,
-                 color, color)
-    draw_text(x + 5, y, text_width(tx), line_height, tx)
-    draw_text(x + 5, y, width - 5, line_height, player.fame, 1)
+    draw_data_gauge(x + 1, y, width - 2, Vocab::fame, player.fame, 100, :number)
   end
 
   # Disegna l'infamia del giocatore
@@ -179,13 +200,7 @@ class Window_PlayerInfo < Window_Base
   # @param [Integer] y
   # @param [Integer] width
   def draw_infame(x, y, width)
-    draw_bg_rect(x, y, width, line_height)
-    tx = Vocab::infame
-    color = hp_gauge_color1
-    draw_gauge_b(x + 5, y, width - 10, line_height, player.infame, 100,
-                 color, color)
-    draw_text(x + 5, y, text_width(tx), line_height, tx)
-    draw_text(x + 5, y, width - 5, line_height, player.infame, 1)
+    draw_data_gauge(x, y, width, Vocab::infame, player.infame, 100, :number)
   end
 
   # Disegna la barra di completamento per i dati
@@ -195,35 +210,59 @@ class Window_PlayerInfo < Window_Base
   # @param [String] header  titolo del parametro
   # @param [Number] value   valore del parametro
   # @param [Number] max     valore massimo del parametro
-  # @param [Boolean] divsr  se è mostrato in percentuale
-  def draw_data_gauge(x, y, width, header, value, max, divsr = false)
-    draw_bg_rect(x, y, width, line_height)
+  # @param [Symbol] type  se è mostrato in percentuale
+  def draw_data_gauge(x, y, width, header, value, max = 1, type = :divisor)
+    x += 5
+    width -= 10
+    #draw_bg_rect(x + 1, y - 2, width, line_height)
+    draw_line(x, y + line_height - 1, width)
     change_color(system_color)
     draw_text(x, y, width, line_height, header)
     change_color(normal_color)
-    if divsr
+    case type
+    when :divisor
       text = sprintf('%d/%d', value, max)
-    else
+    when :percentage
       text = sprintf('%02d%%', value.to_f / max.to_f * 100)
+    when :number
+      text = value
+    else
+      text = value
     end
     x2 = x + width / 2
     w2 = width / 2
-    draw_gauge(x2 + 5, y + 5, w2 - 10, line_height - 10, value, max)
-    draw_text(x2 + 5, y, w2 - 10, line_height, text, 1)
+    draw_gauge_b(x2, y - 1, w2, 10, value, max)
+    draw_text(x2, y, w2, line_height, text, 1)
   end
 
   # Disegna i dati di un determinato parametro
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
-  # @param [String] header      # titolo
+  # @param [String, Fixnum] header      # titolo
   # @param [String,Integer,Number] text # testo
   def draw_data(x, y, width, header, text)
-    draw_bg_rect(x, y, width, line_height)
-    change_color(system_color)
-    draw_text(x + 5, y, width - 10, line_height, header)
+    x += 5
+    width -= 5
+    draw_line(x, y + line_height - 1, width)
+    #draw_bg_rect(x + 1 , y, width - 2, line_height)
+    if header.is_a? String
+      change_color(system_color)
+      draw_text(x, y, width, line_height, header)
+    else
+      draw_icon(header, x, y)
+    end
     change_color(normal_color)
-    draw_text(x + 5, y, width - 10, line_height, text, 2)
+    draw_text(x, y, width, line_height, text, 2)
+  end
+
+  # @param [Fixnum] x
+  # @param [Fixnum] y
+  # @param [Fixnum] width
+  # @param [Fixnum] thickness
+  # @param [Color] color
+  def draw_line(x, y, width, thickness = 1, color = sc1)
+    contents.fill_rect(x, y, width, thickness, color)
   end
 
   # Imposta il giocatore
