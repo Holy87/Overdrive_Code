@@ -75,6 +75,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
   end
 
   def get_player_data
+    Online.login unless Online.logged_in?
     @player = Online_Player.get($game_system.player_id)
   end
 

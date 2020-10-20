@@ -107,16 +107,33 @@ module Online
   ONLINE_MODE_OFF = "Offline"
   ONLINE_MODE_ON = "Online"
 
+  # se true, il giocatore ha effettuato il login.
+  @logged = false
+  # se true, significa che il primo login è fallito. Evita di tentare ulteriori volte in modo
+  # da non rallentare l'esperienza di gioco.
+  @disconnected = false
+
   # Percorso directory contenenti le chiamate alle azioni
   def self.api_path
     HTTP.domain + (SUBPATH_API ?  '/' + SUBPATH_API + '/' : '/')
   end
 
   # effettua il login al servizio
-  def self.login
+  # @param [Fixnum] retries numero di tentativi
+  def self.login(retries = 3)
+    @disconnected = false
     operation = post :player, :login, $game_system.auth_params
+
+    # ritenta se è una bad request (a volte capita)
+    if !operation.success? and operation.error_code == HTTP::HTTP_STATUS_BAD_REQUEST and retries > 0
+      login(retries - 1)
+    end
+
     $game_system.banned = operation.error_code == PLAYER_BANNED
     @logged = operation.success?
+    if !operation.success? and operation.error_code == NO_CONNECTION_ERROR
+      @disconnected = true
+    end
   end
 
   # effettua il logout uscendo dal gioco
@@ -129,6 +146,10 @@ module Online
     @logged
   end
 
+  def self.cannot_connect?
+    @disconnected
+  end
+
   # ottiene la risposta dal server di Overdrive indicando la risorsa ed
   # il metodo ed ottenendo la risposta sempre come formato JSON.
   # @param [Symbol] resource risorsa da maneggiare
@@ -136,6 +157,7 @@ module Online
   # @param [Hash] params parametri dell'operazione
   # @return [HTTP::Response]
   def self.get(resource, action, params = {})
+    raise InternetConnectionException.new('Disconnected', NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.get(api_path + "#{resource}/#{action}.json", params)
     Logger.info(response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
@@ -150,6 +172,7 @@ module Online
   # @param [Hash] params
   # @return [Online::Operation_Result]
   def self.upload(resource, action, params = {})
+
     login unless logged_in?
     post resource, action, params
   end
@@ -266,6 +289,7 @@ module Online
   # @return [Online::Operation_Result]
   def self.post(resource, action, params)
     Logger.info(params) if $TEST
+    return Operation_Result.from_code(NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.post(api_path + "#{resource}/#{action}.json", params)
     Logger.info(response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
