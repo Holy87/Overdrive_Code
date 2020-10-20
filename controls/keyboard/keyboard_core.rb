@@ -9,7 +9,8 @@
 # Questo script vi permette di ottenere il completo controllo della tastiera e
 # sarà una base per script futuri.
 # Ecco le emozionanti FICIURS!
-# ● Possibilità di rimappare completamente tutti i comandi di gioco
+# ● Possibilità di rimappare completamente tutti i comandi di gioco ed aggiungere
+#    nuovi comandi oltre a quelli già presenti (:C, :A, :X...)
 # ● Ottieni il nome del tasto da premere
 # ● Segue il layout della tastiera
 #===============================================================================
@@ -22,6 +23,7 @@
 # Vocab.key_name(:C) -> 'BARRA SPAZIATRICE' perché il pulsante di spazio è il primo
 # configurato sul comando :C
 # Vocab.key_name(:X) -> 'MAIUSC'
+# Vocab.key_name(:VK_RETURN) -> 'INVIO' puoi anche specificare direttamente il tasto
 # ● Keyboard.caps_lock? -> determina se è attivo il "blocca maiuscole"
 # ● Keyboard.num_lock? -> determina se è attivo il "blocca numeri"
 # ● Keyboard.unicode_char(codice) -> ok, questo dovrebbe essere utile per script
@@ -31,11 +33,19 @@
 # 'E' se nel frattempo si teneva premuto Maiuscole o se il Bloc Num era attivato, ed
 # il simbolo dell'euro '€' se era tenuto premuto il simbolo Alt Gr.
 #
+# Funzioni in gioco:
+# Se inserisci in un box di messaggio \K[x] dove x è il numero del comando (vedi
+# in basso), puoi far dire al messaggio il nome del tasto assegnato.
+# Esempio
+# Usa il tasto \K[0] per correre -> 'Usa il tasto [MAIUSCOLA] per correre'
+#
 # ■ IMPOSTAZIONI GIOCATORE
 # È possibile definire le impostazioni della tastiera che sono memorizzate in
-# $game_system.
+# $game_system per impostare altri tasti per i comandi e aggiungerne anche di
+# nuovi.
 # Configura DEFAULT_KEY_SET per personalizzare i comandi da dare.
-# Nota: le impostazioni con il comando F1 verranno ignorate.
+# Nota 1: questo script non sovrascrive le funzioni del tasto F1 e F12.
+# Nota 2: le impostazioni del menu F1 verranno ignorate.
 #===============================================================================
 
 module Keyboard
@@ -51,7 +61,7 @@ module Keyboard
         :LEFT => [:VK_LEFT],
         :RIGHT => [:VK_RIGHT],
         :START => [], #not really used by RPG Maker
-        :SELECT => [], #not used too
+        :SELECT => [], #not used too, but you can if you want
         :L => [:KEY_Q, :VK_PRIOR],
         :R => [:KEY_W, :VK_NEXT],
         :A => [:VK_SHIFT],
@@ -60,11 +70,10 @@ module Keyboard
         :X => [:KEY_A],
         :Y => [:KEY_S],
         :Z => [:KEY_D],
-        :F9 => :VK_F9,
-        :F12 => :VK_F12,
-        :CTRL => :VK_CONTROL,
-        # not used in game
-        :F1 => :VK_F1
+        :F9 => :VK_F9, # for debug window
+        :F12 => :VK_F12, # not used in game
+        :CTRL => :VK_CONTROL, # for pass throught objects in debug mode
+        :F1 => :VK_F1 # not used in game
     }
 
     # TRADUZIONI PERSONALIZZATE
@@ -72,18 +81,20 @@ module Keyboard
     # Qui puoi definire una traduzione custom (valido solo se chiami con
     # Vocab::key_name)
     CUSTOM_KEY_TRANSLATION = {
-        :VK_UP      => 'FR. SU',
-        :VK_LEFT    => 'FR. SINISTRA',
-        :VK_RIGHT   => 'FR. DESTRA',
-        :VK_DOWN    => 'FR. GIÙ',
-        :VK_SHIFT   => 'MAIUSCOLA',
-        :VK_PRIOR   => 'PAG. SU',
-        :VK_NEXT    => 'PAG. GIÙ'
+        :VK_UP => 'FR. SU',
+        :VK_LEFT => 'FR. SINISTRA',
+        :VK_RIGHT => 'FR. DESTRA',
+        :VK_DOWN => 'FR. GIÙ',
+        :VK_SHIFT => 'MAIUSCOLA',
+        :VK_PRIOR => 'PAG. SU',
+        :VK_NEXT => 'PAG. GIÙ'
     }
 
     # Questo array serve per mostrare il nome del tasto nella finestra di messaggio
     # e di aiuto. Ad ogni indice corrisponde un pulsante. Ad esempio, se scrivi \K[0]
     # nel messaggio, mostrerà 'MAIUSCOLA'. Se scrivi \K[Y] mostrerà invece 'S'.
+    # NOTA: Se hai installato lo script delle icone tasti, questa configurazione
+    # verrà ignorata (usa la configurazione dell'altro script)
     #               0   1   2   3   4   5   6   7   8      9       10   11
     KEY_INDEXES = [:A, :B, :C, :X, :Y, :Z, :L, :R, :LEFT, :RIGHT, :UP, :DOWN]
     # imposta questo valore a true quando vuoi mostrare le parentesi quadre [ e ]
@@ -238,7 +249,7 @@ module Keyboard
   VK_BROWSER_HOME = 0xAC # Browser Start and Home key
   VK_LAUNCH_MAIL = 0xB4 # Start Mail key
   VK_LAUNCH_MEDIA_SELECT = 0xB5 # Select Media key
-  VK_LAUNCH_APP1 =0xB6 #Start Application 1 key
+  VK_LAUNCH_APP1 = 0xB6 #Start Application 1 key
   VK_LAUNCH_APP2 = 0xB7 # Start Application 2 key
 
   # Use as MapVirtualKeyEx second parameter function
@@ -397,7 +408,7 @@ class Game_System
   # converts the game key symbol with the configured virtual key
   # ex. :UP -> [:VK_UP]
   #     :C  -> [:VK_SPACE, :VK_RETURN, :KEY_Z]
-  # @param [Array<Symbol>, Symbol] original_key
+  # @param [Array<Symbol>] original_key
   def adjust_keyboard(original_key)
     if keyboard_set.include? original_key
       keyboard_set[original_key]
@@ -574,8 +585,8 @@ module Input
   def self.dir8
     return 1 if press?(:DOWN) and press?(:LEFT)
     return 3 if press?(:DOWN) and press?(:RIGHT)
-    return 7 if press?(:UP)   and press?(:LEFT)
-    return 9 if press?(:UP)   and press?(:RIGHT)
+    return 7 if press?(:UP) and press?(:LEFT)
+    return 9 if press?(:UP) and press?(:RIGHT)
     dir4
   end
 
@@ -623,40 +634,43 @@ module Input
   end
 end
 
-unless $imported['H87-ControllerMapper']
-  #===============================================================================
-  # ** Window_Base
-  #===============================================================================
-  class Window_Base < Window
-    alias h87_normal_process_escape process_character unless $@
+#===============================================================================
+# ** Window_Base
+#===============================================================================
+class Window_Base < Window
+  alias h87_k_normal_process_escape process_escape_character unless $@
 
-    def process_escape_character(code, text, pos)
-      if code.upcase == 'K'
-        process_draw_key_name(obtain_escape_param(text), pos)
-        return
-      end
-      h87_normal_process_escape(code, text, pos)
+  def process_escape_character(code, text, pos)
+    if code.upcase == 'K'
+      process_draw_key_name(obtain_escape_param(text), pos)
+      return
     end
-    #--------------------------------------------------------------------------
-    # * Draws the key name
-    # @param [Integer] index
-    # @param [Hash<Integer>] pos
-    #--------------------------------------------------------------------------
-    def process_draw_key_name(index, pos)
+    h87_k_normal_process_escape(code, text, pos)
+  end
+
+  #--------------------------------------------------------------------------
+  # * Draws the key name
+  # @param [Integer] index
+  # @param [Hash<Integer>] pos
+  #--------------------------------------------------------------------------
+  def process_draw_key_name(index, pos)
+    if $imported['H87-ControllerMapper']
+      symbol = Controller_Mapper::Settings::KEY_INDEXES[index]
+    else
       symbol = Keyboard::Settings::KEY_INDEXES[index]
-      puts "Key not found for index #{index}" if symbol.nil?
-      key_name = Vocab.key_name(symbol)
-      if use_keyboard_brackets?
-        key_name = sprintf('[%s]', key_name)
-      end
-      if custom_keyboard_color?
-        old_color = contents.font.color.clone
-        change_color(text_color(Keyboard::Settings::CHANGE_COLOR))
-      end
-      draw_text(pos[:x], pos[:y], text_size(key_name).width + 2, line_height, key_name)
-      change_color(old_color) if custom_keyboard_color?
-      pos[:x] += text_size(key_name).width
     end
+    puts "Key not found for index #{index}" if symbol.nil?
+    key_name = Vocab.key_name(symbol)
+    if use_keyboard_brackets?
+      key_name = sprintf('[%s]', key_name)
+    end
+    if custom_keyboard_color?
+      old_color = contents.font.color.clone
+      change_color(text_color(Keyboard::Settings::CHANGE_COLOR))
+    end
+    draw_text(pos[:x], pos[:y], text_size(key_name).width + 2, line_height, key_name)
+    change_color(old_color) if custom_keyboard_color?
+    pos[:x] += text_size(key_name).width
   end
 
   def custom_keyboard_color?
@@ -667,6 +681,7 @@ unless $imported['H87-ControllerMapper']
     Keyboard::Settings::USE_BRACKETS
   end
 end
+
 
 class KeyboardInputNameError < StandardError
 

@@ -1,8 +1,8 @@
 =begin
  ==============================================================================
   ■ Utility universali di Holy87
-      versione 1.7.2 - WIP
-      Difficoltà utente: ★★★
+      versione 1.8.1
+      Difficoltà utente: ★★★★★
       Licenza: CC-BY. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata
       l'attribuzione impropria.
@@ -29,12 +29,16 @@
       - await_response_async DEPRECATO
       - Nuovi metodi per richieste web:
         HTTP.get, HTTP.post, HTTP.put, HTTP.delete
-        Queste restituiranno un oggetto Response
+        Queste restituiranno un oggetto Response (vedi documentazione sotto)
       - Metodo per donwload dei file migliorato
       - Aggiunta dei metodi minutes, hours e days negli integer (vedi esempi)
       - La versione del gioco può essere inserita nel file Game.ini
         invece che nel file dedicato Version.ini
-      - Win.temp_flush deprecato
+      - Nuovo metodo per ottenere la lingua del sistema: Win.locale_name al posto
+        di Win.language. A differenza di quest'ultimo, ora è possibile ottenere
+        direttamente la descrizione della lingua corrente (es. en-US, it-IT ecc...)
+      - Win.language DEPRECATO
+      - Win.temp_flush DEPRECATO
       - Sistemazione e rifinitura del codice
       - Aggiunti i metodi on_vx_ace? e on_vx? che determinano su che versione
         di RPG Maker sta girando lo script.
@@ -394,6 +398,23 @@ $imported['H87_UniversalModule'] = 1.8
 #  computer
 #==============================================================================
 module Win
+  # HOW TO HANDLE WINDOWS DATA TYPES:
+  # https://docs.microsoft.com/en-us/windows/win32/winprog/windows-data-types
+  # | Type Name        | Data Type                      | pack-unpack character |
+  # | BOOL             | 32-bit signed integer (0/1)    | l                     |
+  # | BOOLEAN          | same as BYTE                   | C
+  # | BYTE             | 8-bit unsigned char            | C                     |
+  # | SHORT            | 16-bit integer                 | s                     |
+  # | LONG             | 32-bit signed integer          | l                     |
+  # | WORD             | 16-bit unsigned integer        | S                     |
+  # | DWORD            | 32-bit unsigned integer        | L                     |
+  # | UINT             | 32-bit unsigned integer        | L                     |
+  # | WPARAM/UINT_PTR  | 32/64-bit unsigned int         | I_                    |
+  # | LPARAM/LONG_PTR  | 32/64-bit signed Long          | l_                    |
+  # | LPTSTR           | null-terminated string pointer | A*                    |
+  # * note: Game.exe is 32-bit program, WPARAM and LPARAM are always 32-bit.
+
+
   # Win32APIs
   # noinspection RubyConstantNamingConvention
   GetUserName = Win32API.new('advapi32', 'GetUserName', 'PP', 'I')
@@ -405,15 +426,16 @@ module Win
   GetSystemMetrics = Win32API.new('user32', 'GetSystemMetrics', 'I', 'I')
   # noinspection RubyConstantNamingConvention
   GetVersionEx = Win32API.new('kernel32', 'GetVersionEx', 'P', 'I')
-  # noinspection RubyConstantNamingConvention
+  # noinspection RubyConstantNamingConvention - deprecato
   GetUserDefaultLCID = Win32API.new('kernel32', 'GetUserDefaultLCID', [], 'I')
+  # https://docs.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-getsystemdefaultlocalename
+  GetSystemDefaultLocaleName = Win32API.new('kernel32', 'GetSystemDefaultLocaleName', 'PI', 'I')
   # noinspection RubyConstantNamingConvention
   GetWindowRect = Win32API.new('user32', 'GetWindowRect', 'PP', 'I')
-
-  GetLastError = Win32API.new('Errhandlingapi', 'GetLastError', '', 'I')
+  # https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
+  GetLastError = Win32API.new('kernel32', 'GetLastError', '', 'I')
 
   # useful error codes
-
   ERROR_SUCCESS = 0
   ERROR_INVALID_FUNCTION = 1
   ERROR_FILE_NOT_FOUND = 2
@@ -436,6 +458,10 @@ module Win
   SM_CYFIXEDFRAME = 8 # The width of the vertical border the perimeter of a
   #                      window that has a caption but is not sizable
   SM_CXSCREEN = 0 # The width of the screen of the primary display monitor
+
+  # Default locale name length
+  LOCALE_NAME_MAX_LENGTH = 85
+
   # Restituisce il nome utente di Windows
   # @return [String]
   def self.username
@@ -459,28 +485,40 @@ module Win
   # @return [String]
   def self.get_folder_path(symbol = :docs)
     case symbol
-    when :user;
+    when :user
       index = 40
-    when :docs;
+    when :docs, :documents
       index = 5
-    when :imgs;
+    when :imgs, :images, :pictures
       index = 39
-    when :musc;
+    when :musc, :music
       index = 13
-    when :vdeo;
+    when :vdeo, :video
       index = 14
-    when :strp;
+    when :strp, :start_menu
       index = 2
-    when :prog;
+    when :prog, :program_files
       index = 38
-    when :appd;
+    when :appd, :app_data
       index = 28
+    when :desktop
+      index = 0
+    when :favs, :favorites
+      index = 6
+    when :roaming
+      index = 26
     else
-      ; index = 0
+      index = 0
     end
     path = "\0" * 128
     SHGetFolderPath.call(0, index, 0, 2, path)
     path.unpack('A*')[0].gsub('\\', '/')
+  end
+
+  # Returns the Vista+ saved games folder
+  # @return [String]
+  def self.saved_games_folder
+    get_folder_path(:user) + '/Saved Games'
   end
 
   # Deprecated, left for compatibility
@@ -488,19 +526,19 @@ module Win
   # @return [String]
   # @deprecated
   def self.getFolderPath(symbol = :docs)
-    ; get_folder_path(symbol);
+    get_folder_path(symbol)
   end
 
   # Restituisce la larghezza della cornice della finestra
   # @return [String]
-  def self.window_frame_width;
-    GetSystemMetrics.call(SM_CXFIXEDFRAME);
+  def self.window_frame_width
+    GetSystemMetrics.call(SM_CXFIXEDFRAME)
   end
 
   # Restituisce l'altezza della barra del titolo
   # @return [String]
-  def self.window_title_height;
-    GetSystemMetrics.call(SM_CYCAPTION);
+  def self.window_title_height
+    GetSystemMetrics.call(SM_CYCAPTION)
   end
 
   # Elimina il file temporaneo per aggiornarlo prima di un download.
@@ -522,11 +560,12 @@ module Win
       end
       return unless File.directory?(path)
       Dir.foreach(path) { |x| #per ogni file nel percorso
-        next if x == "." or x == '..' #passa al prossimo se è ind.
-        if File.directory?(path + "/" + x) #se il file è una cartella
-          folder = path + "/" + x #entra nella cartella
-          fetch_folder_for_delete(folder, filename)
-        end
+      next if x == "." or x == '..' #passa al prossimo se è ind.
+      if File.directory?(path + "/" + x) #se il file è una cartella
+        folder = path + "/" + x #entra nella cartella
+        #noinspection Rails3Deprecated
+        fetch_folder_for_delete(folder, filename)
+      end
       }
     end
   end
@@ -534,16 +573,18 @@ module Win
   # Cerca nella cartella il file da cancellare
   #   path: directory
   #   nomefile: file da cancellare
+  # @deprecated
   def self.fetch_folder_for_delete(path, nomefile)
     Dir.foreach(path) { |y| #per ogni file nella cartella
-      next if File.directory?(path + '/' + y) #passa al prossimo se è una c.
-      if no_ext(nomefile) == y[0..no_ext(nomefile).size - 1] #se l'inizio del nome corrisp.
-        begin
-          File.delete(path + '/' + y) #eliminalo
-        rescue
-          next
-        end
+    next if File.directory?(path + '/' + y) #passa al prossimo se è una c.
+                            #noinspection Rails3Deprecated
+    if no_ext(nomefile) == y[0..no_ext(nomefile).size - 1] #se l'inizio del nome corrisp.
+      begin
+        File.delete(path + '/' + y) #eliminalo
+      rescue
+        next
       end
+    end
     }
   end
 
@@ -553,28 +594,48 @@ module Win
     s = [20 + 128, 0, 0, 0, 0, ''].pack('LLLLLa128')
     GetVersionEx.call(s)
     a = s.unpack('LLLLLa128')
-    indice = a[1].to_f; dec = a[2].to_f / 10
+    indice = a[1].to_f
+    dec = a[2].to_f / 10
     return indice + dec
   end
 
   # Restituisce il nome del file senza estensione.
   # @return [String]
+  # @deprecated
   def self.no_ext(nomefile)
     nome = nomefile.split(".")
     return nome[0..nome.size - 2]
   end
 
+  # Returns a rect containing the screen
+  # @return [Rect]
+  def self.screen
+    width = GetSystemMetrics.call(SM_CXFULLSCREEN)
+    height = GetSystemMetrics.call(SM_CYFULLSCREEN)
+    Rect.new(0, 0, width, height)
+  end
+
   # Restituisce un array di larghezza e altezza della parte utilizzabile dello
   #   schermo: non conta lo spazio della barra delle applicazioni.
+  # @deprecated use Win::screen instead
   def self.screen_resolution
     x = GetSystemMetrics.call(SM_CXFULLSCREEN)
     y = GetSystemMetrics.call(SM_CYFULLSCREEN)
     return [x, y]
   end
 
+  # returns the system locale name (ex. it-IT, en-US, ...)
+  # @return [String]
+  def self.locale_name
+    buff = " " * LOCALE_NAME_MAX_LENGTH
+    GetSystemDefaultLocaleName.call(buff, LOCALE_NAME_MAX_LENGTH)
+    buff.unpack('A' * LOCALE_NAME_MAX_LENGTH).delete_if { |x| x == "" } * ''
+  end
+
   # Restituisce un intero come codice della lingua del sistema
-  def self.language;
-    GetUserDefaultLCID.call;
+  # @deprecated use locale_name
+  def self.language
+    GetUserDefaultLCID.call
   end
 
   # Restituisce la data attuale
@@ -627,18 +688,23 @@ module Win
     system(string)
   end
 
+  # this method should be used within Win32 API functions that need HWND
+  # parameters
+  # @return [Integer]
+  def self.current_window
+    Screen::FindWindowEx.call(0, 0, H87_ModConfig::PROCESSNAME, nil)
+  end
+
   # gets the system window rect.
   # @return [Rect]
   def self.get_window_rect
     w_rect = [0, 0, 0, 0].pack('l_l_l_l_')
-    this_window = Screen::FindWindowEx.call(0, 0, H87_ModConfig::PROCESSNAME, nil)
+    this_window = current_window
     GetWindowRect.call(this_window, w_rect)
     rect = w_rect.unpack('l_l_l_l_')
     Rect.new(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1])
   end
-  # Returns a copied text from Windows clipboard
-  # @return [String]
-  end #win
+end #win
 
 #==============================================================================
 # ** Clipboard
@@ -684,7 +750,7 @@ module Clipboard
         data = ''
       end
     rescue
-      puts 'Read clipboard error!'
+      Logger.warning 'Read clipboard error!'
       data = ''
     ensure
       CloseClipboard.call
@@ -952,6 +1018,22 @@ module HTTP
   # The service is temporarily overloaded.
   HTTP_STATUS_SERVICE_UNAVAIL = 503
 
+  RESPONSE_CODE_DESCRIPTIONS = {
+      0 => 'HOST UNREACHABLE',
+      HTTP_STATUS_OK => 'OK',
+      HTTP_STATUS_BAD_REQUEST => 'BAD REQUEST',
+      HTTP_STATUS_BAD_GATEWAY => 'BAD GATEWAY',
+      HTTP_STATUS_MOVED => 'MOVED',
+      HTTP_STATUS_REDIRECT => 'REDIRECTED',
+      HTTP_STATUS_FORBIDDEN => 'FORBIDDEN',
+      HTTP_STATUS_BAD_METHOD => 'BAD METHOD',
+      HTTP_STATUS_NOT_FOUND => 'NOT FOUND',
+      HTTP_STATUS_SERVER_ERROR => 'INTERNAL SERVER ERROR',
+      HTTP_STATUS_SERVICE_UNAVAIL => 'SERVICE UNAVAILABLE',
+      HTTP_STATUS_REQUEST_TIMEOUT => 'REQUEST TIMEOUT',
+      HTTP_STATUS_BAD_GATEWAY => 'BAD GATEWAY'
+  }
+
 
   #API Calls
   #SetPrClass = Win32API.new('kernel32','SetPriorityClass','pi','i').call(-1,128)
@@ -1050,7 +1132,9 @@ module HTTP
   # @param [Hash] params
   # @param [Array<Integer>] flags
   # @return [Response]
-  def self.send_request(url, method = :get, params = {}, force_https = false, flags = [INTERNET_FLAG_RELOAD])
+  def self.send_request(request, method = :get, params = {}, force_https = false, flags = [INTERNET_FLAG_RELOAD])
+    url = request.uri
+    Logger.info sprintf('%s -> %s', method.to_s.upcase, url)
     force_https = true if url =~ /^https:\/\//
     info = url_info(url)
     server = info[:server]
@@ -1069,6 +1153,7 @@ module HTTP
     if session.nil?
       response.code = Win::GetLastError.call
       response.body = "Error while connecting to the server (code: #{response.code})"
+      Logger.info response.description
       return response
     end
 
@@ -1083,6 +1168,7 @@ module HTTP
       response.body = "Error while sending request (code: #{response.code})."
     end
     InternetCloseHandle.call(h_file)
+    Logger.info response.description
     response
   end
 
@@ -1107,8 +1193,8 @@ module HTTP
                                        INTERNET_FLAG_TRANSFER_ASCII, 0)
 
     if connection.nil?
-      puts '[ERROR] Error while connecting to the server.'
-      raise InternetConnectionException, 'Error while connecting to the server.'
+      Logger.error 'Error while connecting to the server.'
+      raise InternetConnectionException.new 'Error while connecting to the server.'
     end
 
     file = InternetOpenUrl.call(InternetOpenA, url, headers, headers.size, opts, nil)
@@ -1128,7 +1214,7 @@ module HTTP
   # @param [Hash] params
   # @param [Integer] method
   # @return [String]
-  # @deprecated use HTTP::post
+  # @deprecated use HTTP::post instead
   def self.send_post_request(url, params = {}, force_https = false)
     send_request(url, :post, params, force_https).body
   end
@@ -1137,8 +1223,7 @@ module HTTP
   # @param [String] uri
   # @return [Hash]
   def self.url_info(uri)
-    address = uri.delete(/^http[s]?:\/\//i).split('/')
-    puts address
+    address = uri.gsub(/^http[s]?:\/\//i, '').split('/')
     {
         server: address[0],
         root: address.size > 1 ? address[1..address.size].join('/') : address[0],
@@ -1164,8 +1249,25 @@ module HTTP
       obj.close #chiusura del file
     else
       string = '%s is not a valid folder, so %s will not be saved.'
-      puts sprintf(string, folder, filename)
+      Logger.warning sprintf(string, folder, filename)
     end
+  end
+
+
+  # @param [Object] h_file
+  # @param [String] read buffer
+  # @param [Integer] buffer_size
+  # @return [String]
+  def self.internet_read_file(h_file, response = '', buffer_size = 1024)
+    loop do
+      lp_buffer = ' ' * buffer_size
+      bytes_read = [0].pack('i!')
+      read_ok = InternetReadFile.call(h_file, lp_buffer, buffer_size, bytes_read)
+      read_size = bytes_read.unpack('i!')[0]
+      response << lp_buffer[0, read_size]
+      break if read_ok and read_size == 0 or read_size == "NaN"
+    end
+    response
   end
 
   # gets some (int) info from web resource
@@ -1176,7 +1278,7 @@ module HTTP
     buffer = "\0" * 128
     buffer_length = [buffer.size - 1].pack('l')
     status = HttpQueryInfo.call(file, info_code, buffer, buffer_length, nil)
-    raise InternetConnectionException('Failed to receive the data') unless status
+    raise InternetConnectionException.new('Failed to receive the data') unless status
     buffer.delete!("\0").to_i
   end
 
@@ -1219,8 +1321,9 @@ module HTTP
   #   response_name: nome della risposta (per poterla leggere)
   #   low_priority: priorità (false se normale, true se bassa)
   # @deprecated utilizza HTTP::read_async
-  def self.get_server_response(url, response_name, low_priority = false)
-    HTTP.read_async(url)
+  #noinspection RubyUnusedLocalVariable
+  def self.get_server_response(url, _response_name, _low_priority = false)
+    get(url)
   end
 
   # Restituisce direttamente il testo di risposta dal server, interrompendo
@@ -1231,8 +1334,8 @@ module HTTP
     get(url).body
   end
 
-  class << self;
-    alias await_response await_get_server_response;
+  class << self
+    alias await_response await_get_server_response
   end
   # Restituisce true se il file è scaricato.
   # filename: nome del file
@@ -1332,6 +1435,7 @@ module HTTP
   class Response
     attr_accessor :code
     attr_accessor :head
+    # @return [String]
     attr_accessor :body
     attr_accessor :size
 
@@ -1348,6 +1452,29 @@ module HTTP
 
     def progress
       @body.size.to_f / @size.to_f
+    end
+
+    # the response code
+    # @return [Integer]
+    def code
+      @code.to_i
+    end
+
+    def json?
+      return false if @body.nil?
+      return false if @body.empty?
+      #noinspection RegExpRedundantEscape
+      @body =~ /^(\{.+\}|\[.*\])$/smi
+    end
+
+    # @return [String]
+    def description
+      description = RESPONSE_CODE_DESCRIPTIONS[@code] || ''
+      sprintf('%d %s', @code, description)
+    end
+
+    def to_s
+      @body
     end
   end
 
@@ -1400,22 +1527,9 @@ module Async_Downloads
     HTTP.download(url, folder, nil, https)
   end
 
-  # Ottiene la risposta di un servizio web in modo asincrono, lanciando
-  #   automaticamente il metodo associato.
-  #   url:          indirizzo della richiesta
-  #   method_name:  nome del metodo, in simbolo (ad es. :apri)
-  #   low:          true se è a bassa incidenza, false altrimenti
-  #   response_id:  id della risposta.
-  # @param [String] url
-  # @param [Method] method
-  # @param [Boolean] low
-  # @param [String] response_id
-  # @return [String]
-  # @deprecated
-  def get_response_async(url, callback_method, low = true, response_id = String.random(20))
-    @async_responses = {} if @async_responses.nil?
-    @async_responses[response_id] = method
-    HTTP.re
+  # @return [Hash{Symbol->HTTP::Request}]
+  def async_downloads
+    @async_downloads = {}
   end
 
   # Restituisce direttamente la stringa di risposta dal server
@@ -1424,7 +1538,7 @@ module Async_Downloads
   # @return [String]
   # @raise [InternetConnectionException]
   def await_response(url)
-    HTTP.get(url)
+    HTTP.get(url).body
   end
 
   # Controlla i download e lancia il metodo associato se completato.
@@ -1500,7 +1614,7 @@ module Mouse
       ary = lpoint.unpack('l_l_')
       MousePoint.new(ary[0], ary[1])
     else
-      raise GetMousePosException('Error occurred when obtaining cursor position')
+      raise GetMousePosException.new('Error occurred when obtaining cursor position')
     end
   end
 end
@@ -1532,7 +1646,7 @@ module Base64
   # @param [String] string
   # @return [String]
   def self.decode(string)
-    ; string.gsub(/\s+/, '').unpack('m')[0];
+    string.gsub(/\s+/, '').unpack('m')[0]
   end
 
   # Restituisce una stringa codificata in Base64
@@ -1540,7 +1654,7 @@ module Base64
   # @param [String] string
   # @return [String]
   def self.encode(string)
-    ; [string].pack("m");
+    [string].pack("m")
   end
 end #base64
 
@@ -1574,7 +1688,9 @@ class H87_Settings
   def save
     save_data($game_settings, DataManager.settings_path)
   end
-end #settings
+end
+
+#settings
 
 #==============================================================================
 # ** Game_Version
@@ -1651,7 +1767,9 @@ class Game_Version
   def to_s
     sprintf('%d.%d.%d.%d', @major, @minor, @build, @revision)
   end
-end #game_version
+end
+
+#game_version
 
 #==============================================================================
 # ** RPG::System -> aggiunta del metodo per la versione del gioco
@@ -1661,7 +1779,9 @@ class Game_System
   def game_version
     Game_Version.now
   end
-end #rpg_system
+end
+
+#rpg_system
 
 #==============================================================================
 # ** DataManager -> aggiunta dei metodi per caricare i settaggi
@@ -1673,6 +1793,7 @@ module DataManager
     alias h87set_load_n_db load_normal_database
     alias h87set_load_b_db load_battle_test_database
   end
+
   # caricamento nd
   def self.load_normal_database
     load_h87settings
@@ -1820,16 +1941,18 @@ class String
   # @param [Integer] size
   # @return [String]
   def self.random(size = 4)
-    ; rand(36 ** size).to_s(36);
+    rand(36 ** size).to_s(36)
   end
 
   # Restituisce la stessa stringa ma crittografata in ROT13
   #   http://it.wikipedia.org/wiki/ROT13
   # @return [String]
-  def crypt_rot13;
-    self.tr('A-Za-z', 'N-ZA-Mn-za-m');
+  def crypt_rot13
+    self.tr('A-Za-z', 'N-ZA-Mn-za-m')
   end
-end #fine della stringa
+end
+
+#fine della stringa
 
 #==============================================================================
 # ** Inclusione dei metodi asincroni in Scene_Base
@@ -1895,20 +2018,20 @@ class Object
   # Metodo di stampa riga
   # @deprecated not used anymore. Please use puts instead
   def println(*args)
-    ; puts *args;
+    puts *args
   end
 
   # Metodi di conversione Base64
   # @param [String] string
   # @return [String]
   def base64_encode(string)
-    ; Base64.encode(string);
+    Base64.encode(string)
   end
 
   # @param [String] string
   # @return [String]
   def base64_decode(string)
-    ; Base64.decode(string);
+    Base64.decode(string)
   end
 
   # Restituisce direttamente la stringa di risposta dal server
@@ -1930,13 +2053,27 @@ class Object
   end
 
   # Determina se il gioco è VX Ace
-  def on_vx_ace?;
-    RUBY_VERSION == '1.9.2';
+  def on_vx_ace?
+    RUBY_VERSION == '1.9.2'
   end
 
   # Determina se il gioco è VX
-  def on_vx?;
-    RUBY_VERSION == '1.8.1';
+  def on_vx?
+    RUBY_VERSION == '1.8.1'
+  end
+end
+
+#==============================================================================
+# ** Time
+#==============================================================================
+class Time
+  # @param [Date] date_str
+  def self.from_string(date_str)
+    if date_str =~ /(\d{4})-(\d{2})-(\d{2})/
+      Time.local($1.to_i, $2.to_i, $3.to_i)
+    else
+      raise WrongDateFormatError('You must use format YYYY-MM-DD')
+    end
   end
 end
 
@@ -1979,12 +2116,47 @@ end
 
 
 # launched when can't connect with the server
-class InternetConnectionException < Exception;
-end
-# launched when can't read from the clipboard
-class ClipboardDataAccessException < Exception;
-end
-# launched when fails to obtaining the mouse position
-class GetMousePosException < Exception;
+class InternetConnectionException < StandardError
+  attr_accessor :code
+
+  # @param [String] message
+  # @param [Fixnum] code
+  def initialize(message, code = nil)
+    super(message)
+    @code = code
+  end
+
+  # determines if the connection is not available
+  def server_unreachable?
+    @code == 0
+  end
 end
 
+# launched when can't read from the clipboard
+class ClipboardDataAccessException < Exception; end
+
+# launched when fails to obtaining the mouse position
+class GetMousePosException < Exception; end
+
+class WrongDateFormatError < StandardError
+
+end
+
+unless $imported['H87-ConsoleLogger']
+  module Logger
+    def self.info(*args)
+      args[0] = '[INFO] ' + args[0].to_s
+      puts args
+    end
+
+    def self.error(*args)
+      args[0] = '[ERROR] ' + args[0].to_s
+      puts args
+    end
+
+    def self.warning(*args)
+      args[0] = '[WARNING] ' + args[0].to_s
+      puts args
+    end
+  end
+end

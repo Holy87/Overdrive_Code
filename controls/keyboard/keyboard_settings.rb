@@ -1,9 +1,30 @@
+#===============================================================================
+# Personalizzazione tastiera di Holy87
+# Difficoltà utente: ★
+# Versione 1.0
+# Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
+# lo script nei propri progetti, sia amatoriali che commerciali. Vietata
+# l'attribuzione impropria.
+#===============================================================================
+# Questo script vi permette di aggiungere nelle opzioni di gioco una nuova voce
+# che permetterà al giocatore di personalizzare i pulsanti della tastiera per
+# eseguire i vari comandi nel gioco. Puoi definire più tasti per ogni
+#===============================================================================
+# Istruzioni: inserire lo script sotto Materials, prima del Main e sotto gli
+# script Interfaccia Tastiera e Opzioni di gioco. I due script sono necessari
+# per il corretto funzionamento, altrimenti va in crash all'avvio.
+# Sotto è possibile configurare i testi per le voci e i comandi personalizzabili.
+#===============================================================================
+
+#===============================================================================
+# ** Impostazioni dello script
+#===============================================================================
 module Keyboard
   module Settings
-    KEYBOARD_COMMAND = 'Comandi'
-    KEYBOARD_HELP = 'Imposta i comandi della tastiera.'
+    KEYBOARD_COMMAND = 'Tastiera'
+    KEYBOARD_HELP = 'Imposta i pulsanti della tastiera.'
     HELP_INPUT = 'Premi un tasto per assegnarlo, ESC per annullare.'
-    HELP_KEY = 'Puoi cambiare i tasti della tastiera.
+    HELP_KEY = 'Puoi cambiare i pulsanti della tastiera.
 Seleziona Ripristina o premi %s per resettare.'
     RESET_KEY_COMMAND = 'Reimposta tutto'
     ASSIGNED_ERROR = 'Il tasto %s è già assegnato a %s.'
@@ -64,7 +85,7 @@ Seleziona Ripristina o premi %s per resettare.'
     CANCEL_KEY = :VK_ESCAPE
 
     # Impedisci di selezionare un tasto già assegnato ad un altro comando
-    # (e che sia l'unico)
+    # se è l'unico assegnato a quel comando.
     BLOCK_ALREADY_ASSIGNED = true
   end
 
@@ -78,6 +99,8 @@ Seleziona Ripristina o premi %s per resettare.'
 end
 
 H87Options.push_keys_option(Keyboard.create_keys_command)
+$imported = {} if $imported == nil
+$imported['H87-Keyboard_Settings'] = 1.0
 
 module Vocab
   def self.keyboard_config_help
@@ -373,8 +396,8 @@ class Window_KeyboardKeys < Window_Selectable
   end
 
   def draw_command_names
-    Keyboard::Settings::INPUT_DESCRIPTION.each_with_index do |obj, index|
-      draw_text(0, index * line_height, command_description_width, line_height, obj[1])
+    Keyboard::Settings::INPUTS.each_with_index do |input, index|
+      draw_text(0, index * line_height, command_description_width, line_height, Vocab.command_name(input))
     end
   end
 
@@ -426,7 +449,7 @@ class Window_KeyboardKeys < Window_Selectable
     enabled = enable?(key_obj)
     return if key_obj.key.nil?
     change_color(normal_color, enabled)
-    draw_text(rect, Vocab.key_name(key_obj.key))
+    draw_text(rect, Vocab.key_name(key_obj.key), 1)
   end
 
   def draw_reset_command(index)

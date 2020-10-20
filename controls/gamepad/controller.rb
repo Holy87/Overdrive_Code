@@ -12,6 +12,8 @@
 # v1.03 => Ora l'uso del controller non è bloccante per la tastiera
 # v1.02 => Inserita compatibilità con sistemi che non supportano DX11
 # v1.01 => Bugfix
+# v1.1  => Introduzione del flag DEBUG_MODE. Se attivato, mostra lo stato
+#          del controller nel terminale di debu.
 #===============================================================================
 # Questo script vi permette di utilizzare i controller per PC più moderni, come
 # il controller dell'XBox 360/One, PS4 e Logitech. Lo script è subito utilizzabile
@@ -252,6 +254,9 @@ module XInput_Settings
 	# Quanto bisogna inclinare l'analogico per fargli riconoscere una direzione
   # in genere questo parametro viene definito zona morta
 	ANALOG_DIRECTION_MIN = 16300 # max 32767
+
+  # Se attivato, mostra su console lo stato del controller.
+  DEBUG_MODE = false
 end
 
 # ---------ATTENZIONE: MODIFICARE SOTTO QUESTO PARAGRAFO COMPORTA SERI RISCHI
@@ -260,7 +265,7 @@ end
 
 
 $imported = {} if $imported == nil
-$imported['H87-XInput'] = 1.0
+$imported['H87-XInput'] = 1.1
 unless $imported['H87_UniversalModule']
   raise('Questo script richiede il modulo universale di Holy87.')
 end
@@ -488,6 +493,12 @@ class XInput_State
   # @return [Game_Pad]
   #--------------------------------------------------------------------------
   def game_pad; @game_pad; end
+
+  # @return [String]
+  def to_s
+    sprintf("%s - Packet No: %d\nState: %s", super,
+            @packet_number.to_i, @game_pad.to_s)
+  end
 end
 
 #===============================================================================
@@ -527,6 +538,7 @@ class XInput_BatteryInformation
   end
 
   # To String (for screen printable)
+  # @return [String]
   def to_s
     case @battery_type
       when XInput::BATTERY_TYPE_ALKALINE
@@ -1007,14 +1019,16 @@ module Input
   #--------------------------------------------------------------------------
   # * Single pad update process
   #--------------------------------------------------------------------------
+  #noinspection RubyModifiedFrozenObject
   def self.update_keys(controller_index = 0)
     state = XInput.get_state(controller_index)
+    debug_controller_state(state) if XInput_Settings::DEBUG_MODE && controller_index == 0
     if state && state.packet_number != XInput::DEVICE_NOT_GAMEPAD
       @controller_plugged[controller_index] = true
       @key_state[controller_index] = state.game_pad.keymap_state
-      @key_timing[controller_index].each_key { |key|
+      @key_timing[controller_index].each_key do |key|
         @key_timing[controller_index][key] = nil unless @key_state[controller_index].keys.include?(key)
-      }
+      end
       @key_state[controller_index].each_key {|key|
         if @old_key_state[controller_index].keys.include?(key)
           @key_timing[controller_index][key] ||= -1
@@ -1026,6 +1040,15 @@ module Input
     else
       @controller_plugged[controller_index] = false
     end
+  end
+
+  # @param [XInput_State] state
+  def self.debug_controller_state(state)
+    return if state.nil?
+    return unless $TEST
+    return if @old_packet == state.packet_number
+    @old_packet = state.packet_number
+    puts state
   end
   #--------------------------------------------------------------------------
   # * Updates the game variables
