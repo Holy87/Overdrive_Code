@@ -1,13 +1,14 @@
 =begin
  ==============================================================================
   ■ Opzioni di gioco di Holy87
-      versione 1.2.1
+      versione 1.2.2
       Difficoltà utente: ★★
       Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata
       l'attribuzione impropria.
 
       Changelog
+      v1.2.2 -> risoluzione di bug critici e miglioramenti vari
       v1.2.1 -> risoluzione di bug critici e miglioramenti vari
       v1.2.0 -> possibilità di impostare un valore minimo per le variabili
                 possibilità di visualizzare il valore anziché percentuale
@@ -182,110 +183,96 @@ $imported['H87_Options'] = 1.2
 #  Configura i testi e le opzioni
 #==============================================================================
 module H87Options
-  #--------------------------------------------------------------------------
-  # * Vocaboli
-  #--------------------------------------------------------------------------
+  # Vocaboli
   #Comando Opzioni
   OPTION_COMMAND = "Opzioni"
   #Valore della barra disattivata
   OFF_BAR = "OFF"
   #Opzioni ordinate per categoria
-  SYSTEM_OPTIONS =      "Sistema"
-  GAME_OPTIONS =        "Gioco"
-  SOUND_OPTIONS =       "Audio"
-  APPEARANCE_OPTIONS =  "Aspetto"
-  GRAPHIC_OPTIONS =     "Grafica"
-  INTERNET_OPTIONS =    "Internet"
-  KEYS_OPTIONS =        "Comandi"
-  USER_OPTIONS =        "Generale"
-  #--------------------------------------------------------------------------
-  # * Suono al cambio di switch
-  #--------------------------------------------------------------------------
+  SYSTEM_OPTIONS = "Sistema"
+  GAME_OPTIONS = "Gioco"
+  SOUND_OPTIONS = "Audio"
+  APPEARANCE_OPTIONS = "Aspetto"
+  GRAPHIC_OPTIONS = "Grafica"
+  INTERNET_OPTIONS = "Internet"
+  KEYS_OPTIONS = "Comandi"
+  USER_OPTIONS = "Generale"
+  # Suono al cambio di switch
   TOGGLE_SOUND = "Switch2"
-  #--------------------------------------------------------------------------
-  # * Mostra il menu opzioni nel titolo? Alla schermata del titolo vengono
+  # Mostra il menu opzioni nel titolo? Alla schermata del titolo vengono
   #   mostrate solo le opzioni GLOBALI (vedi nelle istruzioni per smanettoni)
-  #--------------------------------------------------------------------------
   SHOW_ON_TITLE = false
-  #--------------------------------------------------------------------------
-  # * Mostra le opzioni nella schermata del Menu?
-  #--------------------------------------------------------------------------
+  # Mostra le opzioni nella schermata del Menu?
   SHOW_ON_MENU = true
-  #--------------------------------------------------------------------------
-  # * Configura qui le varie opzioni. Vedi gli esempi per capire come
+  # Configura qui le varie opzioni. Vedi gli esempi per capire come
   #   creare le opzioni.
-  #--------------------------------------------------------------------------
   ELEMENTS = [
       #normale switch
-      { :type => :switch, #tipo switch
-        :text => "Interruttore", #nome dell'opzione
-        :help => "Questa è una prova dell'interruttore.",#mostrato nella descr.
-        :sw   => 3, #ID della switch
-        :on   => "ON",  #testo ON
-        :off  => "OFF", #testo OFF
-        :default => true, #valore predefinito (facoltativo)
+      {:type => :switch, #tipo switch
+       :text => "Interruttore", #nome dell'opzione
+       :help => "Questa è una prova dell'interruttore.", #mostrato nella descr.
+       :sw => 3, #ID della switch
+       :on => "ON", #testo ON
+       :off => "OFF", #testo OFF
+       :default => true, #valore predefinito (facoltativo)
       },
       #separatore
-      { :type => :separator,  #tipo separatore
-        :text => "Separatore",#testo mostrato
+      {:type => :separator, #tipo separatore
+       :text => "Separatore", #testo mostrato
       },
       #variabile
-      { :type => :variable,   #tipo variabile
-        :text => "Sveglia",   #testo mostrato
-        :help => "Imposta l'ora della sveglia", #descrizione
-        :var  => 110,          #ID della variabile
-        :max  => 11,          #valore massimo
-        :default => 6,        #valore predefinito
+      {:type => :variable, #tipo variabile
+       :text => "Sveglia", #testo mostrato
+       :help => "Imposta l'ora della sveglia", #descrizione
+       :var => 110, #ID della variabile
+       :max => 11, #valore massimo
+       :default => 6, #valore predefinito
       },
       #altra variabile
-      { :type => :variable,   #tipo variabile
-        :text => "Animale",#testo mostrato
-        :help => "Imposta il tuo animale preferito", #descrizione
-        :var  => 111,          #variabile
-        :values => ["Cane", "Gatto", "Elefante"],#valori 0, 1 e 2
+      {:type => :variable, #tipo variabile
+       :text => "Animale", #testo mostrato
+       :help => "Imposta il tuo animale preferito", #descrizione
+       :var => 111, #variabile
+       :values => %w[Cane Gatto Elefante], #valori 0, 1 e 2
       },
       #altra variabile, tanti valori quindi mostro un popup
-      { :type => :variable,   #tipo variabile
-        :text => "Mese",#testo mostrato
-        :help => "Imposta il mese del gioco", #descrizione
-        :var  => 112,          #variabile
-        :open_popup => true,  #troppi valori, usa un popup
-        :values => ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
-                    "Luglio","Agosto","Settembre","Ottobre","Novembre",
-                    "Dicembre"],# i mesi dell'anno
+      {:type => :variable, #tipo variabile
+       :text => "Mese", #testo mostrato
+       :help => "Imposta il mese del gioco", #descrizione
+       :var => 112, #variabile
+       :open_popup => true, #troppi valori, usa un popup
+       :values => %w[Gennaio Febbraio Marzo Aprile Maggio Giugno Luglio Agosto Settembre Ottobre Novembre Dicembre], # i mesi dell'anno
       },
       #Variabile mostrata come barra
-      { :type   => :bar, #tipo barra
-        :text   => "Riempimento", #testo mostrato
-        :sw     => 5, #switch ON/OFF
-        :var    => 113,#ID della variabile
-        :color  => 10, #colore della variabile (10 è rosso nella skin default)
-        :max    => 50, #valore massimo
-        :perc => false,
-        :min => -50,
+      {:type => :bar, #tipo barra
+       :text => "Riempimento", #testo mostrato
+       :sw => 5, #switch ON/OFF
+       :var => 113, #ID della variabile
+       :color => 10, #colore della variabile (10 è rosso nella skin default)
+       :max => 50, #valore massimo
+       :perc => false,
+       :min => -50,
       },
       #Altra barra
-      { :type   => :bar, #tipo barra
-        :text   => "Prodezza", #testo mostrato
-        :var    => 14,#ID della variabile
-        :color  => 4, #colore della variabile (4 è celeste)
-        :max    => 100, #valore massimo
-        :default => 44,
-        :condition => "$game_switches[5] == false", #l'opzione è disponibile solo
+      {:type => :bar, #tipo barra
+       :text => "Prodezza", #testo mostrato
+       :var => 14, #ID della variabile
+       :color => 4, #colore della variabile (4 è celeste)
+       :max => 100, #valore massimo
+       :default => 44,
+       :condition => "$game_switches[5] == false", #l'opzione è disponibile solo
       }, #se lo switch 5 è false (in pratica se disattivi la barra precedente)
       #Opzione avanzata
-      { :type => :advanced, #opzione speciale
-        :method => :apri_nome, #metodo alla pressione, vedi sotto per la definiz.
-        :text => "Cambia nome eroe", #testo mostrato
-        :condition => "$TEST", #attivo solo se è un test di gioco
-        :help => "Cambia il nome eroe durante il gioco.",
+      {:type => :advanced, #opzione speciale
+       :method => :apri_nome, #metodo alla pressione, vedi sotto per la definiz.
+       :text => "Cambia nome eroe", #testo mostrato
+       :condition => "$TEST", #attivo solo se è un test di gioco
+       :help => "Cambia il nome eroe durante il gioco.",
       },
   ] #NON CANCELLARE QUESTA PARENTESI!
 
-  #--------------------------------------------------------------------------
-  # * Configurazione per Menu Titolo personalizzato
-  #--------------------------------------------------------------------------
-  TITLE_ICON = "Icona"  #icona del comando
+  # Configurazione per Menu Titolo personalizzato
+  TITLE_ICON = "Icona" #icona del comando
   TITLE_BALOON = "Fumetto" #immagine del fumetto
 end
 
@@ -306,153 +293,129 @@ end
 #==============================================================================
 
 
-
-
-
-
 #==============================================================================
 # ** Modulo H87Options
 #------------------------------------------------------------------------------
 #  Modulo di gestione delle opzioni
 #==============================================================================
 module H87Options
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni di gioco
-  #--------------------------------------------------------------------------
+  # Restituisce le opzioni di gioco
   def self.game_options
     return @game.nil? ? [] : @game
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni definite dall'utente
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni definite dall'utente
   def self.user_options
     return ELEMENTS + generic_options
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni generali
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni generali
   def self.generic_options
     return @generic.nil? ? [] : @generic
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni grafiche
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni grafiche
   def self.graphic_options
     return @graphic.nil? ? [] : @graphic
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni di sistema
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni di sistema
   def self.system_options
     return @system.nil? ? [] : @system
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni audio
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni audio
   def self.sound_options
     return @sound.nil? ? [] : @sound
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni dei comandi
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni dei comandi
   def self.keys_options
     return @keys.nil? ? [] : @keys
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni internet
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni internet
   def self.internet_options
     return @internet.nil? ? [] : @internet
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le opzioni d'aspetto
-  #--------------------------------------------------------------------------
+
+  # Restituisce le opzioni d'aspetto
   def self.appearance_options
     return @appearance.nil? ? [] : @appearance
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce tutte le opzioni
-  #--------------------------------------------------------------------------
+
+  # Restituisce tutte le opzioni
   def self.all_options
     return user_options + game_options + appearance_options + graphic_options +
         sound_options + keys_options + system_options + internet_options
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni di sistema
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni di sistema
   def self.push_system_option(hash)
     if @system.nil?
-      @system = [{:type=> :separator, :text=> SYSTEM_OPTIONS}]
+      @system = [{:type => :separator, :text => SYSTEM_OPTIONS}]
     end
     @system.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni dei comandi
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni dei comandi
   def self.push_keys_option(hash)
     if @keys.nil?
-      @keys = [{:type=> :separator, :text=> KEYS_OPTIONS}]
+      @keys = [{:type => :separator, :text => KEYS_OPTIONS}]
     end
     @keys.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni generiche
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni generiche
   def self.push_generic_option(hash)
     @generic = [] if @generic.nil?
     @generic.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni d'aspetto
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni d'aspetto
   def self.push_appearance_option(hash)
     if @appearance.nil?
-      @appearance = [{ :type=> :separator,:text=> APPEARANCE_OPTIONS}]
+      @appearance = [{:type => :separator, :text => APPEARANCE_OPTIONS}]
     end
     @appearance.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni di gioco
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni di gioco
   def self.push_game_option(hash)
     if @game.nil?
-      @game = [{:type=> :separator, :text=> GAME_OPTIONS}]
+      @game = [{:type => :separator, :text => GAME_OPTIONS}]
     end
     @game.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni audio
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni audio
   def self.push_sound_option(hash)
     if @sound.nil?
-      @sound = [{ :type=> :separator, :text=> SOUND_OPTIONS}]
+      @sound = [{:type => :separator, :text => SOUND_OPTIONS}]
     end
     @sound.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni grafiche
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni grafiche
   def self.push_graphic_option(hash)
     if @graphic.nil?
-      @graphic = [{ :type=> :separator, :text=> GRAPHIC_OPTIONS}]
+      @graphic = [{:type => :separator, :text => GRAPHIC_OPTIONS}]
     end
     @graphic.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunge le opzioni internet
-  #--------------------------------------------------------------------------
+
+  # Aggiunge le opzioni internet
   def self.push_internet_option(hash)
     if @internet.nil?
-      @internet = [{ :type=> :separator, :text=> INTERNET_OPTIONS}]
+      @internet = [{:type => :separator, :text => INTERNET_OPTIONS}]
     end
     @internet.push(hash)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la lista delle opzioni
-  #--------------------------------------------------------------------------
+
+  # Restituisce la lista delle opzioni
   def self.option_list
     options = []
-    all_options.each {|option|
+    all_options.each { |option|
       opt = Option.new(option)
       next if opt.for_game? and $game_temp.nil? || $game_temp.in_game == false
       options.push(opt)
@@ -468,16 +431,13 @@ end
 #==============================================================================
 class Scene_Menu < Scene_MenuBase
   alias h87options_create_command_window create_command_window unless $@
-  #--------------------------------------------------------------------------
-  # * Finestra comandi
-  #--------------------------------------------------------------------------
+  # Finestra comandi
   def create_command_window
     h87options_create_command_window
     @command_window.set_handler(:options, method(:command_options))
   end
-  #--------------------------------------------------------------------------
-  # * Vai alle opzioni
-  #--------------------------------------------------------------------------
+
+  # Vai alle opzioni
   def command_options
     $game_temp.in_game = true
     SceneManager.call(Scene_Options)
@@ -491,9 +451,7 @@ end
 #==============================================================================
 class Window_MenuCommand < Window_Command
   alias h87options_aoc add_original_commands unless $@
-  #--------------------------------------------------------------------------
-  # * Aggiunta del comando
-  #--------------------------------------------------------------------------
+  # Aggiunta del comando
   def add_original_commands
     h87options_aoc
     if H87Options::SHOW_ON_MENU
@@ -509,29 +467,26 @@ end
 #==============================================================================
 class Scene_Title < Scene_Base
   alias h87options_create_command_window create_command_window unless $@
-  #--------------------------------------------------------------------------
-  # * Aggiunta dell'evento
-  #--------------------------------------------------------------------------
+  # Aggiunta dell'evento
   def create_command_window
     h87options_create_command_window
     @command_window.set_handler(:options, method(:command_options))
   end
-  #--------------------------------------------------------------------------
-  # * Comando per le opzioni
-  #--------------------------------------------------------------------------
+
+  # Comando per le opzioni
   def command_options
     $game_temp.in_game = false
     SceneManager.call(Scene_Options)
   end
-  #--------------------------------------------------------------------------
-  # * Aggiunta del comando del menu titolo personalizzato
-  #--------------------------------------------------------------------------
+
+  # Aggiunta del comando del menu titolo personalizzato
   if $imported["H87_TitleMenu"]
     alias h87options_ccp crea_contenuti_personalizzati
+
     def crea_contenuti_personalizzati
       h87options_ccp
       if H87Options::SHOW_ON_TITLE
-        add_cursor(:options,"command_options",H87Options::TITLE_ICON,H87Options::TITLE_BALOON)
+        add_cursor(:options, "command_options", H87Options::TITLE_ICON, H87Options::TITLE_BALOON)
       end
     end
   end
@@ -544,9 +499,7 @@ end
 #==============================================================================
 class Window_TitleCommand < Window_Command
   alias h87options_aoc make_command_list unless $@
-  #--------------------------------------------------------------------------
-  # * Aggiunta del comando
-  #--------------------------------------------------------------------------
+  # Aggiunta del comando
   def make_command_list
     h87options_aoc
     if H87Options::SHOW_ON_TITLE
@@ -564,16 +517,14 @@ module DataManager
   class << self
     alias h87options_cgo create_game_objects
   end
-  #--------------------------------------------------------------------------
-  # * Alias caricamento DB
-  #--------------------------------------------------------------------------
+
+  # Alias caricamento DB
   def self.create_game_objects
     h87options_cgo
     initialize_options
   end
-  #--------------------------------------------------------------------------
-  # * Inizializza le variabili globali
-  #--------------------------------------------------------------------------
+
+  # Inizializza le variabili globali
   def self.initialize_options
     for option in H87Options.option_list
       next if $game_settings[option.id] != nil
@@ -590,23 +541,19 @@ end
 #  Contiene le impostazioni della singola opzione di gioco
 #==============================================================================
 class Option
-  #--------------------------------------------------------------------------
-  # * Variabili d'istanza pubblici
-  #--------------------------------------------------------------------------
-  attr_reader :type         #tipo
-  attr_reader :description  #descrizione
-  attr_reader :name         #nome
-  attr_reader :values       #elenco valori
-  attr_reader :max          #massimo della variabile
-  attr_reader :min          #minimo della variabile
-  attr_reader :default      #valore predefinito
+  # Variabili d'istanza pubblici
+  attr_reader :type #tipo
+  attr_reader :description #descrizione
+  attr_reader :name #nome
+  attr_reader :values #elenco valori
+  attr_reader :max #massimo della variabile
+  attr_reader :min #minimo della variabile
+  attr_reader :default #valore predefinito
   attr_reader :value_method #metodo che restituisce il valore
-  attr_reader :bar_color    #colore della barra
-  attr_reader :tag          #etichetta (per salvataggio in game_settings)
-  attr_reader :id           #identificatore (per trovarlo altrove)
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
-  #--------------------------------------------------------------------------
+  attr_reader :bar_color #colore della barra
+  attr_reader :tag #etichetta (per salvataggio in game_settings)
+  attr_reader :id #identificatore (per trovarlo altrove)
+  # Inizializzazione
   def initialize(hash)
     @type = hash[:type]
     @description = hash[:help]
@@ -618,28 +565,31 @@ class Option
     @min = 0
     # noinspection RubyCaseWithoutElseBlockInspection
     case @type
-      when :switch; init_switch(hash)
-      when :variable; init_variable(hash)
-      when :separator; init_separator(hash)
-      when :advanced; init_advanced(hash)
-      when :bar; init_bar(hash)
+    when :switch;
+      init_switch(hash)
+    when :variable;
+      init_variable(hash)
+    when :separator;
+      init_separator(hash)
+    when :advanced;
+      init_advanced(hash)
+    when :bar;
+      init_bar(hash)
     end
     @method = hash[:method]
     @value_method = hash[:val_mt] unless hash[:val_mt].nil?
     @special_draw = hash[:special] unless hash[:special].nil?
     @enabled_condition = hash[:condition] unless hash[:condition].nil?
   end
-  #--------------------------------------------------------------------------
-  # * Inizializza gli attributi dello switch
-  #--------------------------------------------------------------------------
+
+  # Inizializza gli attributi dello switch
   def init_switch(hash)
     @default = false if @default.nil? && !hash[:not_initialize]
     @switch = hash[:sw]
     @values = [hash[:off], hash[:on]]
   end
-  #--------------------------------------------------------------------------
-  # * Inizializza gli attributi della variabile
-  #--------------------------------------------------------------------------
+
+  # Inizializza gli attributi della variabile
   def init_variable(hash)
     @distance = hash[:distance].nil? ? 1 : hash[:distance]
     @variable = hash[:var]
@@ -650,32 +600,29 @@ class Option
       @values = []
       @max = hash[:max]
       @min = hash[:min] if hash[:min]
-      for i in @min..@max
+      (@min..@max).each { |i|
         @values.push(i)
-      end
+      }
     else
       @values = hash[:values]
       @max = @values.size - 1
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il valore minimo
-  #--------------------------------------------------------------------------
-  def min; @min || 0; end
-  #--------------------------------------------------------------------------
-  # * Inizializza gli attributi del separatore
-  #--------------------------------------------------------------------------
-  def init_separator(hash)
+
+  # Restituisce il valore minimo
+  def min
+    @min || 0;
   end
-  #--------------------------------------------------------------------------
-  # * Inizializza gli attributi dell'oggetto avanzato
-  #--------------------------------------------------------------------------
+
+  # Inizializza gli attributi del separatore
+  def init_separator(hash) end
+
+  # Inizializza gli attributi dell'oggetto avanzato
   def init_advanced(hash)
     @popup = eval(hash[:popup]) if hash[:popup]
   end
-  #--------------------------------------------------------------------------
-  # * Inizializza gli attributi della barra
-  #--------------------------------------------------------------------------
+
+  # Inizializza gli attributi della barra
   def init_bar(hash)
     @max = hash[:max]
     @min = hash[:min] if hash[:min]
@@ -687,108 +634,102 @@ class Option
     @bar_color = 1
     @bar_color = hash[:color] if hash[:color]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il valore dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Restituisce il valore dell'opzione
   def value
     return method(@value_method).call if @value_method != nil
     case @type
-      when :switch
-        return switch
-      when :variable, :bar
-        return variable
+    when :switch
+      return switch
+    when :variable, :bar
+      return variable
+    else
+      0
     end
   end
-  #--------------------------------------------------------------------------
-  # * Imposta il valore dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Imposta il valore dell'opzione
   def value=(new_value)
     case @type
-      when :switch
-        set_switch(new_value)
-      when :variable, :bar
-        set_variable(new_value)
+    when :switch
+      set_switch(new_value)
+    when :variable, :bar
+      set_variable(new_value)
     end
     method(@method).call(new_value) if @method
   end
-  #--------------------------------------------------------------------------
-  # * Cambia lo stato della switch
-  #--------------------------------------------------------------------------
+
+  # Cambia lo stato della switch
   def toggle
     set_switch(!self.switch) if @switch
     method(@method).call(self.switch) if @method
   end
-  #--------------------------------------------------------------------------
-  # * Incrementa il valore dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Incrementa il valore dell'opzione
   def increment(fast = false)
     if @type == :switch
       toggle
     else
       set_switch(true)
       self.value += calc_distance(fast)
-      if :variable
+      if @type == :variable
         self.value = self.min if self.value > @max
-      else #barra
+      else
+        #barra
         self.value = @max if self.value > @max
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * Decrementa il valore dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Decrementa il valore dell'opzione
   def decrement(fast = false)
     if @type == :switch
       toggle
     else
       set_switch(true)
       self.value -= calc_distance(fast)
-      if :variable
+      if @type == :variable
         self.value = @max if self.value < self.min
-      else #barra
+      else
+        #barra
         self.value = self.min if self.value < self.min
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'incremento o decremento
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'incremento o decremento
   def calc_distance(fast)
     return @distance unless @type == :bar
     return @distance unless fast
-    return @distance * 10
+    @distance * 10
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la classe della finestra di popup
-  #--------------------------------------------------------------------------
+
+  # Restituisce la classe della finestra di popup
   def popup
     return @popup if @popup
     return Generic_PopupWindow if @need_popup
-    return nil
+    nil
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'ID dello switch o variabile assegnato
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'ID dello switch o variabile assegnato
   def id
     return @variable if @variable != nil
     return @switch if @switch != nil
-    return @tag
+    @tag
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce lo stato della switch
-  #--------------------------------------------------------------------------
+
+  # Restituisce lo stato della switch
   def switch
     return true if @switch.nil?
     return true if @switch == 0
     if @switch.is_a?(Integer)
-      return $game_switches[@switch]
+      $game_switches[@switch]
     else
-      return $game_settings[@switch]
+      $game_settings[@switch]
     end
   end
-  #--------------------------------------------------------------------------
-  # * Imposta lo stato della switch
-  #--------------------------------------------------------------------------
+
+  # Imposta lo stato della switch
   def set_switch(value)
     return if @switch.nil?
     return if @switch == 0
@@ -798,20 +739,18 @@ class Option
       $game_settings[@switch] = value
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce lo stato della variabile
-  #--------------------------------------------------------------------------
+
+  # Restituisce lo stato della variabile
   def variable
     return 0 if @variable == 0
     if @variable.is_a?(Integer)
-      return $game_variables[@variable]
+      $game_variables[@variable]
     else
-      return $game_settings[@variable]
+      $game_settings[@variable]
     end
   end
-  #--------------------------------------------------------------------------
-  # * Imposta lo stato della variabile
-  #--------------------------------------------------------------------------
+
+  # Imposta lo stato della variabile
   def set_variable(value)
     return if @variable == 0
     if @variable.is_a?(Integer)
@@ -820,88 +759,81 @@ class Option
       $game_settings[@variable] = value
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se l'opzione ha una switch
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se l'opzione ha una switch
   def toggable?
-    return @switch != nil
+    @switch != nil
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le condizioni di abilitazione dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Restituisce le condizioni di abilitazione dell'opzione
   def enabled?
     if $game_system != nil && self.tag != nil &&
         $game_system.enabling_options[self.tag] == false
       return false
     end
     return true if @enabled_condition.nil?
-    return eval(@enabled_condition)
+    eval(@enabled_condition)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se mostra la percentuale (la barra)
-  #--------------------------------------------------------------------------
-  def show_perc?; @perc; end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se è un separatore
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se mostra la percentuale (la barra)
+  def show_perc?
+    @perc
+  end
+
+  # Restituisce true se è un separatore
   def separator?
-    return @type == :separator
+    @type == :separator
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se è un'opzione disponibile solo nella partita
+
+  # Restituisce true se è un'opzione disponibile solo nella partita
   #   (ossia, non visibile nella schermata del titolo)
-  #--------------------------------------------------------------------------
   def for_game?
     return true if @variable.is_a?(Integer)
     return true if @switch.is_a?(Integer)
     return true if @for_game
-    return false
+    false
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se l'opzione apre un popup
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se l'opzione apre un popup
   def open_popup?
-    return self.popup != nil
+    self.popup != nil
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se l'opzione è disponibile e configurabile
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se l'opzione è disponibile e configurabile
   def value_active?(value_index)
     if @type == :switch
-      return value_index == 1 && value ? true : false
+      value_index == 1 && value ? true : false
     elsif @type == :variable
-      return value == value_index * @distance
+      value == value_index * @distance
     else
-      return true
+      true
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se l'opzione è attiva
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se l'opzione è attiva
   def is_on?
-    return self.switch
+    self.switch
   end
-  #--------------------------------------------------------------------------
-  # * Restituisc true se l'opzione può essere decrementata
-  #--------------------------------------------------------------------------
+
+  # Restituisc true se l'opzione può essere decrementata
   def can_decrement?
     return false if @type == :advanced
     return false if @type == :bar && self.value <= self.min
     return false if @need_popup
-    return true
+    return false unless [:variable, :switch, :bar].include?(@type)
+    true
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se l'opzione può essere incrementata
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se l'opzione può essere incrementata
   def can_increment?
     return false if @type == :advanced
     return false if @type == :bar && self.value >= self.max
     return false if @need_popup
-    return true
+    return false unless [:variable, :switch, :bar].include?(@type)
+    true
   end
-  #--------------------------------------------------------------------------
-  # * Esegue il metodo personalizzato dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Esegue il metodo personalizzato dell'opzione
   def execute_method
     return unless @method
     method(@method).call
@@ -914,64 +846,55 @@ end
 #  Schermata delle opzioni
 #==============================================================================
 class Scene_Options < Scene_MenuBase
-  #--------------------------------------------------------------------------
-  # * Inizio
-  #--------------------------------------------------------------------------
+  # Inizio
   def start
     super
     create_help_window
     create_option_window
     create_popup_windows
   end
-  #--------------------------------------------------------------------------
-  # * Aggiornamento
-  #--------------------------------------------------------------------------
+
+  # Aggiornamento
   def update
     super
     update_popups
   end
-  #--------------------------------------------------------------------------
-  # * Fine
-  #--------------------------------------------------------------------------
+
+  # Fine
   def terminate
     super
     dispose_popups
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna le finestre di popup
-  #--------------------------------------------------------------------------
+
+  # Aggiorna le finestre di popup
   def update_popups
-    @popups.each_value{|p| p.update}
+    @popups.each_value { |p| p.update }
   end
-  #--------------------------------------------------------------------------
-  # * Elimina le finestre di popup
-  #--------------------------------------------------------------------------
+
+  # Elimina le finestre di popup
   def dispose_popups
-    @popups.each_value{|p| p.dispose}
+    @popups.each_value { |p| p.dispose }
   end
-  #--------------------------------------------------------------------------
-  # * Creazione della finestra d'aiuto
-  #--------------------------------------------------------------------------
+
+  # Creazione della finestra d'aiuto
   def create_help_window
     @help_window = Window_Help.new
   end
-  #--------------------------------------------------------------------------
-  # * Creazione della finestra delle opzioni
-  #--------------------------------------------------------------------------
+
+  # Creazione della finestra delle opzioni
   def create_option_window
     @option_window = Window_GameOptions.new(@help_window.y + @help_window.height)
     @option_window.help_window = @help_window
     @option_window.set_handler(:cancel, method(:return_scene))
     @option_window.activate
   end
-  #--------------------------------------------------------------------------
-  # * Crea le finestre di popup
-  #--------------------------------------------------------------------------
+
+  # Crea le finestre di popup
   def create_popup_windows
     @popups = {}
     opt = H87Options.option_list
     y = @help_window.height
-    for i in 0..opt.size-1
+    for i in 0..opt.size - 1
       if opt[i].popup
         popup = opt[i].popup.new(y, opt[i])
         popup.visible = false
@@ -981,16 +904,14 @@ class Scene_Options < Scene_MenuBase
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la finestra di popup attualmente aperta
-  #--------------------------------------------------------------------------
+
+  # Restituisce la finestra di popup attualmente aperta
   def popup
     @popups[@popup_index]
   end
-  #--------------------------------------------------------------------------
-  # * Mostra la finestra di popup
+
+  # Mostra la finestra di popup
   #   index: indice dell'opzione
-  #--------------------------------------------------------------------------
   def show_popup(index)
     @last_frame = Graphics.frame_count
     @popup_index = index
@@ -1007,9 +928,8 @@ class Scene_Options < Scene_MenuBase
     end
     popup.activate
   end
-  #--------------------------------------------------------------------------
-  # * Viene eseguito quando l'utente seleziona un'opzione dal popup
-  #--------------------------------------------------------------------------
+
+  # Viene eseguito quando l'utente seleziona un'opzione dal popup
   def item_selected
     if @last_frame < Graphics.frame_count
       @option_window.item.value = popup.selected_value
@@ -1020,9 +940,8 @@ class Scene_Options < Scene_MenuBase
       popup.activate
     end
   end
-  #--------------------------------------------------------------------------
-  # * Chiude la finestra di popup
-  #--------------------------------------------------------------------------
+
+  # Chiude la finestra di popup
   def close_popup
     popup.deactivate
     x = Graphics.width
@@ -1045,10 +964,8 @@ end
 #  Finestra che contiene l'elenco delle opzioni
 #==============================================================================
 class Window_GameOptions < Window_Selectable
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
+  # Inizializzazione
   #   y: coordinata Y iniziale
-  #--------------------------------------------------------------------------
   def initialize(y)
     super(0, y, Graphics.width, Graphics.height - y)
     @data = []
@@ -1058,10 +975,9 @@ class Window_GameOptions < Window_Selectable
     self.index = 0
     cursor_down if item && item.separator?
   end
-  #--------------------------------------------------------------------------
-  # * draw_item
+
+  # draw_item
   #   index: indice dell
-  #--------------------------------------------------------------------------
   def draw_item(index)
     item = @data[index]
     if item
@@ -1071,60 +987,56 @@ class Window_GameOptions < Window_Selectable
       draw_item_state(rect, item)
     end
   end
-  #--------------------------------------------------------------------------
-  # * Draw Item Name
+
+  # Draw Item Name
   #     enabled : Enabled flag. When false, draw semi-transparently.
-  #--------------------------------------------------------------------------
   def draw_item_name(item, x, y, enabled = true, width = 172)
     return unless item
     change_color(normal_color, enabled)
     draw_text(x, y, width, line_height, item.name) unless item.separator?
   end
-  #--------------------------------------------------------------------------
-  # * Mostra lo stato dell'opzione a seconda del tipo
-  #--------------------------------------------------------------------------
+
+  # Mostra lo stato dell'opzione a seconda del tipo
   def draw_item_state(rect, item)
     case item.type
-      when :separator
-        draw_separator(rect, item)
-      when :switch
-        draw_switch(rect, item)
-      when :variable
-        draw_variable(rect, item)
-      when :bar
-        draw_bar(rect, item)
-      when :advanced
-        draw_advanced(rect, item)
+    when :separator
+      draw_separator(rect, item)
+    when :switch
+      draw_switch(rect, item)
+    when :variable
+      draw_variable(rect, item)
+    when :bar
+      draw_bar(rect, item)
+    when :advanced
+      draw_advanced(rect, item)
+    else
+      # do nothing
     end
   end
-  #--------------------------------------------------------------------------
-  # * Disegna il separatore
-  #--------------------------------------------------------------------------
+
+  # Disegna il separatore
   def draw_separator(rect, item)
     color = gauge_back_color
     color.alpha = 128
-    contents.fill_rect(rect.x, rect.y+2, rect.width, rect.height-4, color)
+    contents.fill_rect(rect.x, rect.y + 2, rect.width, rect.height - 4, color)
     draw_text(rect.x, rect.y, rect.width, line_height, item.name, 1)
   end
-  #--------------------------------------------------------------------------
-  # * Move Cursor Down
-  #--------------------------------------------------------------------------
+
+  # Move Cursor Down
   def cursor_down(wrap = false)
     super
     super if item.separator?
   end
-  #--------------------------------------------------------------------------
-  # * Move Cursor Up
-  #--------------------------------------------------------------------------
+
+  # Move Cursor Up
   def cursor_up(wrap = false)
     super
     if item.separator?
       self.index == 0 && !wrap ? cursor_down : super
     end
   end
-  #--------------------------------------------------------------------------
-  # * Disegna lo switch
-  #--------------------------------------------------------------------------
+
+  # Disegna lo switch
   def draw_switch(rect, item)
     x = get_state_x(rect)
     width = get_state_width(x, rect, item)
@@ -1134,9 +1046,8 @@ class Window_GameOptions < Window_Selectable
     change_color(normal_color, enable?(item) && item.value)
     contents.draw_text(x, rect.y, width, line_height, item.values[1], 1)
   end
-  #--------------------------------------------------------------------------
-  # * Disegna la variabile
-  #--------------------------------------------------------------------------
+
+  # Disegna la variabile
   def draw_variable(rect, item)
     if item.open_popup?
       draw_popup_variable(rect, item)
@@ -1144,30 +1055,27 @@ class Window_GameOptions < Window_Selectable
       draw_values_variable(rect, item)
     end
   end
-  #--------------------------------------------------------------------------
-  # * Disegna la variabile se apre un popup
-  #--------------------------------------------------------------------------
+
+  # Disegna la variabile se apre un popup
   def draw_popup_variable(rect, item)
     x = get_state_x(rect)
     width = rect.width - x
     change_color(normal_color, enable?(item))
     draw_text(x, rect.y, width, line_height, item.values[item.value], 1)
   end
-  #--------------------------------------------------------------------------
-  # * Disegna i valori della variabile
-  #--------------------------------------------------------------------------
+
+  # Disegna i valori della variabile
   def draw_values_variable(rect, item)
     x = get_state_x(rect)
     width = get_state_width(x, rect, item)
     for i in 0..item.max
       next if item.values[i].nil?
       change_color(normal_color, enable?(item) && item.value_active?(i))
-      draw_text(x+(width*i), rect.y, width, line_height, item.values[i], 1)
+      draw_text(x + (width * i), rect.y, width, line_height, item.values[i], 1)
     end
   end
-  #--------------------------------------------------------------------------
-  # * Disegna la barra
-  #--------------------------------------------------------------------------
+
+  # Disegna la barra
   def draw_bar(rect, item)
     x = get_state_x(rect)
     width = rect.width - x
@@ -1177,14 +1085,14 @@ class Window_GameOptions < Window_Selectable
       color = text_color(item.bar_color)
     end
     color.alpha = enable?(item) ? 255 : 128
-    contents.fill_rect(x, rect.y+5, width, line_height-10, color)
-    contents.clear_rect(x+1, rect.y+6, width-2, line_height-12)
-    rate = (item.value - item.min)/(item.max.to_f - item.min.to_f)
-    contents.fill_rect(x, rect.y+5, width*rate, line_height-10, color)
+    contents.fill_rect(x, rect.y + 5, width, line_height - 10, color)
+    contents.clear_rect(x + 1, rect.y + 6, width - 2, line_height - 12)
+    rate = (item.value - item.min) / (item.max.to_f - item.min.to_f)
+    contents.fill_rect(x, rect.y + 5, width * rate, line_height - 10, color)
     if item.is_on?
       change_color(normal_color, enable?(item))
       if item.show_perc?
-        text = sprintf("%2d%%",rate*100)
+        text = sprintf("%2d%%", rate * 100)
       else
         text = item.value.to_i
       end
@@ -1194,77 +1102,65 @@ class Window_GameOptions < Window_Selectable
     end
     draw_text(x, rect.y, width, line_height, text, 1)
   end
-  #--------------------------------------------------------------------------
-  # * Disegna il valore del metodo avanzato
-  #--------------------------------------------------------------------------
-  def draw_advanced(rect, item)
-  end
-  #--------------------------------------------------------------------------
-  # * Update Help Text
-  #--------------------------------------------------------------------------
+
+  # Disegna il valore del metodo avanzato
+  def draw_advanced(rect, item) end
+
+  # Update Help Text
   def update_help
     @help_window.set_item(item)
   end
-  #--------------------------------------------------------------------------
-  # * Creazione della lista delle opzioni
-  #--------------------------------------------------------------------------
+
+  # Creazione della lista delle opzioni
   def make_option_list
     @data = H87Options.option_list
   end
-  #--------------------------------------------------------------------------
-  # * Get Number of Items
-  #--------------------------------------------------------------------------
+
+  # Get Number of Items
   def item_max
     @data ? @data.size : 0
   end
-  #--------------------------------------------------------------------------
-  # * Display in Enabled State?
-  #--------------------------------------------------------------------------
+
+  # Display in Enabled State?
   def enable?(item)
     item.enabled?
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'opzione selezionata
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'opzione selezionata
   def item
     @data[index]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la coordinata X dove disegnare lo stato
-  #--------------------------------------------------------------------------
+
+  # Restituisce la coordinata X dove disegnare lo stato
   def get_state_x(rect)
     rect.x + rect.width / 2
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la larghezza del valore in caso di più valori
-  #--------------------------------------------------------------------------
+
+  # Restituisce la larghezza del valore in caso di più valori
   def get_state_width(x, rect, item)
     (rect.width - x) / item.values.size
   end
-  #--------------------------------------------------------------------------
-  # * Esecuzione dell'azione di selezione (INVIO)
-  #--------------------------------------------------------------------------
+
+  # Esecuzione dell'azione di selezione (INVIO)
   def action
     case item.type
-      when :switch, :bar
-        toggle_item
-      when :advanced
-        process_method
-      when :variable
-        open_popup
+    when :switch, :bar
+      toggle_item
+    when :advanced
+      process_method
+    when :variable
+      open_popup
     else
       process_custom_method
     end
   end
-  #--------------------------------------------------------------------------
-  # * Esegui un metodo personalizzato
-  #--------------------------------------------------------------------------
+
+  # Esegui un metodo personalizzato
   def process_custom_method
     # da implementare per eventuali estensioni
   end
-  #--------------------------------------------------------------------------
-  # * Cambia lo stato della switch dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Cambia lo stato della switch dell'opzione
   def toggle_item
     return unless item.toggable?
     item.toggle
@@ -1272,44 +1168,39 @@ class Window_GameOptions < Window_Selectable
     refresh
     activate
   end
-  #--------------------------------------------------------------------------
-  # * Chiama il metodo
-  #--------------------------------------------------------------------------
+
+  # Chiama il metodo
   def process_method
     item.execute_method
     open_popup
   end
-  #--------------------------------------------------------------------------
-  # * Apre il popup
-  #--------------------------------------------------------------------------
+
+  # Apre il popup
   def open_popup
     return unless item.popup
     Sound.play_ok
     SceneManager.scene.show_popup(self.index)
     deactivate
   end
-  #--------------------------------------------------------------------------
-  # * Aggiornamento
-  #--------------------------------------------------------------------------
+
+  # Aggiornamento
   def update
     return if disposed?
     super
     update_other_commands
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna gli altri comandi
-  #--------------------------------------------------------------------------
+
+  # Aggiorna gli altri comandi
   def update_other_commands
     return unless active && cursor_movable?
     shift_left if Input.repeat?(:LEFT)
     shift_right if Input.repeat?(:RIGHT)
-    shift_left(true) if Input.repeat?(:L)
-    shift_right(true) if Input.repeat?(:R)
+    #shift_left(true) if Input.repeat?(:L)
+    #shift_right(true) if Input.repeat?(:R)
     action if Input.trigger?(:C) && enable?(item)
   end
-  #--------------------------------------------------------------------------
-  # * Scorri a sinistra se è una variabile o una barra
-  #--------------------------------------------------------------------------
+
+  # Scorri a sinistra se è una variabile o una barra
   def shift_left(fast = false)
     return unless item.can_decrement?
     return unless enable?(item)
@@ -1317,9 +1208,8 @@ class Window_GameOptions < Window_Selectable
     Sound.play_cursor
     refresh
   end
-  #--------------------------------------------------------------------------
-  # * Scorri a destra se è una variabile o una barra
-  #--------------------------------------------------------------------------
+
+  # Scorri a destra se è una variabile o una barra
   def shift_right(fast = false)
     return unless item.can_increment?
     return unless enable?(item)
@@ -1335,9 +1225,7 @@ end
 #  Classe d'appoggio per le finestre di popup
 #==============================================================================
 class Window_OptionPopup < Window_Selectable
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
-  #--------------------------------------------------------------------------
+  # Inizializzazione
   def initialize(y, option, width = 200)
     super(Graphics.width, y, width, Graphics.height - y)
     @option = option
@@ -1345,33 +1233,28 @@ class Window_OptionPopup < Window_Selectable
     refresh
     select_last
   end
-  #--------------------------------------------------------------------------
-  # * Refresh
-  #--------------------------------------------------------------------------
+
+  # Refresh
   def refresh
     make_option_list
     create_contents
     draw_all_items
   end
-  #--------------------------------------------------------------------------
-  # * Ottiene la lista delle opzioni dei valori
-  #--------------------------------------------------------------------------
+
+  # Ottiene la lista delle opzioni dei valori
   def make_option_list
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il numero di oggetti
-  #--------------------------------------------------------------------------
+
+  # Restituisce il numero di oggetti
   def item_max
     @data.nil? ? 0 : @data.size
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'opzione selezionata
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'opzione selezionata
   def select_last
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la nuova opzione selezionata dall'utente
-  #--------------------------------------------------------------------------
+
+  # Restituisce la nuova opzione selezionata dall'utente
   def selected_value
     @keys ? @keys[self.index] : self.index
   end
@@ -1383,24 +1266,20 @@ end
 #  Finestra dei popup generici delle opzioni
 #==============================================================================
 class Generic_PopupWindow < Window_OptionPopup
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
+  # Inizializzazione
   #   y: coordinata Y
   #   option: opzione del popup
-  #--------------------------------------------------------------------------
   def initialize(y, option)
     super(y, option, 200)
   end
-  #--------------------------------------------------------------------------
-  # * disegna l'oggetto
-  #--------------------------------------------------------------------------
+
+  # disegna l'oggetto
   def draw_item(index)
     rect = item_rect(index)
     draw_text(rect, item(index))
   end
-  #--------------------------------------------------------------------------
-  # * Ottiene l'elenco dei valori dell'opzione
-  #--------------------------------------------------------------------------
+
+  # Ottiene l'elenco dei valori dell'opzione
   def make_option_list
     @data = @option.values
     if @data.is_a?(Hash)
@@ -1408,36 +1287,32 @@ class Generic_PopupWindow < Window_OptionPopup
       @data = @data.values
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il valore selezionato
-  #--------------------------------------------------------------------------
+
+  # Restituisce il valore selezionato
   def item(index = self.index)
     @data[index]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la chiave
-  #--------------------------------------------------------------------------
+
+  # Restituisce la chiave
   def key(index = self.index)
     @keys[index]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'opzione selezionata
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'opzione selezionata
   def select_last
     if @option.values.is_a?(Array)
-      self.index = [[@option.value, 0].max, @option.values.size-1].min
+      self.index = [[@option.value, 0].max, @option.values.size - 1].min
     else
       self.index = keys_from_hash
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce l'opzione selezionata dall'hash dei valori
-  #--------------------------------------------------------------------------
+
+  # Restituisce l'opzione selezionata dall'hash dei valori
   def keys_from_hash
-    if @keys.find_index(@option.value)
+    if @keys.include?(@option.value)
       @keys.find_index(@option.value)
     else
-      @keys.first
+      0
     end
   end
 end
@@ -1458,6 +1333,7 @@ end
 #==============================================================================
 class Game_System
   attr_accessor :enabling_options
+
   def option_enable(tag, state)
     @enabling_options = {} if @enabling_options.nil?
     @enabling_options[tag] = state

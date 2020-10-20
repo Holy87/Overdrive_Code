@@ -1,7 +1,7 @@
 =begin
  ==============================================================================
   ■ Opzioni skin finestre di Holy87
-      versione 1.0.1
+      versione 1.1
       Difficoltà utente: ★★
       Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata
@@ -81,6 +81,9 @@
       Imposta uno sfondo (nella cartella Picture) quando si seleziona questa
       windowskin.
 
+      background_opacity: x
+      Imposta un'opacità per lo sfondo (che va a sovrapporsi a quello sotto)
+
       outline color: A,B,C,D
       Imposta un colore del contorno dove A: Colore rosso, B: Verde, C: Blu,
       D: Trasparenza. Quest'ultimo è facoltativo.
@@ -91,20 +94,14 @@
 # ** CONFIGURAZIONE
 #==============================================================================
 module WindowskinsManager
-  #--------------------------------------------------------------------------
-  # * Imposta la finestra predefinita all'avvio del gioco
-  #--------------------------------------------------------------------------
+  # Imposta la finestra predefinita all'avvio del gioco
   DEFAULT_SKIN = "Stripes"
-  #--------------------------------------------------------------------------
-  # * Vuoi aggiungere la cartella delle windowskins custom in Documenti?
-  #--------------------------------------------------------------------------
+  # Vuoi aggiungere la cartella delle windowskins custom in Documenti?
   USE_CUSTOM = true #false se non vuoi questa funzione
   # Nome della cartella
   INT_SK_FOLDER = "Graphics/Windowskins"
   EXT_SK_FOLDER = "Skins"
-  #--------------------------------------------------------------------------
-  # * Stringhe di testo nelle opzioni
-  #--------------------------------------------------------------------------
+  # Stringhe di testo nelle opzioni
   SET_HELP = "Imposta un tema delle finestre personalizzato."
   SET_TEXT = "Tema"
   SET_REDC = "Rosso"
@@ -119,13 +116,8 @@ end
 #    Non modificare oltre questo script se non sai dove mettere le mani.
 
 
-
-
-
-
-
 $imported = {} if $imported == nil
-$imported["H87_Windowskins"] = true
+$imported["H87_Windowskins"] = 1.1
 unless $imported["H87_Options"]
   msgbox "Windowskins script requires Holy87 Settings Menu v1.2.0 or better."
 end
@@ -136,41 +128,38 @@ end
 #==============================================================================
 module WindowskinsManager
   module_function
-  #--------------------------------------------------------------------------
-  # * Returns the windows folder name
-  #--------------------------------------------------------------------------
-  def window_folder; EXT_SK_FOLDER; end
-  #--------------------------------------------------------------------------
-  # * Gets the list of all windowskins objects
-  #--------------------------------------------------------------------------
+  # Returns the windows folder name
+  def window_folder
+    EXT_SK_FOLDER;
+  end
+
+  # Gets the list of all windowskins objects
   def list
     default_windowskins.merge(user_windowskins)
   end
-  #--------------------------------------------------------------------------
-  # * An hash with all the windowskin names {"name" => "name"}
-  #--------------------------------------------------------------------------
+
+  # An hash with all the windowskin names {"name" => "name"}
   def name_list
     h = {}
-    list.keys.each{|key| h[key] = key}
+    list.keys.each { |key| h[key] = key }
     h
   end
-  #--------------------------------------------------------------------------
-  # * Gets all the default windowskins in the game folder
-  #--------------------------------------------------------------------------
+
+  # Gets all the default windowskins in the game folder
   def default_windowskins
     fetch_windowskin_folder(INT_SK_FOLDER)
   end
-  #--------------------------------------------------------------------------
-  # * Gets all the custom windowskins in user folder
-  #--------------------------------------------------------------------------
+
+  # Gets all the custom windowskins in user folder
   def user_windowskins
     return {} unless $imported['H87_Homesave']
     return {} unless USE_CUSTOM
     fetch_windowskin_folder(custom_windowskins_folder)
   end
-  #--------------------------------------------------------------------------
-  # * Searches for all windowskins in the folder
-  #--------------------------------------------------------------------------
+
+  # Searches for all windowskins in the folder
+  # @param [String] path
+  # @return [Hash]
   def fetch_windowskin_folder(path)
     windowskins = {}
     Dir.foreach(path) do |file_name|
@@ -183,33 +172,26 @@ module WindowskinsManager
     end
     windowskins
   end
-  #--------------------------------------------------------------------------
-  # * Returns the complete folder path
+
+  # Returns the complete folder path
   # noinspection RubyResolve
   # @return [String]
-  #--------------------------------------------------------------------------
   def custom_windowskins_folder
-    fpath = Homesave.mydocuments
-    Dir.mkdir(fpath) unless File.directory?(fpath)
-    fpath << '/' + Homesave.folder_name
-    Dir.mkdir(fpath) unless File.directory?(fpath)
-    fpath << '/' + window_folder
+    fpath = Homesave.project_data_directory + '/' + window_folder
     Dir.mkdir(fpath) unless File.directory?(fpath)
     fpath
   end
-  #--------------------------------------------------------------------------
-  # * Adds the skin options in the settings menu
-  #--------------------------------------------------------------------------
+
+  # Adds the skin options in the settings menu
   def set_options
     H87Options.push_appearance_option(window_hash)
     H87Options.push_appearance_option(red_hash)
     H87Options.push_appearance_option(green_hash)
     H87Options.push_appearance_option(blue_hash)
   end
-  #--------------------------------------------------------------------------
-  # * Gets the windowskin selection hash
+
+  # Gets the windowskin selection hash
   # @return [Hash]
-  #--------------------------------------------------------------------------
   def window_hash
     {
         :type => :variable,
@@ -222,10 +204,9 @@ module WindowskinsManager
         :popup => "Window_SkinPopup"
     }
   end
-  #--------------------------------------------------------------------------
-  # * Gets the red color selection hash
+
+  # Gets the red color selection hash
   # @return [Hash]
-  #--------------------------------------------------------------------------
   def red_hash
     {
         :type => :bar,
@@ -234,17 +215,16 @@ module WindowskinsManager
         :var => 0,
         :max => 255,
         :min => -255,
-        :color => Color.new(255,0,0),
+        :color => Color.new(255, 0, 0),
         :perc => false,
         :not_initialize => true,
         :condition => "$game_system.tone_allowed?",
         :val_mt => :get_red_tone,
         :method => :set_red_tone}
   end
-  #--------------------------------------------------------------------------
-  # * Gets the gren color selection hash
+
+  # Gets the gren color selection hash
   # @return [Hash]
-  #--------------------------------------------------------------------------
   def green_hash
     {
         :type => :bar,
@@ -253,17 +233,16 @@ module WindowskinsManager
         :var => 0,
         :max => 255,
         :min => -255,
-        :color => Color.new(0,255,0),
+        :color => Color.new(0, 255, 0),
         :perc => false,
         :not_initialize => true,
         :condition => "$game_system.tone_allowed?",
         :val_mt => :get_green_tone,
         :method => :set_green_tone}
   end
-  #--------------------------------------------------------------------------
-  # * Gets the blue color selection hash
+
+  # Gets the blue color selection hash
   # @return [Hash]
-  #--------------------------------------------------------------------------
   def blue_hash
     {
         :type => :bar,
@@ -272,7 +251,7 @@ module WindowskinsManager
         :var => 0,
         :max => 255,
         :min => -255,
-        :color => Color.new(0,0,255),
+        :color => Color.new(0, 0, 255),
         :perc => false,
         :not_initialize => true,
         :condition => "$game_system.tone_allowed?",
@@ -287,96 +266,110 @@ end
 #  Class that handles all windowskin informations
 #==============================================================================
 class Window_Skin
-  #--------------------------------------------------------------------------
-  # * Public instance variables
-  #--------------------------------------------------------------------------
-  attr_reader :path       #file path
-  attr_reader :name       #windowskin name
-  attr_reader :tone       #windowskin color
-  attr_reader :bold       #text bold
-  attr_reader :italic     #text italic
-  attr_reader :outline    #text outline
-  attr_reader :opacity    #text opacity
-  attr_reader :shadow     #text shadow
-  attr_reader :font_name  #fonts array
-  attr_reader :file_name  #file name
-  attr_reader :font_size  #text size
+  # Public instance variables
+  # @return [String]
+  attr_reader :path #file path
+  # @return [String]
+  attr_reader :name #windowskin name
+  # @return [Tone]
+  attr_reader :tone #windowskin color
+  attr_reader :bold #text bold
+  attr_reader :italic #text italic
+  attr_reader :outline #text outline
+  attr_reader :opacity #text opacity
+  attr_reader :shadow #text shadow
+  # @return [String or Array<String>]
+  attr_reader :font_name #fonts array
+  # @return [String]
+  attr_reader :file_name #file name
+  attr_reader :font_size #text size
+  # @return [Color]
   attr_reader :font_color #font color
+  # @return [Color]
   attr_reader :font_out_color #outline color
+  # @return [String]
   attr_reader :background #background image
-  attr_reader :tone_locked#tone locked?
-  #--------------------------------------------------------------------------
-  # * Object initialization
+  attr_reader :background_opacity
+  attr_reader :tone_locked #tone locked?
+  # Object initialization
   #   path: file path
-  #--------------------------------------------------------------------------
   def initialize(path)
     @path = File.dirname(path) + "/"
-    @file_name = File.basename(path,".*")
+    @file_name = File.basename(path,".png")
     @name = @file_name
     @font_color = text_color
     check_skin_settings
   end
-  #--------------------------------------------------------------------------
-  # * Check if a skin setting file exists
-  #--------------------------------------------------------------------------
+
+  # Check if a skin setting file exists
   def check_skin_settings
     settings_file = @path + @file_name + ".txt"
     if File.exist?(settings_file)
       fetch_skin_settings(settings_file)
     end
   end
-  #--------------------------------------------------------------------------
-  # * Reads the settings file and settes the proper parameters
+
+  # Reads the settings file and settes the proper parameters
   #   settings_file: Settings file to read
-  #--------------------------------------------------------------------------
   def fetch_skin_settings(settings_file)
     File.open(settings_file, "r") do |file|
       file.each_line do |line|
         case line
-          when /name[ ]*[=:][ ]*(.+)/i; @name = $1
-          when /bold[ ]*[=:][ ]*(.+)/i; @bold = ch_tf($1)
-          when /italic[ ]*[=:][ ]*(.+)/i; @italic = ch_tf($1)
-          when /outline[ ]*[=:][ ]*(.+)/i; @outline = ch_tf($1)
-          when /shadow[ ]*[=:][ ]*(.+)/i; @shadow = ch_tf($1)
-          when /tone locked[ ]*[=:][ ]*(.+)/i; @tone_locked = ch_tf($1)
-          when /fonts[ ]*[=:][ ]*(.+)/i; @font_name = $1.split(",")
-          when /font size[ ]*[=:][ ]*(\d+)/i; @font_size = $1.to_i
-          when /opacity[ ]*[=:][ ]*(\d+)/i; @opacity = $1.to_i
-          when /background[ ]*[=:][ ]*(.+)/i; @background = $1
-          when /^color[ ]*[=:][ ]*(.+)/i
-            colors = $1.split(/[ ]*,[ ]*/)
-            @font_color = Color.new(255,255,255,255)
-            @font_color.red = colors[0].to_i if colors[0]
-            @font_color.green = colors[1].to_i if colors[1]
-            @font_color.blue = colors[2].to_i if colors[2]
-            @font_color.alpha = colors[3].to_i if colors[3]
-          when /^outline color[ ]*[=:][ ]*(.+)/i
-            colors = $1.split(/[ ]*,[ ]*/)
-            @font_out_color = Color.new(0,0,0,255)
-            @font_out_color.red = colors[0].to_i if colors[0]
-            @font_out_color.green = colors[1].to_i if colors[1]
-            @font_out_color.blue = colors[2].to_i if colors[2]
-            @font_out_color.alpha = colors[3].to_i if colors[3]
-          when /tone[ ]*[=:][ ]*(.+)/i
-            begin
-              colors = $1.split(/[ ]*,[ ]*/).collect{|a| a.to_i}
-              @tone = Tone.new(colors[0], colors[1], colors[2])
-            rescue Exception
-              println $!
-              println $!.message
-            end
-          else
-            puts 'Invalid ' + line + ' data'
+        when /name[ ]*[=:][ ]*(.+)/i;
+          @name = $1
+        when /bold[ ]*[=:][ ]*(.+)/i;
+          @bold = ch_tf($1)
+        when /italic[ ]*[=:][ ]*(.+)/i;
+          @italic = ch_tf($1)
+        when /outline[ ]*[=:][ ]*(.+)/i;
+          @outline = ch_tf($1)
+        when /shadow[ ]*[=:][ ]*(.+)/i;
+          @shadow = ch_tf($1)
+        when /tone locked[ ]*[=:][ ]*(.+)/i;
+          @tone_locked = ch_tf($1)
+        when /fonts[ ]*[=:][ ]*(.+)/i;
+          @font_name = $1.split(",")
+        when /font size[ ]*[=:][ ]*(\d+)/i;
+          @font_size = $1.to_i
+        when /opacity[ ]*[=:][ ]*(\d+)/i;
+          @opacity = $1.to_i
+        when /background[ ]*[=:][ ]*(.+)/i;
+          @background = $1
+        when /background[ _]opacity[ ]*[=:][ ]*(\d+)/i;
+          @background_opacity = $1.to_i
+        when /^color[ ]*[=:][ ]*(.+)/i
+          colors = $1.split(/[ ]*,[ ]*/)
+          @font_color = Color.new(255, 255, 255, 255)
+          @font_color.red = colors[0].to_i if colors[0]
+          @font_color.green = colors[1].to_i if colors[1]
+          @font_color.blue = colors[2].to_i if colors[2]
+          @font_color.alpha = colors[3].to_i if colors[3]
+        when /^outline color[ ]*[=:][ ]*(.+)/i
+          colors = $1.split(/[ ]*,[ ]*/)
+          @font_out_color = Color.new(0, 0, 0, 255)
+          @font_out_color.red = colors[0].to_i if colors[0]
+          @font_out_color.green = colors[1].to_i if colors[1]
+          @font_out_color.blue = colors[2].to_i if colors[2]
+          @font_out_color.alpha = colors[3].to_i if colors[3]
+        when /tone[ ]*[=:][ ]*(.+)/i
+          begin
+            colors = $1.split(/[ ]*,[ ]*/).collect { |a| a.to_i }
+            @tone = Tone.new(colors[0], colors[1], colors[2])
+          rescue Exception
+            Logger.error $!
+            Logger.error $!.message
+          end
+        else
+          puts 'Invalid ' + line + ' data'
         end
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * Returns true or false for a proper string
+
+  # Returns true or false for a proper string
   #   string: string to read. Returns true if string == "true",
   #                           Returns false if string == "false",
   #                           Otherwise, returns nil.
-  #--------------------------------------------------------------------------
   def ch_tf(string)
     if string =~ /(true|false)/i
       return true if string.downcase == "true"
@@ -384,17 +377,17 @@ class Window_Skin
     end
     nil
   end
-  #--------------------------------------------------------------------------
-  # * Returns the windowskin bitmap
+
+  # Returns the windowskin bitmap
   # @return [Bitmap]
-  #--------------------------------------------------------------------------
-  def bitmap; Cache.windowskin(@file_name, @path); end
-  #--------------------------------------------------------------------------
-  # * Get Text Color
+  def bitmap
+    Cache.windowskin(@file_name + '.png', @path);
+  end
+
+  # Get Text Color
   #     n : Text color number  (0-31)
   # @param [Integer] n
   # @return [Color]
-  #--------------------------------------------------------------------------
   def text_color(n = 0)
     x = 64 + (n % 8) * 8
     y = 96 + (n / 8) * 8
@@ -408,9 +401,7 @@ end
 #  Module for loading resources
 #==============================================================================
 module Cache
-  #--------------------------------------------------------------------------
-  # * Returns the windowskin bitmap
-  #--------------------------------------------------------------------------
+  # Returns the windowskin bitmap
   def self.windowskin(filename, path = WindowskinsManager::INT_SK_FOLDER + '/')
     load_bitmap(path, filename)
   end
@@ -421,28 +412,24 @@ end
 #==============================================================================
 class Game_System
   attr_accessor :tone_customized
-  #--------------------------------------------------------------------------
-  # * Returns the selected windowskin or default if none is setted
+  # Returns the selected windowskin or default if none is setted
   # @return [Window_Skin]
-  #--------------------------------------------------------------------------
   def selected_windowskin
     set_windowskin(default_windowskin) if @selected_windowskin.nil?
     @selected_windowskin
   end
-  #--------------------------------------------------------------------------
-  # * Returns the default widnowskin
+
+  # Returns the default widnowskin
   # @return [Window_Skin]
-  #--------------------------------------------------------------------------
   def default_windowskin
     Window_Skin.new(WindowskinsManager::INT_SK_FOLDER + '/' + WindowskinsManager::DEFAULT_SKIN)
   end
-  #--------------------------------------------------------------------------
-  # * Sets a windowskin to the game
+
+  # Sets a windowskin to the game
   #   skin_name: if it's a string, sets the windowskin of the list from key
   #              if it's an integer or nil, sets the default windowskin
   #              if it's a Window_Skin object, sets that windowskin
-  # @param [String] skin_name
-  #--------------------------------------------------------------------------
+  # @param [String or Window_Skin] skin_name
   def set_windowskin(skin_name)
     if skin_name == 0 or skin_name.nil?
       windowskin = default_windowskin
@@ -470,44 +457,50 @@ class Game_System
     end
     update_font_settings
   end
-  #--------------------------------------------------------------------------
-  # * Refreshes the windowskin as the save loads
-  #--------------------------------------------------------------------------
+
+  # Refreshes the windowskin as the save loads
   def refresh_windowskin
     set_windowskin(selected_windowskin)
   end
-  #--------------------------------------------------------------------------
-  # * Change the font settings setted in the windowskin.
-  #--------------------------------------------------------------------------
+
+  # Change the font settings setted in the windowskin.
   def update_font_settings
-    change_font_setting("default_name","font_name")
-    change_font_setting("default_size","font_size")
-    change_font_setting("default_bold","bold")
-    change_font_setting("default_italic","italic")
-    change_font_setting("default_shadow","shadow")
-    change_font_setting("default_outline","outline")
-    change_font_setting("default_color","font_color")
-    change_font_setting("default_out_color","font_out_color")
+    change_font_setting(:default_name, :font_name)
+    change_font_setting(:default_size, :font_size)
+    change_font_setting(:default_bold, :bold)
+    change_font_setting(:default_italic, :italic)
+    change_font_setting(:default_shadow, :shadow)
+    change_font_setting(:default_outline, :outline)
+    change_font_setting(:default_color, :font_color)
+    change_font_setting(:default_out_color, :font_out_color)
   end
-  #--------------------------------------------------------------------------
-  # * Change the specified font setting.
+
+  # Change the specified font setting.
   #   f_param: Font class attribute
   #   w_param: Window_Skin class proper attribute
   #   If w_param is nil, loads the default font setting.
-  # @param [String] f_param font param
-  # @param [String] w_param windowskin param
-  #--------------------------------------------------------------------------
+  # @param [Symbol] f_param font param
+  # @param [Symbol] w_param windowskin param
   def change_font_setting(f_param, w_param)
-    if eval("selected_windowskin.#{w_param}") != nil
-      eval("Font.#{f_param} = selected_windowskin.#{w_param}")
+    default_param = (f_param.to_s + '=').to_sym
+    value = selected_windowskin.send(w_param)
+    if value.is_a?(Color) or value != nil
+      Font.send(default_param, selected_windowskin.send(w_param))
     else
-      eval("Font.#{f_param} = Font_BK.#{f_param}")
+      Font.send(default_param, Font_BK.send(f_param))
     end
   end
-  #--------------------------------------------------------------------------
-  # * Returns true if the player can change the windowskin tone
-  #--------------------------------------------------------------------------
-  def tone_allowed?; !selected_windowskin.tone_locked; end
+
+  # Returns true if the player can change the windowskin tone
+  def tone_allowed?
+    !selected_windowskin.tone_locked
+  end
+
+  # resets windowskin settings if windowskin not found
+  def fallback_windowskin
+    return if WindowskinsManager.list.keys.include?(selected_windowskin.name)
+    set_windowskin default_windowskin
+  end
 end
 
 #==============================================================================
@@ -516,23 +509,19 @@ end
 #  Window for windowskin selection
 #==============================================================================
 class Window_SkinPopup < Generic_PopupWindow
-  #--------------------------------------------------------------------------
-  # * Override method for cursor up
-  #--------------------------------------------------------------------------
+  # Override method for cursor up
   def cursor_up(wrap = false)
     super(wrap)
     update_skins
   end
-  #--------------------------------------------------------------------------
-  # * Override method for curson down
-  #--------------------------------------------------------------------------
+
+  # Override method for curson down
   def cursor_down(wrap = false)
     super(wrap)
     update_skins
   end
-  #--------------------------------------------------------------------------
-  # * Update the system windowskin for all windows
-  #--------------------------------------------------------------------------
+
+  # Update the system windowskin for all windows
   def update_skins
     $game_system.set_windowskin(item)
     SceneManager.scene.change_skin
@@ -546,28 +535,18 @@ end
 #  Adds the method to refresh all windows
 #==============================================================================
 class Scene_Options < Scene_MenuBase
-  #--------------------------------------------------------------------------
-  # * Change scene windowskin
-  #--------------------------------------------------------------------------
+  # Change scene windowskin
   def change_skin
     reset_skins
-    recheck_background
+    set_background2_bitmap
   end
-  #--------------------------------------------------------------------------
-  # * Refresh all windows skins
-  #--------------------------------------------------------------------------
+
+  # Refresh all windows skins
   def reset_skins
     instance_variables.each do |varname|
       ivar = instance_variable_get(varname)
       ivar.refresh_windowskin(true) if ivar.is_a?(Window)
     end
-  end
-  #--------------------------------------------------------------------------
-  # * Refresh background
-  #--------------------------------------------------------------------------
-  def recheck_background
-    dispose_background
-    create_background
   end
 end
 
@@ -577,60 +556,51 @@ end
 #  New option methods
 #==============================================================================
 class Option
-  #--------------------------------------------------------------------------
-  # * Get the system windowskin name
+  # Get the system windowskin name
   # @return [String]
-  #--------------------------------------------------------------------------
   def get_windowskin
     $game_system.selected_windowskin.name
   end
-  #--------------------------------------------------------------------------
-  # * Sets the windowskin (useless, anyway)
-  #--------------------------------------------------------------------------
+
+  # Sets the windowskin (useless, anyway)
   def set_windowskin(value)
     $game_system.set_windowskin(value)
   end
-  #--------------------------------------------------------------------------
-  # * Gets the system red tone
+
+  # Gets the system red tone
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def get_red_tone
     $game_system.window_tone.red
   end
-  #--------------------------------------------------------------------------
-  # * Sets the system red tone
+
+  # Sets the system red tone
   # @param [Integer] value
-  #--------------------------------------------------------------------------
   def set_red_tone(value)
     $game_system.window_tone.red = value
     $game_system.tone_customized = true
   end
-  #--------------------------------------------------------------------------
-  # * Gets the system green tone
+
+  # Gets the system green tone
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def get_green_tone
     $game_system.window_tone.green
   end
-  #--------------------------------------------------------------------------
-  # * Sets the system green tone
+
+  # Sets the system green tone
   # @param [Integer] value
-  #--------------------------------------------------------------------------
   def set_green_tone(value)
     $game_system.window_tone.green = value
     $game_system.tone_customized = true
   end
-  #--------------------------------------------------------------------------
-  # * Gets the system blue tone
+
+  # Gets the system blue tone
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def get_blue_tone
     $game_system.window_tone.blue
   end
-  #--------------------------------------------------------------------------
-  # * Sets the system blue tone
+
+  # Sets the system blue tone
   # @param [Integer] value
-  #--------------------------------------------------------------------------
   def set_blue_tone(value)
     $game_system.window_tone.blue = value
     $game_system.tone_customized = true
@@ -644,24 +614,22 @@ end
 #==============================================================================
 class Window_Base < Window
   alias h87_wskins_initialize initialize unless $@
-  #--------------------------------------------------------------------------
-  # * Initialization alias
+  # Initialization alias
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
   # @param [Integer] height
-  #--------------------------------------------------------------------------
   def initialize(x, y, width, height)
     h87_wskins_initialize(x, y, width, height)
     refresh_windowskin
   end
-#--------------------------------------------------------------------------
-# * Loads the windowskin
-#   need_refresh: true if you want to recreate contents and refresh.
-#--------------------------------------------------------------------------
+
+  # Loads the windowskin
+  #   need_refresh: true if you want to recreate contents and refresh.
   def refresh_windowskin(need_refresh = false)
     return unless $game_system
     if $game_system.selected_windowskin != nil
+      $game_system.fallback_windowskin
       self.windowskin = $game_system.selected_windowskin.bitmap
       unless @boc
         if $game_system.selected_windowskin.opacity != nil
@@ -678,9 +646,8 @@ class Window_Base < Window
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * Back opacity setting override
-  #--------------------------------------------------------------------------
+
+  # Back opacity setting override
   def back_opacity=(value)
     super
     @boc = true
@@ -690,22 +657,22 @@ end
 class Scene_MenuBase < Scene_Base
   alias h87_wsk_create_background create_background unless $@
   alias h87_wsk_dispose_background dispose_background unless $@
-  #--------------------------------------------------------------------------
-  # * Create Background
-  #--------------------------------------------------------------------------
+  # Create Background
   def create_background
     h87_wsk_create_background
     @background_sprite2 = Sprite.new
-    picture_name = $game_system.selected_windowskin.background
-    if picture_name.nil?
-      @background_sprite2.bitmap = nil
-    else
-      @background_sprite2.bitmap = Cache.picture(picture_name)
-    end
+    @background_sprite2.z = @background_sprite.z + 1 if @background_sprite
+    set_background2_bitmap
   end
-  #--------------------------------------------------------------------------
-  # * Menu Background disposer
-  #--------------------------------------------------------------------------
+
+  def set_background2_bitmap
+    picture_name = $game_system.selected_windowskin.background
+    bitmap = picture_name.nil? ? nil : Cache.picture(picture_name)
+    @background_sprite2.bitmap = bitmap
+    @background_sprite2.opacity = $game_system.selected_windowskin.background_opacity || 255
+  end
+
+  # Menu Background disposer
   def dispose_background
     h87_wsk_dispose_background
     @background_sprite2.dispose
@@ -718,9 +685,7 @@ end
 #  backup container for fonts
 #==============================================================================
 module Font_BK
-  #--------------------------------------------------------------------------
-  # * Stores the default font settings
-  #--------------------------------------------------------------------------
+  # Stores the default font settings
   def self.make_font_bk
     @fdn = Font.default_name.clone
     @fds = Font.default_size
@@ -731,17 +696,39 @@ module Font_BK
     @fdc = Font.default_color.clone
     @fdoc = Font.default_out_color.clone
   end
-  #--------------------------------------------------------------------------
-  # * Releases the stored settings to the font.
-  #--------------------------------------------------------------------------
-  def self.default_name; @fdn; end
-  def self.default_size; @fds; end
-  def self.default_bold; @fdb; end
-  def self.default_italic; @fdi; end
-  def self.default_shadow; @fdh; end
-  def self.default_outline; @fdo; end
-  def self.default_color; @fdc; end
-  def self.default_out_color; @fdoc; end
+
+  # Releases the stored settings to the font.
+  def self.default_name
+    @fdn;
+  end
+
+  def self.default_size
+    @fds;
+  end
+
+  def self.default_bold
+    @fdb;
+  end
+
+  def self.default_italic
+    @fdi;
+  end
+
+  def self.default_shadow
+    @fdh;
+  end
+
+  def self.default_outline
+    @fdo;
+  end
+
+  def self.default_color
+    @fdc;
+  end
+
+  def self.default_out_color
+    @fdoc;
+  end
 end
 
 #==============================================================================
@@ -752,9 +739,8 @@ module DataManager
   class << self
     alias wsk_extract_save_contents extract_save_contents
   end
-  #--------------------------------------------------------------------------
-  # * Alias method extract_save_contents
-  #--------------------------------------------------------------------------
+
+  # Alias method extract_save_contents
   def self.extract_save_contents(contents)
     wsk_extract_save_contents(contents)
     $game_system.refresh_windowskin
