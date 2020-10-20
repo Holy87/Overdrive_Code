@@ -473,7 +473,7 @@ class Game_Actor < Game_Battler
   def push_message(stateid)
     state = $data_states[stateid]
     text = sprintf(Vocab.new_boost, self.name, state.name)
-    tone = Tone.new(200,255,0,50)
+    tone = Tone.new(200,200,0,0)
     $game_map.stack_popup([state.icon_index, text], tone, EsperConfig::BOOST_APPRAISED_SE)
   end
   #--------------------------------------------------------------------------

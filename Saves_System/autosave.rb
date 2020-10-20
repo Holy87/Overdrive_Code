@@ -1,5 +1,3 @@
-require 'rm_vx_data'
-
 =begin
 AUTOSALVATAGGIO v1.0
 Questo script serve per salvare automaticamente il gioco in determinate occasioni.
@@ -49,32 +47,33 @@ module DataManager
   # * avvia autosalvataggio
   # forced: salva anche se l'opzione è disattivata
   #--------------------------------------------------------------------------
-  def self.autosave(forced = false)
+  def self.autosave(forced = false, show_popup = true)
     return if @actual_saveslot.nil?
     return unless forced or $game_system.autosave_enabled?
-    # compatibilità fog
-    $game_temp.temp_fog = $game_map.fog
-    $game_map.fog = []
-    $temp_save = true
-    if save_game(@actual_saveslot)
-      popup_save_ok if $temp_save
+    autosave_result = save_game(@actual_saveslot)
+    if autosave_result
+      Logger.info "Autosalvataggio riuscito"
     else
-      popup_save_failed if $temp_save
+      Logger.error "Autosalvataggio fallito"
     end
-    $temp_save = false
-    $game_map.fog = $game_temp.temp_fog
+    if show_popup
+      autosave_result ? popup_save_ok : popup_save_failed
+    end
+    autosave_result
   end
   #--------------------------------------------------------------------------
   # * mostra il popup di salvataggio riuscito
   #--------------------------------------------------------------------------
   def self.popup_save_ok
-    Popup.show(Vocab.autosave_success,1254,[0,255,0,100])
+    return unless SceneManager.scene_is? Scene_Map
+    $game_map.add_popup([1254, Vocab.autosave_success], Tone.new(0,255,0,100))
   end
   #--------------------------------------------------------------------------
   # * mostra il popup di salvataggio fallito
   #--------------------------------------------------------------------------
   def self.popup_save_failed
-    Popup.show(Vocab.autosave_failed,1254,[255,0,0,100])
+    return unless SceneManager.scene_is? Scene_Map
+    $game_map.add_popup([1254, Vocab.autosave_failed], Tone.new(255,0,0,100))
   end
   #--------------------------------------------------------------------------
   # * Execute Save (No Exception Processing)

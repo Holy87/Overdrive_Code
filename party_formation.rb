@@ -775,7 +775,7 @@ class Game_Troop < Game_Unit
 
   def distribute_jp
     distribute_active_members_jp
-    jp = $game_troop.dead_members.inject(0) {|sum, enemy| sum + enemy.jp } * $game_party.reserve_exp_rate
+    jp = $game_troop.dead_members.inject(0) {|sum, enemy| sum + enemy.enemy.jp } * $game_party.reserve_exp_rate
     $game_party.stand_by_members.compact.each { |member| member.earn_jp(jp.to_i) }
   end
 end

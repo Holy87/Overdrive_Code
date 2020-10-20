@@ -90,6 +90,7 @@ class Map_Popup_Data
   attr_accessor :x
   attr_accessor :y
   attr_accessor :opacity
+  attr_accessor :tone
 
   attr_reader :id
   attr_reader :width
@@ -115,11 +116,12 @@ class Map_Popup_Data
 
   # @return [Bitmap]
   def generate_bitmap
-    bitmap = Cache.picture(POPUP_BACKGROUND_IMAGE).clone
+    height = Cache.picture(POPUP_BACKGROUND_IMAGE).height
+    bitmap = Bitmap.new(Graphics.width, height)
     bitmap.font.name = POPUP_FONTS
     bitmap.font.color = POPUP_COLOR
     bitmap.font.shadow = POPUP_SHADOW
-    #bitmap.font.outline = POPUP_OUTLINE
+    bitmap.font.outline = POPUP_OUTLINE
     bitmap.font.italic = POPUP_ITALIC
     bitmap.font.bold = POPUP_BOLD
     bitmap.font.size = POPUP_CONTENT_SIZE
@@ -164,7 +166,6 @@ class Map_Popup_Data
   end
 
   # @param [Bitmap] bitmap
-  # @param [Array<String,Integer>] data_array
   def draw_data(bitmap)
     x = PADDING
     y = PADDING
@@ -220,7 +221,8 @@ class Game_Map
 
   def update_popups
     @popups.each_value { |popup| popup.update}
-    @popups.delete_if {|id, popup| popup.transparent?}
+    #noinspection RubyUnusedLocalVariable
+    @popups.delete_if {|_id, popup| popup.transparent?}
   end
 
   def update_stack
@@ -240,9 +242,10 @@ class Game_Map
     @popup_stack_timer = 0
   end
 
-  # @param [Array<String,Integer>] data
+  # @param [Array<String,Integer> or String] data
   # @param [Tone] tone
   def stack_popup(data, tone = nil, sound = nil)
+    data = [data] if data.is_a?(String)
     init_popups if @popup_stack.nil?
     @popup_stack.push({:data => data, :tone => tone, :sound => sound})
   end
@@ -263,9 +266,9 @@ end
 
 #===============================================================================
 # * Classe Sprite_Popup
-# Sottoclasse di Popup, serve pr
+# Contiene sfondo e testo del popup
 #===============================================================================
-class Sprite_Popup < Sprite
+class Sprite_Popup < Sprite_Container
   attr_accessor :popup_id
   # @param [Viewport] viewport
   # @param [Integer] popup_id
@@ -285,13 +288,14 @@ class Sprite_Popup < Sprite
   def copy_popup_bitmap
     popup = $game_map.popups[@popup_id]
     return if popup.nil?
-    self.bitmap = popup.generate_bitmap
+    add_bitmap Cache.picture(Popup_Settings::POPUP_BACKGROUND_IMAGE)
+    add_bitmap popup.generate_bitmap
+    sprites.first.tone = popup.tone
   end
 
   def copy_popup_data
     popup = $game_map.popups[@popup_id]
     if popup.nil?
-      self.bitmap.dispose
       dispose
       return
     end
@@ -385,6 +389,7 @@ end
 #===============================================================================
 class Scene_Map < Scene_Base
   def trigger_popup_graphic(popup_id)
+    return if @spriteset.nil?
     @spriteset.trigger_popup(popup_id)
   end
 end

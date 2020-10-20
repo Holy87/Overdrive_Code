@@ -158,6 +158,9 @@ class Window_ActorCommand < Window_Command
   # @param [Game_Actor] actor
   def attack_icon(actor)
     return 0 if actor.nil?
+    if actor.has_custom_attack?
+      return actor.custom_attack_skill.icon_index
+    end
     return COMMAND_ICONS[UNHARMED_ICON] if actor.unharmed?
     actor.weapons.first.icon_index
   end
@@ -167,6 +170,9 @@ class Window_ActorCommand < Window_Command
   # generica se non ha alcuno scudo
   # @param [Game_Actor] actor
   def guard_icon(actor)
+    if actor.has_custom_guard?
+      return actor.custom_guard_skill.icon_index
+    end
     shields = actor.equips.compact.select { |e| e.shield? }
     shields.any? ? shields.first.icon_index : COMMAND_ICONS[DEFAULT_GUARD_ICON]
   end

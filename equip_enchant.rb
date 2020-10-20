@@ -275,7 +275,7 @@ module H87Enchant
     when RPG::Armor
       new_equip = $data_armors[equip.real_id].clone
     else
-      raise Exception('Nessun equipaggiamento per ' + equip.to_s)
+      raise ArgumentError.new('Nessun equipaggiamento per ' + equip.to_s)
     end
     new_equip.enchant_state = enchant_state if enchant_state > 0
     $game_party.gain_item(new_equip, 1)
@@ -604,7 +604,7 @@ module EquipEnchant
 end
 
 class RPG_Weapons < Array
-  # @return [RPG:Weapon, Array<RPG::Weapon>]
+  # @return [RPG::Weapon]
   def [](*args)
     return super(*args) unless args[0].is_a?(Float)
     return super(*args) if args.size > 1
@@ -613,6 +613,7 @@ class RPG_Weapons < Array
 end
 
 class RPG_Armors < Array
+  # @return [RPG::Armor]
   def [](*args)
     return super(*args) unless args[0].is_a?(Float)
     return super(*args) if args.size > 1
@@ -934,7 +935,7 @@ class Power_Up
       when /lhp[ ](\w+)[ ]+(\w+)[ ]+([+\-]?\d+)/i
         effects.push([:lhp, $1.to_sym, $2.to_sym, $3.to_i])
       else
-        raise Exception('Errore per stringa' + effects_string.to_s)
+        raise ArgumentError.new('Errore per stringa' + effects_string.to_s)
       end
     end
     effects

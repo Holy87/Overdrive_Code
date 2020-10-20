@@ -31,7 +31,7 @@ module ShopsSettings
   # permette che il negozio rivenda gli articoli che hai venduto loro
   RESELLS = true
   # permette al giocatore di riacquistare allo stesso prezzo ciò che
-  # ha appena venduto al negozio, per sbaglio
+  # ha appena venduto al negozio per sbaglio
   REBUY = true
 
   # fare un aggiornamento del negozio alla prima visita? Questo aggiunge
@@ -142,6 +142,7 @@ module ShopsSettings
               {:set => 'i6'},
               {:set => 'i107x1', :sell_locked => true},
               {:set => 'i153x1', :sell_locked => true},
+              {:set => 'i251x1', :sell_locked => true, :price => 100}
           ],
           :random_goods => [
               {:set => 'i5x10'},
@@ -203,7 +204,8 @@ module ShopsSettings
               {:set => 'i6'}, {:set => 'i7x10'},
               {:set => 'i107x1', :sell_locked => true},
               {:set => 'i153x1', :sell_locked => true},
-              {:set => 'i21x1'}
+              {:set => 'i21x1'},
+              {:set => 'i260x1', :sell_locked => true, :price => 250}
           ],
           :random_goods => [
               {:set => 'i7x15'},
@@ -252,7 +254,8 @@ module ShopsSettings
               {:set => 'i150x1', :sell_locked => true},
               {:set => 'i153x1', :sell_locked => true},
               {:set => 'i11x1', :sell_locked => true},
-              {:set => 'i186x1'}
+              {:set => 'i186x1'},
+              {:set => 'i261x1', :sell_locked => true, :price => 500}
           ],
           :random_goods => [
               {:set => 'i50x1', :sell_locked => true, :repl_rate => 100},
@@ -734,7 +737,9 @@ module ShopsSettings
               {:set => 'i107x1', :sell_locked => true},
               {:set => 'i153x1', :sell_locked => true},
               {:set => 'i11x1', :sell_locked => true},
-              {:set => 'i186x2'}
+              {:set => 'i186x2'},
+              {:set => 'i252x1', :sell_locked => true, :price => 2000},
+              {:set => 'i253x1', :sell_locked => true, :price => 1000},
           ],
           :random_goods => [
               {:set => 'i107x1', :sell_locked => true, :repl_rate => 100},
@@ -804,6 +809,7 @@ module ShopsSettings
               {:set => 'i7x4'},
               {:set => 'i15x1'},
               {:set => 'i16x2'},
+              {:set => 'i254x1', :sell_locked => true, :price => 2000},
           ],
           :random_goods => [
               {:set => 'i1x30'},
@@ -1107,6 +1113,8 @@ module ShopsSettings
               {:set => 'i153x1', :sell_locked => false},
               {:set => 'i160x2'},
               {:set => 'i142x2'},
+              {:set => 'i255x1', :sell_locked => true, :price => 1000},
+              {:set => 'i256x1', :sell_locked => true, :price => 3000},
           ],
           :random_goods => [
               {:set => 'i38x15'},

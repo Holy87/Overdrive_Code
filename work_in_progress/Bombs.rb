@@ -3,7 +3,7 @@ require File.expand_path('rm_vx_data')
 class RPG::UsableItem < RPG::BaseItem
   def has_bomb?
     self.note.split(/[\r\n]+/).each { |riga|
-      return true if riga =~
+      return true if riga =~ /a/
 end
 
 class Skill_Bomb

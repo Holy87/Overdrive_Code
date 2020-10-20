@@ -2,7 +2,7 @@
 =begin
  ==============================================================================
   ■ Localizzazione del gioco di Holy87
-      versione 1.0.3
+      versione 1.1
       Difficoltà utente: ★★★
       Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata

@@ -28,9 +28,9 @@ module Element_Settings
   }
 
   MULTIPLE_REGEX = /\[(.+\/.+)\]/
-  ELEMENT_AMPLIFY_REGEX = /<amplify[ _]element[ ]+(\d+)[ ]*:[ ]*([\+\-]\d+)%>/i
-  HEAL_AMPLIFY_REGEX = /<amplify[ _]heal[ ]*:[ ]*([\+\-]\d+)%>/i
-  ELEMENT_DEFENSE = /<element[ _]rate[ ]+(\d+)[ ]*:[ ]*([\+\-]\d+)%>/i
+  ELEMENT_AMPLIFY_REGEX = /<amplify[ _]element[ ]+(\d+)[ ]*:[ ]*([+\-]\d+)%>/i
+  HEAL_AMPLIFY_REGEX = /<amplify[ _]heal[ ]*:[ ]*([+\-]\d+)%>/i
+  ELEMENT_DEFENSE = /<element[ _]rate[ ]+(\d+)[ ]*:[ ]*([+\-]\d+)%>/i
 
   # icon index
   # @return [Integer]
@@ -94,6 +94,8 @@ module DataElements
         @heal_amplify = $1.to_i
       when Element_Settings::ELEMENT_DEFENSE
         @element_rate_set[$1.to_i] = $2.to_i
+      else
+        # type code here
       end
     }
   end
@@ -139,7 +141,7 @@ class RPG::System
   end
 
   # @param [Integer] element_id
-  # @return [RPG::Element_Data]
+  # @return [RPG::Element_Data, nil]
   def element_by_id(element_id)
     elements_data.select { |e| e.id == element_id }.first
   end
@@ -178,6 +180,8 @@ class RPG::System
   def attribute_icon(attribute_id)
     elements_data.select {|ele| ele.id == attribute_id}.first.icon_index
   end
+
+  alias element_icon attribute_icon
 end
 
 class RPG::Element_Data
@@ -206,13 +210,13 @@ class RPG::Element_Data
   end
 
   # il rate minmo dell'elemento
-  # @return [Integer]
+  # @return [Integer, nil]
   def min_rate
     rate_table.last
   end
 
   # il rate massimo dell'elemento
-  # @return [Integer]
+  # @return [Integer, nil]
   def max_rate
     rate_table.first
   end
@@ -262,13 +266,13 @@ class RPG::Element_Data
   private
 
   # @param [String] str
-  # @return [String]
+  # @return [String, nil]
   def singular(str)
     str.split('/').first
   end
 
   # @param [String] str
-  # @return [String]
+  # @return [String, nil]
   def plural(str)
     str.split('/').last
   end

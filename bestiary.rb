@@ -19,7 +19,7 @@ module BestiaryConfig
   ENEMYDEFT = "Sconfitti"
   ENEMYEXP = "Esperienza"
   ENEMYAP = "Punti Abilità"
-  ENEMYGOLD = "Piastre"
+  ENEMYGOLD = "Monete"
   NOTYPE = "Nessuno"
   DESCRIPT = "Informazioni"
   NODESCRIPT = "Nessuna informazione."
@@ -184,15 +184,6 @@ class RPG::Enemy
     end
   end
 
-  # @return [String]
-  def foo
-    %w(foo bar) * ', '
-  end
-
-
-
-
-
   # Caricamento delle informazioni
   def cri
     self.has_critical ? 10 : 1
@@ -267,6 +258,24 @@ class Scene_Title < Scene_Base
 end #scene_title
 
 #==============================================================================
+# ** Scene_Battle
+#==============================================================================
+class Scene_Battle < Scene_Base
+  alias no_best_process_victory process_victory unless $@
+
+  # processo di vittoria
+  def process_victory
+    add_defeated_enemies
+    no_best_process_victory
+  end
+
+  # aggiunge i nemici sconfitti al bestiario
+  def add_defeated_enemies
+    $game_troop.dead_members.each { |enemy| $game_party.add_enemy_defeated(enemy.enemy_id) }
+  end
+end
+
+#==============================================================================
 # ** Game_Party
 #------------------------------------------------------------------------------
 #  Per aggiungere lo stato dei nemici sconfitti
@@ -287,7 +296,9 @@ class Game_Party < Game_Unit
   # Restituisce i nemici sconfitti per ID
   # @return [Array<Integer>]
   def defeated_enemy_ids
-    @defeated_enemies ||= BestiaryConfig.get_enemy_array
+    @defeated_enemies_count ||= {}
+    @defeated_enemies_count.keys.sort
+    #@defeated_enemies ||= BestiaryConfig.get_enemy_array
   end
 
   # Restituisce Il numero di nemici uccisi per un certo tipo
@@ -302,16 +313,32 @@ class Game_Party < Game_Unit
   #     enemy_id: id nemico
   #     number: numero di nemici sconfitti
   def add_enemy_defeated(enemy_id, number = 1)
-    if defeated_enemy_ids[enemy_id].nil?
-      @defeated_enemies.push(enemy_id)
-      @defeated_enemies.sort
-    end
+    return if enemy_id.nil?
+    #if defeated_enemy_ids[enemy_id].nil?
+    #  @defeated_enemies.push(enemy_id)
+    #  @defeated_enemies.sort
+    #end
     @defeated_enemies_count = {} if @defeated_enemies_count.nil?
     if @defeated_enemies_count[enemy_id].nil?
       @defeated_enemies_count[enemy_id] = 1
     else
       @defeated_enemies_count[enemy_id] += number
     end
+    enemy = $data_enemies[enemy_id]
+    enemy.enemy_types.each {|type| add_defeated_enemy_type(type.id, number)}
+  end
+
+  # restituisce il numero di nemici sconfitti
+  # per un determinato tipo (ad es. 19: belva)
+  def defeated_enemies_type_count(type_id)
+    @defeated_enemy_types ||= {}
+    @defeated_enemy_types[type_id] || 0
+  end
+
+  # aggiunge un nemico sconfitto al tipo
+  def add_defeated_enemy_type(enemy_type, number = 1)
+    total = defeated_enemies_type_count(enemy_type)
+    @defeated_enemy_types[enemy_type] = total + number
   end
 
   # Restituisce se un dato nemico è nel bestiario
@@ -335,7 +362,7 @@ class Scene_Bestiary < Scene_MenuBase
   # Inizio
   def start
     super
-    create_viewport
+    create_main_viewport
     create_category_window
     create_enemy_list_window
     create_info_window
@@ -352,11 +379,6 @@ class Scene_Bestiary < Scene_MenuBase
   def terminate
     super
     @viewport.dispose
-  end
-
-  # Crea il viewport
-  def create_viewport
-    @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
   end
 
   # Creazione della finestra delle categorie

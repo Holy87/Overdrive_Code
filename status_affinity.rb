@@ -15,9 +15,17 @@ class Game_Battler
     features_sum :state_defense_rate, state_id
   end
 
+  def state_rank(state_id)
+    0 # definito nelle sottoclssi
+  end
+
+  def custom_rank(state_id)
+    StatusAffinitySettings::STATE_RANKS[state_id][state_rank(state_id)]
+  end
+
   def dynamic_state_probability(state_id)
     if StatusAffinitySettings::STATE_RANKS.keys.include? state_id
-      probability = StatusAffinitySettings::STATE_RANKS[state_id]
+      probability = custom_rankk(state_id)
     else
       probability = default_rank(state_id)
     end
@@ -33,10 +41,18 @@ class Game_Actor < Game_Battler
   def state_probability(state_id)
     dynamic_state_probability(state_id)
   end
+
+  def state_rank(state_id)
+    enemy.state_ranks[state_id]
+  end
 end
 
 class Game_Enemy < Game_Battler
   alias default_rank state_probability unless $@
+
+  def state_rank(state_id)
+    self.class.state_ranks[state_id]
+  end
 
   def state_probability(state_id)
     dynamic_state_probability(state_id)

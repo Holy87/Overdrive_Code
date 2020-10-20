@@ -475,8 +475,8 @@ class Scene_Battle < Scene_Base
   # Alias metodo execute_action_skill
   def execute_action_skill
     h87eas
-    skill = @active_battler.action.skill
     return if @active_battler == nil
+    skill = @active_battler.action.skill
     return if skill == nil
     @active_battler.add_turn_skill(skill) if skill.turn_delay > 0
     @active_battler.add_battle_skill(skill) if skill.battle_delay > 0

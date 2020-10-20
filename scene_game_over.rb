@@ -311,7 +311,7 @@ class Scene_Gameover < Scene_Base
   #--------------------------------------------------------------------------
   def command_load
     snapshot_for_background
-    $scene = Scene_File.new(false, false, false)
+    SceneManager.call Scene_Load
   end
   #--------------------------------------------------------------------------
   # * Transition to Title Screen

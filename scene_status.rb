@@ -796,7 +796,7 @@ class Window_ActorStatus < Window_Base
     contents.font.size = 15
     (7..16).each { |i|
       contents.fill_rect(x+1, y+1, 58, line_height-2, Color.new(0, 0, 0, 50))
-      icon = Y6::ICON[:element_icons][i]
+      icon = $data_system.attribute_icon(i)
       draw_icon(icon, x, y)
       value = actor.element_rate(i) - 100
       if value == 0

@@ -35,6 +35,12 @@ module GameFinder
     pretty_results(find command, params)
   end
 
+  def self.find_kora_kora
+    command = 126
+    params = [132, 0, 0, 1]
+    save_results pretty_results(find command, params), 'kora'
+  end
+
   # @param [Array<Array<String,Array<String>>>] results
   # @return [String]
   def self.pretty_results(results)

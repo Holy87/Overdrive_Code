@@ -379,8 +379,7 @@ class Window_DominationInfo < Window_Base
   # noinspection RubyResolve
   #--------------------------------------------------------------------------
   def param_icon(param)
-    return unless $imported["Y6-Iconview"]
-    Y6::ICON[:stats][param]
+    $data_system.attribute_icon(param)
   end
   #--------------------------------------------------------------------------
   # * ottiene le informazioni del parametro
@@ -1100,11 +1099,7 @@ class Window_DominationElements < Window_Base
   #--------------------------------------------------------------------------
   def draw_element_config(x, y, ele_id)
     width = contents_width / 2
-    if $imported["Y6-Iconview"]
-      # noinspection RubyResolve
-      icon = Y6::ICON[:element_icons][ele_id]
-      draw_icon(icon,x,y)
-    end
+    draw_icon($data_system.attribute_icon(ele_id), x, y)
     value = domination.element_rate(ele_id) - 100
     if value == 0
       change_color(normal_color)

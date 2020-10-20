@@ -43,7 +43,6 @@ module Forge_Settings
   # * altre opzioni
   #--------------------------------------------------------------------------
   DEFAULT_M_RATE = 5 # % di probabilità l'oggetto sia un masterpiece
-  GOLD_ICON = 147    # index icona dell'oro
   # Calcolo dell'oro richiesto per la fabbricazione se non è stato impostato
   # alcun costo. Se inserito 0, ha costo nullo. Con N > 0 ha costo dell'
   # oggetto / N.
@@ -997,7 +996,7 @@ class Window_ForgeGold_Restricted < Window_ForgeGold
     #draw_text(line_rect, Vocab.required_gold)
     change_color(normal_color, enabled)
     text = sprintf('%d%s / %d%s', item.gold, Vocab.currency_unit, $game_party.gold, Vocab.currency_unit)
-    icon_index = Forge_Settings::GOLD_ICON
+    icon_index = $data_system.gold_icon
     draw_icon(icon_index, 0, 0, enabled)
     draw_text(line_rect, text, 2)
   end
@@ -1110,7 +1109,7 @@ class Window_ForgeConfirm < Window_Base
     curr = Vocab.currency_unit
     rect = line_rect(line_number)
     text = sprintf('%d%s/%d%s', gold, curr, p_gold, curr)
-    draw_icon(Forge_Settings::GOLD_ICON, rect.x, rect.y)
+    draw_icon($data_system.gold_icon, rect.x, rect.y)
     draw_text(rect, text, 2)
   end
   #--------------------------------------------------------------------------

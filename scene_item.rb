@@ -4,9 +4,7 @@
 # modulo base con impostazioni per settare lo script
 #==============================================================================
 module H87Item
-  #--------------------------------------------------------------------------
-  # * IMPOSTAZIONI DELLO SCRIPT
-  #--------------------------------------------------------------------------
+  # IMPOSTAZIONI DELLO SCRIPT
   module Settings
     # Disegnare il prezzo di vendita dell'oggetto?
     DRAW_PRICE = true
@@ -40,19 +38,13 @@ module H87Item
         :mp_cost, :hp_cost, :item_price, :gold_cost, :recharge, :aggro, :sinergy,
         :tank_odd, :state_inf_bonus, :state_inf_per,
         :state_inf_dur, :type_effectiveness]
-    #--------------------------------------------------------------------------
-    # * quali dettagli mostrare per le categorie
-    #--------------------------------------------------------------------------
+    # quali dettagli mostrare per le categorie
     EQUIP_DETAILS = [:atk, :def, :spi, :agi, :hit, :cri, :eva, :odds]
     ARMOR_DETAILS = [:kind, :states, :elements, :bonus]
     WEAPON_DETAILS = [:kind, :attack_attribute, :states, :elements, :type_effectiveness, :bonus]
-    #--------------------------------------------------------------------------
-    # * la grandezza del testo dei dettagli. Se 0, usa predefinito
-    #--------------------------------------------------------------------------
+    # la grandezza del testo dei dettagli. Se 0, usa predefinito
     TEXTSIZE = 0
-    #--------------------------------------------------------------------------
-    # * le categorie degli oggetti
-    #--------------------------------------------------------------------------
+    # le categorie degli oggetti
     ITEM_CATEGORIES = {
         1 => [:usable, 'Utilizzabili'],
         2 => [:resource, 'Materiali'],
@@ -62,9 +54,7 @@ module H87Item
         6 => [:battle, 'Battaglia']
     }
   end
-  #--------------------------------------------------------------------------
-  # * prezzo di vendita predefinito
-  #--------------------------------------------------------------------------
+  # prezzo di vendita predefinito
   def self.default_sell_price(item)
     formulas = Settings::SELLPRICE_FORMULAS
     case item
@@ -90,9 +80,8 @@ module Vocab
     # noinspection RubyResolve
     alias int_param param
   end
-  #--------------------------------------------------------------------------
-  # * vari vocaboli
-  #--------------------------------------------------------------------------
+
+  # vari vocaboli
   ITEM_VALUE = 'Prezzo vendita'
   ITEM_SCOPE = 'Bersaglio'
   ITEM_USE = 'Uso'
@@ -123,19 +112,15 @@ module Vocab
   ATTACK_ATTRIBUTE = 'Tipo danni'
   ATTR_EFFECTIVENESS = 'Efficace contro %s'
   EQUIPPABLE_BY = 'Equipaggiabile da'
-  #--------------------------------------------------------------------------
-  # * Restituisce l'elemento dall'ID
+  # Restituisce l'elemento dall'ID
   # @param [Integer] element_id
   # @return [String]
-  #--------------------------------------------------------------------------
   def self.element(element_id)
     return $data_system.elements[element_id]
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce i vocaboli dei rispettivi parametri
+  # Restituisce i vocaboli dei rispettivi parametri
   # @return [String]
-  #--------------------------------------------------------------------------
   def self.hit
     'Mira'
   end
@@ -152,11 +137,9 @@ module Vocab
     'Furia Max'
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce un determinato parametro
+  # Restituisce un determinato parametro
   # @param [Symbol] symbol
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def self.param(symbol)
     case symbol
     when :atk
@@ -186,9 +169,7 @@ module Vocab
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Vocaboli per l'obiettivo
-  #--------------------------------------------------------------------------
+  # Vocaboli per l'obiettivo
   SCOPES = [
       'Nessuno',
       'Un nemico',
@@ -203,9 +184,7 @@ module Vocab
       'Tutti gli alleati KO',
       'L\'utilizzatore'
   ]
-  #--------------------------------------------------------------------------
-  # * Vocaboli per il tipo di armatura
-  #--------------------------------------------------------------------------
+  # Vocaboli per il tipo di armatura
   ARMOR_KINDS = {
       0 => 'Supporto',
       1 => 'Elmo',
@@ -213,27 +192,19 @@ module Vocab
       3 => 'Accessorio',
       7 => 'Magnetite',
   }
-  #--------------------------------------------------------------------------
-  # * Vocaboli per l'occasione
-  #--------------------------------------------------------------------------
+  # Vocaboli per l'occasione
   OCCASIONS = ['Sempre', 'Solo in battaglia', 'Solo dal Menu', 'Mai']
-  #--------------------------------------------------------------------------
-  # * Restituisce il bersaglio
-  #--------------------------------------------------------------------------
+  # Restituisce il bersaglio
   def self.scope(id)
     return SCOPES[id]
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce l'occasione
-  #--------------------------------------------------------------------------
+  # Restituisce l'occasione
   def self.occasion(id)
     return OCCASIONS[id]
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce il tipo di armatura
-  #--------------------------------------------------------------------------
+  # Restituisce il tipo di armatura
   def self.armor_kind(kind)
     return ARMOR_KINDS[kind]
   end
@@ -253,9 +224,7 @@ class RPG::BaseItem
   attr_reader :resource # risorsa per la forgiatura
   attr_reader :use_method # metodo da usare per un oggetto
   attr_reader :use_scene # scena dove andare dopo l'uso di un oggetto
-  #--------------------------------------------------------------------------
-  # * caricamento dei dettagli personalizzati
-  #--------------------------------------------------------------------------
+  # caricamento dei dettagli personalizzati
   def load_custom_details
     return if @det_loaded
     @det_loaded = true
@@ -297,18 +266,14 @@ class RPG::BaseItem
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce il prezzo di vendita
+  # Restituisce il prezzo di vendita
   # @return [Integer]
-  #--------------------------------------------------------------------------
   def selling_price
     @sellprice || H87Item.default_sell_price(self)
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce la categoria
+  # Restituisce la categoria
   # @return [Symbol]
-  #--------------------------------------------------------------------------
   def category
     #return :in_battle if battle_ok? && $game_temp.in_battle
     return @category if @category != nil
@@ -320,7 +285,9 @@ class RPG::BaseItem
     return :battle if battle_ok?
     :generic
   end
-end #baseitem
+end
+
+#baseitem
 
 #==============================================================================
 # ** Sprite_ItemPopup
@@ -329,9 +296,7 @@ end #baseitem
 #==============================================================================
 class Sprite_ItemPopup < Sprite
   attr_accessor :padding
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
-  #--------------------------------------------------------------------------
+  # Inizializzazione
   def initialize(viewport)
     super(viewport)
     self.visible = false
@@ -339,34 +304,26 @@ class Sprite_ItemPopup < Sprite
     @item = nil
   end
 
-  #--------------------------------------------------------------------------
-  # * Imposta l'oggetto
+  # Imposta l'oggetto
   # @param[RPG::BaseItem]
-  #--------------------------------------------------------------------------
   def set_item(item)
     @item = item
     refresh_bitmap
   end
 
-  #--------------------------------------------------------------------------
-  # * Numero di oggetti posseduti
-  #--------------------------------------------------------------------------
+  # Numero di oggetti posseduti
   def item_number
     $game_party.item_number(@item)
   end
 
-  #--------------------------------------------------------------------------
-  # * Aggiorna la bitmap
-  #--------------------------------------------------------------------------
+  # Aggiorna la bitmap
   def refresh_bitmap
     self.bitmap = create_bitmap
     draw_on_bitmap
   end
 
-  #--------------------------------------------------------------------------
-  # * Crea o pulisce la bitmap
+  # Crea o pulisce la bitmap
   # @return [Bitmap]
-  #--------------------------------------------------------------------------
   def create_bitmap
     if self.bitmap.nil?
       bitmap = Bitmap.new(70, 28)
@@ -383,9 +340,7 @@ class Sprite_ItemPopup < Sprite
     bitmap
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna sulla bitmap
-  #--------------------------------------------------------------------------
+  # Disegna sulla bitmap
   def draw_on_bitmap
     return if @item.nil?
     bitmap = self.bitmap
@@ -409,32 +364,26 @@ class Scene_Item < Scene_Base
   alias h87item_terminate terminate unless $@
   alias h87item_update update unless $@
   alias h87item_use_item_nontarget use_item_nontarget unless $@
-  #--------------------------------------------------------------------------
-  # * Inizio
-  #--------------------------------------------------------------------------
+  # Inizio
   def start
     #super
+    create_main_viewport
     h87item_start
-    @popup_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
-    @popup_viewport.z = 999
+    create_popup_viewport
     adjust_windows
     create_category_window
     create_info_window
     create_item_number_popup
   end
 
-  #--------------------------------------------------------------------------
-  # * Adatta le finestre
-  #--------------------------------------------------------------------------
+  # Adatta le finestre
   def adjust_windows
     #@item_window.width = Graphics.width/2
     @target_window.x = 0 - @target_window.width
     @target_window.height = Graphics.height - @target_window.y
   end
 
-  #--------------------------------------------------------------------------
-  # * Fine
-  #--------------------------------------------------------------------------
+  # Fine
   def terminate
     #super
     h87item_terminate
@@ -444,9 +393,7 @@ class Scene_Item < Scene_Base
     @popup_viewport.dispose
   end
 
-  #--------------------------------------------------------------------------
-  # * Aggiornamento
-  #--------------------------------------------------------------------------
+  # Aggiornamento
   def update
     #super
     h87item_update
@@ -455,10 +402,8 @@ class Scene_Item < Scene_Base
     @item_popup.y = @target_window.strcursor.y + 30 if @item_popup.visible
   end
 
-  #--------------------------------------------------------------------------
-  # * Crea la finestra delle categorie
+  # Crea la finestra delle categorie
   # noinspection RubyArgCount
-  #--------------------------------------------------------------------------
   def create_category_window
     @category_window = Window_ItemCategory.new(0, 0, 4)
     #@category_window.viewport = @viewport
@@ -467,9 +412,12 @@ class Scene_Item < Scene_Base
     @target_window.visible = false
   end
 
-  #--------------------------------------------------------------------------
-  # * Crea la finestra delle informazioni
-  #--------------------------------------------------------------------------
+  def create_popup_viewport
+    @popup_viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
+    @popup_viewport.z = 999
+  end
+
+  # Crea la finestra delle informazioni
   def create_info_window
     x = @item_window.width
     y = @item_window.y
@@ -485,15 +433,11 @@ class Scene_Item < Scene_Base
     @item_popup.z = 999
   end
 
-  #--------------------------------------------------------------------------
-  # * Nada!
-  #--------------------------------------------------------------------------
-  def return_scene;
+  # Nada!
+  def return_scene
   end
 
-  #--------------------------------------------------------------------------
-  # * Aggiornamento della selezione oggetto
-  #--------------------------------------------------------------------------
+  # Aggiornamento della selezione oggetto
   def update_item_selection
     if Input.trigger?(:B)
       Sound.play_cancel
@@ -512,11 +456,9 @@ class Scene_Item < Scene_Base
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Show Target Window
+  # Show Target Window
   #     right : Right justification flag (if false, left justification)
   # noinspection RubyUnusedLocalVariable
-  #--------------------------------------------------------------------------
   def show_target_window(right)
     @item_window.active = false
     @target_window.x = 0 - @target_window.width
@@ -531,9 +473,7 @@ class Scene_Item < Scene_Base
     #end
   end
 
-  #--------------------------------------------------------------------------
-  # * Hide Target Window
-  #--------------------------------------------------------------------------
+  # Hide Target Window
   def hide_target_window
     @item_window.active = true
     @target_window.active = false
@@ -542,9 +482,7 @@ class Scene_Item < Scene_Base
     @item_popup.visible = false if @item_popup && !@item_popup.disposed?
   end
 
-  #--------------------------------------------------------------------------
-  # * Usa un oggetto senza bersaglio
-  #--------------------------------------------------------------------------
+  # Usa un oggetto senza bersaglio
   def use_item_nontarget
     if @item.use_method != nil
       eval(@item.use_method)
@@ -563,18 +501,14 @@ end
 # finestra che mostra i dettagli dell'oggetto
 #==============================================================================
 class Window_ItemInfo < Window_DataInfo
-  #--------------------------------------------------------------------------
-  # * Variabili d'istanza pubbliche
-  #--------------------------------------------------------------------------
+  # Variabili d'istanza pubbliche
   attr_accessor :see_possessed # visualizza la quantità posseduta
   attr_accessor :see_sellprice # visualizza il prezzo di vendita
-  #--------------------------------------------------------------------------
-  # * Inizializzazione
+  # Inizializzazione
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] w
   # @param [Integer] h
-  #--------------------------------------------------------------------------
   def initialzie(x, y, w, h)
     @see_possessed = false
     @see_sellprice = H87Item::Settings::DRAW_PRICE
@@ -582,9 +516,7 @@ class Window_ItemInfo < Window_DataInfo
     super(x, y, w, h)
   end
 
-  #--------------------------------------------------------------------------
-  # * Riaggiorna il contenuto
-  #--------------------------------------------------------------------------
+  # Riaggiorna il contenuto
   def refresh
     @line = 0
     contents.clear
@@ -592,27 +524,21 @@ class Window_ItemInfo < Window_DataInfo
     draw_item_data
   end
 
-  #--------------------------------------------------------------------------
-  # * Imposta un oggetto
+  # Imposta un oggetto
   # @param [RPG::BaseItem] new_item
-  #--------------------------------------------------------------------------
   def set_item(new_item)
     return if @item.equal?(new_item)
     @item = new_item
     refresh
   end
 
-  #--------------------------------------------------------------------------
-  # * Restituisce l'oggetto della finestra
+  # Restituisce l'oggetto della finestra
   # @return [RPG::UsableItem,RPG::Armor,RPG::Weapon]
-  #--------------------------------------------------------------------------
-  def item;
+  def item
     @item;
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dati principali dell'oggetto
-  #--------------------------------------------------------------------------
+  # Disegna i dati principali dell'oggetto
   def draw_item_data
     draw_item_possessed if @see_possessed
     draw_item_price if @see_sellprice
@@ -634,18 +560,14 @@ class Window_ItemInfo < Window_DataInfo
     draw_item_custom_details
   end
 
-  #--------------------------------------------------------------------------
-  # * Riaggiorna la grandezza
-  #--------------------------------------------------------------------------
+  # Riaggiorna la grandezza
   def refresh_size
     if H87Item::Settings::TEXTSIZE != 0
       contents.font.size = H87Item::Settings::TEXTSIZE
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Altezza delle lettere
-  #--------------------------------------------------------------------------
+  # Altezza delle lettere
   def auto_height
     if H87Item::Settings::TEXTSIZE == 0
       line_height
@@ -654,20 +576,19 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna un dettaglio generico
+  # Disegna un dettaglio generico
   # @param [String] param
   # @param [String, Integer, Float] value
   # @param [Integer] icon
   # @param [Integer] height
   # @param [Color] color
-  #--------------------------------------------------------------------------
   def draw_detail(param, value = nil, icon = 0, height = auto_height,
                   color = normal_color, icon_pos = :right)
     width = contents_width
     y = @line
     x = 0
-    draw_bg_rect(0, y, contents_width, height)
+    #draw_bg_rect(0, y, contents_width, height)
+    draw_underline(@line / line_height)
     if icon != 0 and icon_pos == :left
       draw_icon(icon, 0, y)
       x = 24
@@ -690,23 +611,19 @@ class Window_ItemInfo < Window_DataInfo
     @line += height
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra una funzione speciale
+  # Mostra una funzione speciale
   # @param [String] feature
   # @param [Color] color
-  #--------------------------------------------------------------------------
   def draw_feature(feature, color = power_up_color)
     draw_detail(feature, nil, 0, auto_height, color)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna un parametro
+  # Disegna un parametro
   # @param [String] param
   # @param [String, Integer] value
   # @param [Boolean] percentuale
   # @param [Integer] icon
   # @param [Boolean] reverse
-  #--------------------------------------------------------------------------
   def draw_parameter(param, value, percentuale = false, icon = 0, reverse = false)
     return if value == 0
     color = normal_color
@@ -716,10 +633,8 @@ class Window_ItemInfo < Window_DataInfo
     draw_detail(param, sprintf('%+d%s', value, perc), icon, auto_height, color)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna un set di icone
+  # Disegna un set di icone
   # @param [Array<Integer>] icon_array
-  #--------------------------------------------------------------------------
   def draw_icon_set(icon_array)
     columns = contents_width / 24
     (0..icon_array.size - 1).each { |i|
@@ -728,16 +643,12 @@ class Window_ItemInfo < Window_DataInfo
     @line += 24 * (icon_array.size / columns * 24 + 1)
   end
 
-  #--------------------------------------------------------------------------
-  # * disegna il numero posseduto di quest'oggetto dal gruppo
-  #--------------------------------------------------------------------------
+  # disegna il numero posseduto di quest'oggetto dal gruppo
   def draw_item_possessed
     draw_detail(Vocab::ITEM_POSSESS, $game_party.item_number(item))
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna il prezzo di un oggetto
-  #--------------------------------------------------------------------------
+  # Disegna il prezzo di un oggetto
   def draw_item_price
     draw_detail(Vocab::ITEM_VALUE, sprintf("%d %s", item.selling_price, Vocab.gold))
   end
@@ -773,19 +684,15 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dettagli di un oggetto
-  #--------------------------------------------------------------------------
+  # Disegna i dettagli di un oggetto
   def draw_item_detail
     (0..H87Item::Settings::ITEM_DETAILS.size - 1).each { |i|
       draw_item_property(H87Item::Settings::ITEM_DETAILS[i])
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le proprietà dell'ottetto
+  # Disegna le proprietà dell'ottetto
   # @param [Symbol] sym
-  #--------------------------------------------------------------------------
   def draw_item_property(sym)
     case sym
     when :hp_recover
@@ -797,10 +704,8 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le proprietà di un equipaggiamento
+  # Disegna le proprietà di un equipaggiamento
   # @param [Symbol] sym
-  #--------------------------------------------------------------------------
   def draw_equip_property(sym)
     case sym
     when :atk
@@ -822,27 +727,21 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dettagli dell'equipaggiamento
-  #--------------------------------------------------------------------------
+  # Disegna i dettagli dell'equipaggiamento
   def draw_equip_detail
     (0..H87Item::Settings::EQUIP_DETAILS.size - 1).each { |i|
       draw_equip_property(H87Item::Settings::EQUIP_DETAILS[i])
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dettagli dell'arma
-  #--------------------------------------------------------------------------
+  # Disegna i dettagli dell'arma
   def draw_weapon_detail
     (0..H87Item::Settings::WEAPON_DETAILS.size - 1).each { |i|
       draw_weapon_property(H87Item::Settings::WEAPON_DETAILS[i])
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le proprietà dell'arma
-  #--------------------------------------------------------------------------
+  # Disegna le proprietà dell'arma
   def draw_weapon_property(sym)
     case sym
     when :kind
@@ -862,18 +761,14 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dettagli dell'armatura
-  #--------------------------------------------------------------------------
+  # Disegna i dettagli dell'armatura
   def draw_armor_detail
     (0..H87Item::Settings::ARMOR_DETAILS.size - 1).each { |i|
       draw_armor_property(H87Item::Settings::ARMOR_DETAILS[i])
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le proprietà dell'armatura
-  #--------------------------------------------------------------------------
+  # Disegna le proprietà dell'armatura
   def draw_armor_property(sym)
     draw_equip_property(sym)
     case sym
@@ -951,26 +846,20 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra il bersaglio
-  #--------------------------------------------------------------------------
+  # Mostra il bersaglio
   def draw_scope
     return if item.occasion == 3
     return if item.scope == 0
     draw_detail(Vocab::ITEM_SCOPE, Vocab.scope(item.scope))
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra l'occasione
-  #--------------------------------------------------------------------------
+  # Mostra l'occasione
   def draw_occasion
     return if item.occasion == 3
     draw_detail(Vocab::ITEM_USE, Vocab.occasion(item.occasion))
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra il danno
-  #--------------------------------------------------------------------------
+  # Mostra il danno
   def draw_damage
     return if item.base_damage == 0
     param = item.damage_to_mp ? Vocab.mp_a : Vocab.hp_a
@@ -981,63 +870,49 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra l'influenza dell'attacco
-  #--------------------------------------------------------------------------
+  # mostra l'influenza dell'attacco
   def draw_atk_f
     return if item.atk_f == 0
     draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra l'influenza dello spirito
-  #--------------------------------------------------------------------------
+  # mostra l'influenza dello spirito
   def draw_spi_f
     return if item.spi_f == 0
     draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra l'influenza della difesa
-  #--------------------------------------------------------------------------
+  # mostra l'influenza della difesa
   def draw_def_f
     return if item.def_f == 0
     draw_detail(Vocab::SKILL_DEF_F, item.def_f)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra l'influenza dell'agilità
-  #--------------------------------------------------------------------------
+  # mostra l'influenza dell'agilità
   def draw_agi_f
     return if item.agi_f == 0
     draw_detail(Vocab::SKILL_AGI_F, item.agi_f)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra il costo PM
-  #--------------------------------------------------------------------------
+  # mostra il costo PM
   def draw_mp_cost
     return if item.mp_cost == 0
     draw_detail(Vocab.skill_param_vocab(:mp_cost), item.mp_cost)
   end
 
-  # * mostra il costo PV
+  # mostra il costo PV
   def draw_hp_cost
     return if item.hp_cost == 0
     draw_detail(Vocab.skill_param_vocab(:hp_cost), item.hp_cost)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra il costo furia
-  #--------------------------------------------------------------------------
+  # mostra il costo furia
   def draw_anger_cost
     return if item.anger_cost == 0
     draw_detail(Vocab.skill_param_vocab(:anger_cost), item.anger_cost)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra il consumo oggetti
-  #--------------------------------------------------------------------------
+  # mostra il consumo oggetti
   def draw_item_cost
     return if item.consume_item == 0
     draw_detail(Vocab::ITEM_CONSUME, sprintf('x%d', item.consume_item_n),
@@ -1045,26 +920,20 @@ class Window_ItemInfo < Window_DataInfo
                 auto_height, normal_color, :right)
   end
 
-  #--------------------------------------------------------------------------
-  # * mostra il consumo di oro
-  #--------------------------------------------------------------------------
+  # mostra il consumo di oro
   def draw_gold_cost
     return if item.gold_cost == 0
     draw_detail(sprintf(Vocab::ITEM_COST, Vocab.currency_unit),
                 item.gold_cost)
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra se assorbe danni
-  #--------------------------------------------------------------------------
+  # Mostra se assorbe danni
   def draw_absorb
     return unless item.absorb_damage
     draw_detail(Vocab::ITEM_ABSORB)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna il set di elementi
-  #--------------------------------------------------------------------------
+  # Disegna il set di elementi
   def draw_element_set
     return if item.element_set.empty?
     draw_detail(Vocab::ITEM_ELEMENT)
@@ -1076,9 +945,7 @@ class Window_ItemInfo < Window_DataInfo
     draw_icon_set(icons)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna il set di stati alterati
-  #--------------------------------------------------------------------------
+  # Disegna il set di stati alterati
   def draw_state_set
     return if item.plus_state_set.empty?
     draw_detail(Vocab::ITEM_STATE_P)
@@ -1087,9 +954,7 @@ class Window_ItemInfo < Window_DataInfo
     draw_icon_set(icons)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna il set di stati che rimuove
-  #--------------------------------------------------------------------------
+  # Disegna il set di stati che rimuove
   def draw_minus_state_set
     return if item.minus_state_set.empty?
     draw_detail(Vocab::ITEM_STATE_M)
@@ -1098,9 +963,7 @@ class Window_ItemInfo < Window_DataInfo
     draw_icon_set(icons)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna la cura HP
-  #--------------------------------------------------------------------------
+  # Disegna la cura HP
   def draw_hp_recover
     return if item.hp_recovery_rate == 0 && item.hp_recovery == 0
     param = sprintf(Vocab::ITEM_RECOVER, Vocab.hp_a)
@@ -1113,9 +976,7 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna la cura MP
-  #--------------------------------------------------------------------------
+  # Disegna la cura MP
   def draw_mp_recover
     return if item.mp_recovery_rate == 0 && item.mp_recovery == 0
     param = sprintf(Vocab::ITEM_RECOVER, Vocab.mp_a)
@@ -1128,56 +989,49 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna l'elemento
-  # noinspection RubyResolve
-  #--------------------------------------------------------------------------
-  def element_icon(element)
-    Y6::ICON[:element_icons][element]
+  # ottiene l'icona dell'elemento
+  def element_icon(element_id)
+    $data_system.attribute_icon(element_id)
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra vari parametri
-  #--------------------------------------------------------------------------
-  def draw_hit;
+  # Mostra vari parametri
+  def draw_hit
     draw_parameter(Vocab.hit, item.hit, true);
   end
 
-  def draw_wht;
+  def draw_wht
     draw_parameter(Vocab.hit, item.hit - 95, true);
   end
 
-  def draw_cri;
+  def draw_cri
     draw_parameter(Vocab.cri, item.cri, true);
   end
 
-  def draw_eva;
+  def draw_eva
     draw_parameter(Vocab.eva, item.eva, true);
   end
 
-  def draw_atk;
+  def draw_atk
     draw_parameter(Vocab.atk, item.atk);
   end
 
-  def draw_spi;
+  def draw_spi
     draw_parameter(Vocab.spi, item.spi);
   end
 
-  def draw_def;
+  def draw_def
     draw_parameter(Vocab.def, item.def);
   end
 
-  def draw_agi;
+  def draw_agi
     draw_parameter(Vocab.agi, item.agi);
   end
 
-  def draw_odds;
+  def draw_odds
     draw_parameter(Vocab.odds, item.odds);
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra il tipo di arma
-  #--------------------------------------------------------------------------
+  # Mostra il tipo di arma
   def draw_weapon_kind
     item.w_types.each do |tipo|
       next if Vocab.wtype(tipo).nil?
@@ -1185,9 +1039,7 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra gli stati alterati che aggiunge l'arma
-  #--------------------------------------------------------------------------
+  # Mostra gli stati alterati che aggiunge l'arma
   def draw_atk_states
     return if item.state_set.empty?
     item.state_set.each { |state_id|
@@ -1196,9 +1048,7 @@ class Window_ItemInfo < Window_DataInfo
     }
   end
 
-  #--------------------------------------------------------------------------
-  # * Mostra l'elemento dell'arma
-  #--------------------------------------------------------------------------
+  # Mostra l'elemento dell'arma
   def draw_atk_element
     return if item.magic_elements.empty?
     item.magic_elements.each do |element|
@@ -1220,23 +1070,17 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i bonus dell'arma
-  #--------------------------------------------------------------------------
+  # Disegna i bonus dell'arma
   def draw_weapon_bonus
     draw_detail(Vocab::WEAPON_2H) if item.two_handed
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna il tipo di armatura
-  #--------------------------------------------------------------------------
+  # Disegna il tipo di armatura
   def draw_armor_kind
     draw_detail(Vocab::EQUIP_KIND, Vocab.armor_kind(item.kind))
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le immunità dell'equipaggiamento
-  #--------------------------------------------------------------------------
+  # Disegna le immunità dell'equipaggiamento
   def draw_def_states
     return if item.state_set.empty?
     draw_detail(Vocab::ARMOR_STATE)
@@ -1248,9 +1092,7 @@ class Window_ItemInfo < Window_DataInfo
     draw_icon_set(icons)
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna le difese elementali e attributi
-  #--------------------------------------------------------------------------
+  # Disegna le difese elementali e attributi
   def draw_def_elements
     return if item.element_set.empty?
     draw_element_protections
@@ -1259,33 +1101,31 @@ class Window_ItemInfo < Window_DataInfo
 
   # protezione dagli elementi
   def draw_element_protections
-    elements = $data_system.magic_elements.select { |ele| item.element_set.include? ele.id}
+    elements = $data_system.magic_elements.select { |ele| item.element_set.include? ele.id }
     return if elements.empty?
     if elements.size == 1
       element = elements.first
       draw_detail(Vocab::ARMOR_ELEMENT, element.name, element.icon_index)
     else
       draw_detail(Vocab::ARMOR_ELEMENT)
-      draw_icon_set(elements.collect { |ele| ele.icon_index})
+      draw_icon_set(elements.collect { |ele| ele.icon_index })
     end
   end
 
   # protezione dagli attributi
   def draw_attribute_protections
-    attributes = $data_system.weapon_attributes.select { |a| item.element_set.include? a.id}
+    attributes = $data_system.weapon_attributes.select { |a| item.element_set.include? a.id }
     return if attributes.empty?
     if attributes.size == 1
       attr = attributes.first
       draw_detail(Vocab::ARMOR_ATTRIBUTE, attr.name, attr.icon_index)
     else
       draw_detail(Vocab::ARMOR_ATTRIBUTE)
-      draw_icon_set(elements.collect { |attr| attr.icon_index})
+      draw_icon_set(elements.collect { |attr| attr.icon_index })
     end
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i bonus dell'armatura
-  #--------------------------------------------------------------------------
+  # Disegna i bonus dell'armatura
   def draw_armor_bonus
     draw_feature(Vocab::ARMOR_PREVENT_CRITICAL) if item.prevent_critical
     draw_feature(Vocab::ARMOR_HALF_MP_COST) if item.half_mp_cost
@@ -1293,9 +1133,7 @@ class Window_ItemInfo < Window_DataInfo
     draw_feature(Vocab::ARMOR_2EXP_GAIN) if item.double_exp_gain
   end
 
-  #--------------------------------------------------------------------------
-  # * Disegna i dettagli personalizzati
-  #--------------------------------------------------------------------------
+  # Disegna i dettagli personalizzati
   def draw_item_custom_details
     item.custom_dets.each do |detail|
       draw_detail(detail[0], detail[1], detail[2])
@@ -1315,9 +1153,7 @@ end
 # mostra le categorie degli oggetti
 #==============================================================================
 class Window_ItemCategory < Window_Category
-  #--------------------------------------------------------------------------
-  # * Metodo astratto per i dati
-  #--------------------------------------------------------------------------
+  # Metodo astratto per i dati
   def default_data
     categories_from_hash(H87Item::Settings::ITEM_CATEGORIES)
   end
@@ -1330,13 +1166,11 @@ end
 #==============================================================================
 class Window_Item < Window_Selectable
   include ListWindow
-  #--------------------------------------------------------------------------
-  # * Object Initialization
+  # Object Initialization
   #     x      : window x-coordinate
   #     y      : window y-coordinate
   #     width  : window width
   #     height : window height
-  #--------------------------------------------------------------------------
   alias h87item_initialize initialize unless $@
 
   def initialize(x, y, width, height)
@@ -1353,18 +1187,14 @@ class Window_Item < Window_Selectable
     set_list(category)
   end
 
-  #--------------------------------------------------------------------------
-  # * Refresh
-  #--------------------------------------------------------------------------
+  # Refresh
   def refresh
     return if @category.nil?
     return if @data.nil?
     (0...@item_max).each(&method(:draw_item))
   end
 
-  #--------------------------------------------------------------------------
-  # * Ottiene i dati
-  #--------------------------------------------------------------------------
+  # Ottiene i dati
   def get_data
     @data = []
     $game_party.items.each { |item|
@@ -1384,28 +1214,22 @@ class Window_Item < Window_Selectable
     #@data.push(nil) if include?(nil)
   end
 
-  #--------------------------------------------------------------------------
-  # * Aggiunge i metodi di x e y iniziali del viewport
+  # Aggiunge i metodi di x e y iniziali del viewport
   # @param [Viewpoer] viewport
-  #--------------------------------------------------------------------------
   def viewport=(viewport)
     super(viewport)
     @view_x = viewport.rect.x
     @view_y = viewport.rect.y
   end
 
-  #--------------------------------------------------------------------------
-  # * Aggiornamento
-  #--------------------------------------------------------------------------
+  # Aggiornamento
   def update
     super
     update_info_window
     back if Input.trigger?(:B)
   end
 
-  #--------------------------------------------------------------------------
-  # * Alias per utilizzare tutta la larghezza
-  #--------------------------------------------------------------------------
+  # Alias per utilizzare tutta la larghezza
   def draw_item_name(item, x, y, enabled = true, width = nil)
     width = contents_width if width.nil?
     if (item.is_a?(RPG::Weapon) or item.is_a?(RPG::Armor)) and @category != :all
@@ -1426,7 +1250,7 @@ class Game_Party < Game_Unit
   # @return [Integer]
   def members_item_number(item)
     sum = 0
-    members.each { |member| sum += member.equips.select { |equip| equip == item}.size }
+    members.each { |member| sum += member.equips.select { |equip| equip == item }.size }
     sum
   end
 end
@@ -1438,17 +1262,13 @@ end
 #==============================================================================
 class Scene_Title < Scene_Base
   alias h87item_load_database load_database unless $@
-  #--------------------------------------------------------------------------
-  # * Carica il database
-  #--------------------------------------------------------------------------
+  # Carica il database
   def load_database
     h87item_load_database
     load_h87_items
   end
 
-  #--------------------------------------------------------------------------
-  # * Inizializza i parametri degli oggetti
-  #--------------------------------------------------------------------------
+  # Inizializza i parametri degli oggetti
   def load_h87_items
     $data_items.each { |item|
       next if item.nil?
