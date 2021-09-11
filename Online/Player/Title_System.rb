@@ -49,7 +49,12 @@ module Player_Titles
       42 => ['Milionario',"Titolo conferito per essere riuscito ad arrivare|a 1.000.000 di monete."],
       43 => ['Coniglio', "Titolo conferito per essere fuggito spess dalle battaglie.|La ritirata tattica non è mai una vergogna!"],
       44 => ['Nerd', "Conferito per aver raggiunto le 80 ore di gioco!"],
-      45 => ['Festaiolo',"Conferito per aver partecipato ad almeno un evento.",2]
+      45 => ['Festaiolo',"Conferito per aver partecipato ad almeno un evento.",2],
+      46 => ['Cheater', "Conferito per aver avviato il gioco in modalità test.|Non barare! :(", 3],
+      47 => ['Spirito natalizio', "Conferito per aver giocato a Natale.|Buone feste!",1],
+      48 => ['Bel nome', "Conferito perché ti chiami come il creatore di Overdrive", 2],
+      49 => ['Nabbo', "Conferito per aver perso contro degli Slime. Sul serio!?", 1, true], # da programmare
+      50 => ['Apeiron', "Conferito per aver inflitto un danno di 99999.", 3] # da programmare
   }
 
   # alcuni titoli possono essere sbloccati quando si conquista un nuovo obiettivo.
@@ -168,6 +173,7 @@ class Game_System
   def refresh_titles
     online_titles.each { |title_id| unlock_title(title_id) }
     global_titles.each { |title_id| unlock_title(title_id, false) }
+    check_auto_titles_on_load_game
   end
 
   def upload_titles
@@ -177,6 +183,12 @@ class Game_System
     params = {:title_ids => @cached_titles * ','}
     operation = Online.upload(:player, :titles, params)
     @cached_titles.clear if operation.success?
+  end
+
+  def check_auto_titles_on_load_game
+    unlock_title(46) if $TEST
+    unlock_title(47) if Date.new.day == 25 and Date.new.month == 12
+    unlock_title(48) if Win.username.downcase.include?('francesc')
   end
 
   def add_global_title(title_id)

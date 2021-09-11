@@ -298,7 +298,8 @@ module ShopsSettings
               {:set => 'w132x4'},
               {:set => 'w151x2'},
               {:set => 'i22x5'},
-              {:set => 'i23x2'}
+              {:set => 'i23x2'},
+              {:set => 'a301x1', :repl_rate => 20}
           ],
           :handles => [:weapons, :armors]
       },
@@ -350,6 +351,8 @@ module ShopsSettings
               {:set => 'a3x25'},
               {:set => 'a62x25'},
               {:set => 'a63x25'},
+              {:set => 'a310x1', :repl_rate => 5},
+              {:set => 'a311x1', :repl_rate => 5},
           ]
       },
       :monferr_fruit => {
@@ -366,6 +369,7 @@ module ShopsSettings
               {:set => 'i41x8'},
               {:set => 'i42x6'},
               {:set => 'i48x2'},
+              {:set => 'a301x1', :repl_rate => 20}
           ]
       },
       :monferr_merchant => {
@@ -432,7 +436,8 @@ module ShopsSettings
               {:set => 'a143x1'},
               {:set => 'a144x1'},
               {:set => 'a145x1'},
-              {:set => 'a154x5'}
+              {:set => 'a154x5'},
+              {:set => 'a301x1', :repl_rate => 25}
           ]
       },
       :pigwarts_magic => {
@@ -568,6 +573,7 @@ module ShopsSettings
               {:set => 'a25x20'},
               {:set => 'a67x20'},
               {:set => 'a242x20'},
+              {:set => 'a301x1', :repl_rate => 30}
           ]
       },
       :faide_merchant_fruit => {
@@ -623,6 +629,8 @@ module ShopsSettings
               {:set => 'i56x4'},
               {:set => 'i57x5'},
               {:set => 'i66x3'},
+              {:set => 'a310x1', :repl_rate => 8},
+              {:set => 'a311x1', :repl_rate => 8},
           ]
       },
       :faide_merchant_adele => {
@@ -678,6 +686,8 @@ module ShopsSettings
               {:set => 'w71x25'},
               {:set => 'w102x25'},
               {:set => 'w151x25'},
+              {:set => 'a312x1', :repl_rate => 5},
+              {:set => 'a313x1', :repl_rate => 5},
           ]
       },
       :faide_weapons => {
@@ -692,7 +702,8 @@ module ShopsSettings
               {:set => 'w10x30'},
               {:set => 'w23x30'},
               {:set => 'w52x30'},
-              {:set => 'w155x30'}
+              {:set => 'w155x30'},
+              {:set => 'a301x1', :repl_rate => 40},
           ],
           :replenishment_rate => 5
       },
@@ -855,6 +866,8 @@ module ShopsSettings
               {:set => 'a66x2'},
               {:set => 'a67x4'},
               {:set => 'a243x4'},
+              {:set => 'a310x1', :repl_rate => 7},
+              {:set => 'a311x1', :repl_rate => 7},
           ]
       },
       :balthazar_scrolls => {
@@ -1080,6 +1093,16 @@ module ShopsSettings
               {:set => 'w135x1', :sell_locked => true, :repl_rate => 0.4},
               {:set => 'w136x1', :sell_locked => true, :repl_rate => 0.4},
               {:set => 'w137x1', :sell_locked => true, :repl_rate => 0.4},
+              {:set => 'a306x1', :repl_rate => 10},
+              {:set => 'a307x1', :repl_rate => 10},
+              {:set => 'a308x1', :repl_rate => 10},
+              {:set => 'a309x1', :repl_rate => 10},
+              {:set => 'a310x1', :repl_rate => 10},
+              {:set => 'a311x1', :repl_rate => 10},
+              {:set => 'a312x1', :repl_rate => 3},
+              {:set => 'a313x1', :repl_rate => 3},
+              {:set => 'a301x1'},
+              {:set => 'a302x1', :repl_rate => 20},
           ]
       },
       :balthazar_boutique => {
@@ -1228,6 +1251,10 @@ module ShopsSettings
               {:set => 'w110x2'},
               {:set => 'w130x2'},
               {:set => 'w156x2'},
+              {:set => 'a302x1'},
+              {:set => 'a303x1', :repl_rate => 50},
+              {:set => 'a308x1', :repl_rate => 10},
+              {:set => 'a309x1', :repl_rate => 10},
           ]
       },
       :yugure_armors => {
@@ -1331,6 +1358,10 @@ module ShopsSettings
               {:set => 'i21x20'},
               {:set => 'i22x20'},
               {:set => 'i23x15'},
+              {:set => 'a303x2'},
+              {:set => 'a304x2', :repl_rate => 40},
+              {:set => 'a306x1', :repl_rate => 30},
+              {:set => 'a307x1', :repl_rate => 30},
           ]
       },
       :nevandra_magic => {

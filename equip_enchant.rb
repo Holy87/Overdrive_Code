@@ -65,6 +65,9 @@ module H87Enchant
   # ira: aumenta l'ira attaccando
   # sir: aumento ira iniziale
   # kir: aumento ira uccisione
+  # pnt: fa ignorare la difesa del bersaglio
+  # scn: abilità scanner
+  # duk: contrattacca quando evade
   WEAPON_TAGS = {
       1 => ["Stordente", "sta 8", "Probabilità di stordire con l'attacco.", 971],
       2 => ["Velenoso", "sta 2", "Probabilità di avvelenare con l'attacco.", 965],
@@ -144,7 +147,7 @@ module H87Enchant
       74 => ["Furia", "lhp hp cri +15", "Aumenta la probabilità di attacchi critici vicino alla morte.", 1225],
       75 => ["Crisi", "sta 115", "Possibilità di infliggere Crisi con l'attacco.", 1038],
       76 => ["Pacifico", "odd -30", "Diminuisce la probabilità di venire colpiti.", 1108],
-      77 => ["Magispirito", "hst 11" "Probabilità di attivare TurboSpirito con la magia.", 979],
+      77 => ["Magispirito", "hst 11", "Probabilità di attivare TurboSpirito con la magia.", 979],
       78 => ["Magiveleno", "mst 2", "Probabilità di infliggere Veleno con le magie.", 965],
       79 => ["Rapido", "agi +9", "Aumenta la Velocità del 9%.", 980],
       80 => ["Sinergia", "inc 10", "Leggera ricarica della Sinergia ad ogni turno.", 920],
@@ -177,25 +180,30 @@ module H87Enchant
       119 => ['Lag', 'sta 16', 'Rallenta i nemici con l\'attacco', 995],
       # - ARMA PER MAGHI (da vedere)
       120 => ['Efficace', 'mat 25', 'L\'attacco semplice fa il 25% in più di danni.', 142],
-      121 => ['Recupero', 'amp 2', 'Fa guadagnare 2 PM ad ogni attacco', 0],
+      121 => ['Recupero', 'amp 2', 'Fa guadagnare 2 PM ad ogni attacco', 1230],
       # - ARMA DA ARCANO (da vedere)
-      122 => ['Introforza', 'ats 10', 'Aumenta l\'attacco del 10% dello Spirito', 0],
+      122 => ['Introforza', 'ats 10', 'Aumenta l\'attacco del 10% dello Spirito', 795],
 
       # - Cubo magico
-      126 => ['Kikorangi', 'amp 4', 'Aumenta il numero di PM guadagnati con l\'attacco.',0],
-      127 => ['Papura'],
+      126 => ['Kikorangi', 'amp 4', 'Aumenta il numero di PM guadagnati con l\'attacco.',1084],
+      127 => ['Papura', 'sta 2', 'Può infliggere Veleno con l\'attacco.', 965],
       128 => ['Kakariki'],
       129 => ['Karaka'],
 
       # ULTRA - viene applicata dai drop random
-      130 => ['Ultra A', 'atk +15', 'Aumenta l\'attacco del 15%.',0],
-      131 => ['Ultra D', 'def +15', 'Aumenta la difesa del 15%.',0],
-      132 => ['Ultra S', 'spi +15', 'Aumenta lo spirito del 15%.',0],
-      133 => ['Ultra V', 'agi +15', 'Aumenta la velocità del 15%.',0],
+      130 => ['Ultra A', 'atk +15', 'Aumenta l\'attacco del 15%.',120],
+      131 => ['Ultra D', 'def +15', 'Aumenta la difesa del 15%.',121],
+      132 => ['Ultra S', 'spi +15', 'Aumenta lo spirito del 15%.',122],
+      133 => ['Ultra V', 'agi +15', 'Aumenta la velocità del 15%.',123],
 
-      135 => ['Iracondo', 'ira +5', 'Aumenta la Furia attaccando', 0],
-      136 => ['Mietitore', 'kir +15', 'Guadagno 15 punti Furia uccidendo un nemico', 0],
-      137 => ['Furioso', 'sir +10', 'Dona 10 punti Furia a inizio battaglia', 0],
+      135 => ['Iracondo', 'ira +5', 'Aumenta la Furia attaccando', 1250],
+      136 => ['Mietitore', 'kir +15', 'Guadagno 15 punti Furia uccidendo un nemico', 1250],
+      137 => ['Furioso', 'sir +10', 'Dona 10 punti Furia a inizio battaglia', 1250],
+
+      150 => ['Penetrante', 'pnt', 'Ignora la difesa del bersaglio negli attacchi normali', 1052],
+      151 => ['Veggente', 'scn', 'Permette di conoscere le debolezze del bersaglio', 815],
+      152 => ['Opportunista', 'duk, eva +10', 'Aumenta l\'evasione. Contrattacca su schivata', 1071],
+
 
 
 
@@ -514,6 +522,10 @@ module EquipEnchant
       @anger_init += value.to_i
     when :kir
       @anger_kill += value.to_i
+    when :pnt
+      @qualities.push(:avoid_defense)
+    when :duk
+      @qualities.push(:parry)
     else
       # niente
     end
