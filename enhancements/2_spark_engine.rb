@@ -3,6 +3,8 @@
 #-------------------------------------------------------------------------------
 # Motore che gestisce le scintille degli Sprite
 #===============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Spark_Engine"] = 1.0
 module Spark_Engine
   DEFAULT_SPARK_IMAGE = 'Spark'
   #--------------------------------------------------------------------------

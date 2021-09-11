@@ -3,6 +3,8 @@
 #-------------------------------------------------------------------------------
 # Modulo per le funzioni di fade e pulsazione
 #===============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Fade_Engine"] = 1.0
 module Fade_Engine
   # Variabili d'istanza pubbliche
   attr_accessor :fade_speed   #velocità di dissolvenza

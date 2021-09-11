@@ -3,6 +3,8 @@
 #-------------------------------------------------------------------------------
 # Motore che gestisce le funzioni aggiuntive degli Sprite
 #===============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Sprite_Engine"] = 1.0
 module Sprite_Engine
   # Avvia l'animazione dello Zoom
   #   new_x: nuovo zoom X (metti :same se non vuoi che cambi)

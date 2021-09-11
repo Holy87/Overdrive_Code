@@ -3,6 +3,9 @@
 #------------------------------------------------------------------------------
 # Aggiunta di metodi utili per uno sviluppo più facile
 #==============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Window_Enhancement"] = 1.0
+
 class Window_Base < Window
   alias draw_no_emoji_text_ex draw_text_ex unless $@
   alias process_no_emoji_character process_character unless $@
@@ -146,7 +149,7 @@ class Window_Base < Window
   # @param [Integer] width    larghezza (tutta la larghezza se omesso)
   # @param [Color] color      colore (predefinito, quello del testo)
   def draw_underline(line, width = contents_width, color = normal_color)
-    color.alpha = 128
+    color.alpha = 64
     contents.fill_rect(0, line_height * (line + 1) - 1, width, 1, color)
   end
 

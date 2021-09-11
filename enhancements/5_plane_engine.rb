@@ -3,6 +3,8 @@
 #-------------------------------------------------------------------------------
 # Modulo che include i metodi di movimento del Plane
 #===============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Plane_Engine"] = 1.0
 module Plane_Engine
 
   # Variabili d'istanza pubblici

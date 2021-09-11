@@ -3,6 +3,8 @@
 #------------------------------------------------------------------------------
 #  Aggiunta di metodi alla classe Bitmap
 #==============================================================================
+$imported = {} if $imported == nil
+$imported["H87-Bitmap_Enhancement"] = 1.0
 class Bitmap
   attr_accessor :line_height
   # Disegna un testo formattato (torna a capo automaticamente)
