@@ -54,6 +54,7 @@ module Online
   # Switch di attivazione/disattivazione delle feature online. Il giocatore può
   # scegliere se giocare online o offline in qualsiasi momento.
   ACTIVATION_SWITCH = 426
+  SHARE_PARTY_SW = 427 # switch per condivisione membri del gruppo
 
   # Percorso delle chiamate al server nel dominio del gioco. Ad esempio, se il dominio è www.miogioco.it,
   # le API risiederanno in www.miogioco.it/api/risorsa/metodo
@@ -107,6 +108,11 @@ module Online
   ONLINE_MODE_OFF = "Offline"
   ONLINE_MODE_ON = "Online"
 
+  SHARE_PARTY_TERM = "Condividi Eroi"
+  SHARE_PARTY_HELP = "Scegli se condividere le informazioni del tuo party con gli altri.|L'impostazione sarà resa effetiva solo dopo il salvataggio."
+  SHARE_PARTY_ON = "Condividi"
+  SHARE_PARTY_OFF = "Non condividere"
+
   # se true, il giocatore ha effettuato il login.
   @logged = false
   # se true, significa che il primo login è fallito. Evita di tentare ulteriori volte in modo
@@ -121,16 +127,21 @@ module Online
   # effettua il login al servizio
   # @param [Fixnum] retries numero di tentativi
   def self.login(retries = 3)
-    @disconnected = false
     operation = post :player, :login, $game_system.auth_params
 
     # ritenta se è una bad request (a volte capita)
     if !operation.success? and operation.error_code == HTTP::HTTP_STATUS_BAD_REQUEST and retries > 0
-      login(retries - 1)
+      Logger.warning("Login attempt failed. Retrying... #{4 - retries}")
+      return login(retries - 1)
     end
 
     $game_system.banned = operation.error_code == PLAYER_BANNED
     @logged = operation.success?
+    if @logged
+      Logger.info("✅ ACCESSO EFFETTUATO")
+    else
+      Logger.info("⛔ ACCESSO NON RIUSCITO")
+    end
     if !operation.success? and operation.error_code == NO_CONNECTION_ERROR
       @disconnected = true
     end
@@ -159,7 +170,7 @@ module Online
   def self.get(resource, action, params = {})
     raise InternetConnectionException.new('Disconnected', NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.get(api_path + "#{resource}/#{action}.json", params)
-    Logger.info(response.body) if $TEST
+    Logger.info("📡",response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
     raise InternetConnectionException.new(response.body, code) unless response.ok?
     response
@@ -172,7 +183,6 @@ module Online
   # @param [Hash] params
   # @return [Online::Operation_Result]
   def self.upload(resource, action, params = {})
-
     login unless logged_in?
     post resource, action, params
   end
@@ -180,6 +190,10 @@ module Online
   # determina se la componente online è abilitata
   def self.enabled?
     $game_switches[Online::ACTIVATION_SWITCH]
+  end
+
+  def self.share_party?
+    $game_switches[Online::SHARE_PARTY_SW]
   end
 
   # restituisce lo stato dei server
@@ -265,15 +279,17 @@ module Online
   # ottiene i dati di gioco da caricare sul server
   # @return [Hash{Symbol->String or Fixnum}]
   def self.get_play_data
-    {
+    data = {
         :level => $game_party.total_max_level, # <- daglli achievement
         :hours => $game_system.playtime / 60 / 60,
         :minutes => $game_system.playtime / 60 % 60,
         :story => $game_system.story_progress,
         :quests => $game_system.completed_quests, # <- dal nuovo quest system
         :exp => $game_actors[2].exp, # <- Exp di Monica
-        :gold => $game_party.gold
+        :gold => $game_party.gold,
+        :party => share_party? ? $game_party.base64_party : nil
     }
+    data
   end
 
   def self.connection_error_description(status_code)
@@ -288,10 +304,10 @@ module Online
   # @param [Hash] params
   # @return [Online::Operation_Result]
   def self.post(resource, action, params)
-    Logger.info(params) if $TEST
+    Logger.info("➡",params) if $TEST
     return Operation_Result.from_code(NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.post(api_path + "#{resource}/#{action}.json", params)
-    Logger.info(response.body) if $TEST
+    Logger.info("⬅",response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
     return Operation_Result.from_code(code) unless response.ok?
     Operation_Result.new(response.decode_json) rescue Operation_Result.from_code(DATA_ERROR)
@@ -394,6 +410,16 @@ H87Options.push_internet_option({
                                     :on => Online::ONLINE_MODE_ON,
                                     :off => Online::ONLINE_MODE_OFF,
                                     :sw => Online::ACTIVATION_SWITCH
+                                })
+
+H87Options.push_internet_option({
+                                    :type => :switch,
+                                    :text => Online::SHARE_PARTY_TERM,
+                                    :help => Online::SHARE_PARTY_HELP,
+                                    :on => Online::SHARE_PARTY_ON,
+                                    :off => Online::SHARE_PARTY_OFF,
+                                    :sw => Online::SHARE_PARTY_SW,
+                                    :default => true
                                 })
 
 # Attivare o disattivare popup messaggi sfera dimensionale

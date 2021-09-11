@@ -141,8 +141,60 @@ class Game_Party < Game_Unit
   attr_accessor :id_partita # per retrocompatibilità
   attr_accessor :nome_giocatore
 
+  # @return [Array<Game_Actor>]
+  def standard_battle_members
+    battle_members.select { |member| !member.domination? && !member.guest?}
+  end
+
   def max_exp
     members.map { |member| member.exp }.max
+  end
+
+  def base64_party
+    base64_encode(JSON.encode(active_members_data_hash))
+  end
+
+  # @return [Array<Hash{Symbol->Fixnum}>]
+  def active_members_data_hash
+    standard_battle_members.map{|member| member.data_hash}
+  end
+end
+
+class Game_Actor < Game_Battler
+  # @return [String, nil]
+  def to_json
+    JSON.encode data_hash
+  end
+
+  #noinspection RubyResolve
+  def guest?
+    actor.fix_equipment
+  end
+
+  # @return [Hash{Symbol->Fixnum}]
+  #noinspection RubyResolve
+  def data_hash
+    {
+        :actor_id => @actor_id, :name => @name,
+        :level => @level, :atk_p => @atk_plus,
+        :def_p => @def_plus, :spi_p => @spi_plus,
+        :agi_p => @agi_plus, :mhp_p => @maxhp_plus,
+        :mmp_p => @maxmp_plus,
+        :weapon_id => @weapon_id,
+        :armor1_id => @armor1_id,
+        :armor2_id => @armor2_id,
+        :armor3_id => @armor3_id,
+        :armor4_id => @armor4_id,
+        :extra_armor_ids => extra_armor_id,
+        :equip_types => equip_type.map{|t|t.to_s},
+        :skills => @skills,
+        :passives => @learned_passives
+    }
+  end
+
+  # @return [String]
+  def to_base64
+    base64_encode(to_json)
   end
 end
 
@@ -175,7 +227,7 @@ module DataManager
   def self.save_game(index)
     $game_system.upload_titles
     if h87_online_save_game(index)
-      Online.update_player_data
+      Online.update_player_data if index.is_a?(Integer)
       true
     else
       false

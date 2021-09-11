@@ -135,7 +135,7 @@ class Online_Notification
 
   # @return [Symbol] il tipo di notifica
   attr_accessor :type
-  # @return [String] informazioni aggiuntive
+  # @return [Hash] informazioni aggiuntive
   attr_accessor :info
   # @return [Time] la data della notifica
   attr_reader :date
@@ -187,8 +187,10 @@ class Online_Notification
     return @title if @title != nil
     if Vocab.notification_title(@type) != nil
       Vocab.notification_title(@type)
+    elsif @data['title'] != nil
+      @data['title']
     else
-      @data.split(',').first
+      'NO-TITLE'
     end
   end
 
@@ -206,24 +208,25 @@ class Online_Notification
   # @return [String]
   def message
     return @message if @message != nil
-    data = @data.split(',')
     text = Vocab.notification_message @type
     case @type
     when :fame, :infame
-      sprintf(text, data[0])
+      sprintf(text, @data['sender_name'])
     when :banned
       text
     when :auction
-      item = [$data_items, $data_weapons, $data_armors][data[1].to_i][data[0].to_i]
+      item_type = @data['item']['item_type']
+      item_id = @data['item']['item_id']
+      item = [[], $data_items, $data_weapons, $data_armors][item_type][item_id]
       item_name = item ? item.name : 'ERROR'
-      sprintf(text, item_name, data[2].to_i, Vocab.currency_unit)
+      sprintf(text, item_name, @data['price'], Vocab.currency_unit)
     when :reply
-      sphere = Dimensional_Sphere.new(data[0].to_sym)
-      sprintf(text, data[1], sphere.name)
+      sphere = Dimensional_Sphere.new(@data['board_id'].to_sym)
+      sprintf(text, @data['player_name'], sphere.name)
     when :event, :service, :custom
       base64_decode(data[1])
     else
-      data[1] || data[0] || ''
+      @data['message']
     end
   end
 

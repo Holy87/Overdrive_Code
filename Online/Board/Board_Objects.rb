@@ -58,7 +58,7 @@ class Board_Message
   def initialize(data)
     @old_player_name = data['old_name']
     @date = get_date(data['date'])
-    @message = base64_decode(data['message'])
+    @message = base64_decode(data['message'].gsub('\n','').gsub('\/','/'))
     @message_id = data['message_id']
     @author = Online_Player.new(data['author']) if data['author']
   end
@@ -101,7 +101,7 @@ class Board_Message
   # Restituisce la data formattata come stringa
   def time
     return '' if @date.nil?
-    sprintf('%d/%d/%d %d:%d', @date.day, @date.month, @date.year,
+    sprintf('%d/%d/%d %d:%02d', @date.day, @date.month, @date.year,
             @date.hour, @date.min)
   end
 end

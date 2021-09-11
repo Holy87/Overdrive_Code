@@ -215,14 +215,15 @@ class Scene_MessageBoard < Scene_MenuBase
     super
     create_main_viewport
     get_message_board
+    update_player_data
     create_info_window
     create_messages_window
     create_writing_window
     create_command_window
     create_emoji_window
     create_player_window
-    create_report_window
     create_alert_message_window
+    create_report_window
     create_transition_sprite
     download_messages
   end
@@ -240,6 +241,10 @@ class Scene_MessageBoard < Scene_MenuBase
 
   def get_message_board
     @board = Dimensional_Sphere.new($game_temp.sphere_id)
+  end
+
+  def update_player_data
+    $game_system.download_player_data
   end
 
   # @return [Dimensional_Sphere]
@@ -303,7 +308,7 @@ class Scene_MessageBoard < Scene_MenuBase
   end
 
   def create_report_window
-    @report_window = Window_MessageReport.new(0, 0)
+    @report_window = Window_MessageReport.new(0, @alert_message_window.bottom_corner)
     @report_window.openness = 0
     @report_window.set_handler(:ok, method(:send_report))
     @report_window.set_handler(:cancel, method(:close_report))
@@ -325,7 +330,7 @@ class Scene_MessageBoard < Scene_MenuBase
   end
 
   def create_alert_message_window
-    @alert_message_window = Window_MessageAlert.new(Graphics.width, @report_window.bottom_corner)
+    @alert_message_window = Window_MessageAlert.new(0, 0)
     @alert_message_window.visible = false
   end
 
@@ -388,20 +393,25 @@ class Scene_MessageBoard < Scene_MenuBase
   end
 
   def open_alert_window
+    @placing_status = 0
     @info_window.smooth_move(0, 0 - @info_window.height)
     @message_window.smooth_move(0, Graphics.height)
     unless @alert_message_window.visible
       @alert_message_window.x = Graphics.width
       @alert_message_window.visible = true
     end
-    @alert_message_window.smooth_move(0, @alert_message_window.y)
+    @alert_message_window.smooth_move(0, @alert_message_window.y, 4, method(:activate_alert_window))
     @command_window.unselect_start
     @report_window.open
     @transition_sprite.visible = true
-    @transition_sprite.smooth_move(0 + @alert_message_window.padding, 0 + @alert_message_window.padding, 4, method(:activate_alert_window))
+    sprite_x = 0 + @alert_message_window.padding
+    sprite_y = @alert_message_window.y + @alert_message_window.padding
+    @transition_sprite.smooth_move(sprite_x, sprite_y, 4, method(:activate_alert_window))
   end
 
   def activate_alert_window
+    @placing_status += 1
+    return if @placing_status < 2
     @alert_message_window.set_bitmap(@transition_sprite.bitmap)
     @transition_sprite.bitmap.dispose
     @transition_sprite.bitmap = nil
@@ -442,7 +452,7 @@ class Scene_MessageBoard < Scene_MenuBase
       @board.refresh
       @message_window.refresh
       @message_window.index = 0
-      show_dialog(Vocab.board_message_sent, @message_window)
+      show_dialog(Vocab.board_message_sent, method(:do_update))
     else
       Sound.play_buzzer
       @info_window.set_help(result.failed_message)

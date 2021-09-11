@@ -296,7 +296,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
 
   def avatar_confirmation
     reset_main_windows
-    if @avatar_window.index != current_player.title_id
+    if @avatar_window.index != current_player.avatar
       begin
         operation = Online.change_avatar(@avatar_window.index)
         if operation.success?

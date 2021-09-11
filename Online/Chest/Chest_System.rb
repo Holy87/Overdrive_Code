@@ -1,3 +1,9 @@
+module Chest_Troops
+  # Status che verrà applicato automaticamente ai nemici
+  # nei gruppi di mostri degli scrigni
+  AUTO_STATE_ID = 140
+end
+
 #===============================================================================
 # ** Game_Map
 #-------------------------------------------------------------------------------
@@ -59,6 +65,11 @@ end
 class Game_Temp
   # @return [Local_Chest] chest
   attr_accessor :chest
+  attr_accessor :in_chest_battle
+
+  def in_chest_battle?
+    @in_chest_battle == true
+  end
 end
 
 #===============================================================================
@@ -174,6 +185,9 @@ class Game_Interpreter
   end
 end
 
+#===============================================================================
+# ** Scene_Map
+#===============================================================================
 class Scene_Map < Scene_Base
   alias h87_chest_update_scene_change update_scene_change unless $@
 
@@ -191,5 +205,21 @@ class Scene_Map < Scene_Base
     #noinspection RubyResolve
     $game_temp.next_scene = nil
     SceneManager.call(Scene_Chest)
+  end
+end
+
+#===============================================================================
+# ** Game_Enemy
+#===============================================================================
+class Game_Enemy < Game_Battler
+  alias h87_chest_states states unless $@
+
+  # @return [Array<RPG::State>]
+  def states
+    if $game_temp.in_chest_battle?
+      h87_chest_states + [$data_states[Chest_Troops::AUTO_STATE_ID]]
+    else
+      h87_chest_states
+    end
   end
 end
