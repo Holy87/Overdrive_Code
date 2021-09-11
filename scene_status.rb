@@ -127,9 +127,10 @@ module StatusSettings
       :states => 'Condizioni',
       :stats => 'Statistiche',
   }
-  #--------------------------------------------------------------------------
-  # * Colori dei ruoli (non utilizzati)
-  #--------------------------------------------------------------------------
+  # Testo mostrato nei parametri quando c'è un bonus danni
+  ELEMENT_AMPLIFIER_VOCAB = "Bonus danni da %s"
+  ELEMENT_AMPLIFIER_HELP = "\\n[0] causa il %d%% danni in più con l'elemento %s."
+  # Colori dei ruoli (non utilizzati)
   ROLE_COLORS = {
       :damg => Color.new(234, 71, 2),
       :heal => Color.new(79, 234, 2),
@@ -959,10 +960,12 @@ class Window_ActorParams < Window_Selectable
   # Aggiorna la lista dei parametri
   def update_status_params
     @status_params = Status_Param.get_params(@data)
+    amplified_elements_data.each_pair do |key, data|
+      @status_params[key] = Status_Param.new(data)
+    end
   end
-  #--------------------------------------------------------------------------
-  # * Imposta l'eroe
-  #--------------------------------------------------------------------------
+
+  # Imposta l'eroe
   def set_actor(new_actor)
     return if @actor == new_actor
     @actor = new_actor
@@ -1008,19 +1011,39 @@ class Window_ActorParams < Window_Selectable
      :neu => normal_color,
      :pos => power_up_color}[key]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il parametro
-  #--------------------------------------------------------------------------
+
+  # Restituisce il parametro
   def get_param(symbol)
-    actor.send symbol
+    if symbol.to_s =~ /element_(\d+)_amp/
+      actor.element_amplifier $1.to_i
+    else
+      actor.send symbol
+    end
   end
-  #--------------------------------------------------------------------------
-  # * Aggiorna la finestra d'aiuto
-  #--------------------------------------------------------------------------
+
+  # Aggiorna la finestra d'aiuto
   def update_help
     return if @help_window.nil?
     return if item.nil?
     @help_window.set_text(item.description)
+  end
+
+  # @return [Hash]
+  def amplified_elements_data
+    amplified_data = {}
+    amplified_elements.each do |element|
+      key = ('element_' + element.id.to_s + '_amp').to_sym
+      data = {:text => sprintf(StatusSettings::ELEMENT_AMPLIFIER_VOCAB, element.name),
+              :description => sprintf(StatusSettings::ELEMENT_AMPLIFIER_HELP, (actor.element_amplifier(element.id)*100-100), element.name),
+              :default => 0, :format => '%+d%%', :formula => 'x*100-100' }
+      amplified_data[key] = data
+    end
+    amplified_data
+  end
+
+  # @return [Array<RPG::Element_Data>]
+  def amplified_elements
+    $data_system.magic_elements.select { |element| actor.element_amplifier(element.id) != 1.0 }
   end
 end
 
