@@ -33,6 +33,7 @@ class Shop_Article
     @sales_off = details.deny_sales || false
     @sell_locked = details.sell_locked || false
     @replenishment_rate = details.repl_rate
+    @rpg_article = details
   end
 
   # restituisce l'oggetto
@@ -48,6 +49,11 @@ class Shop_Article
     else
       nil
     end
+  end
+
+  # @return [RPG::Shop_Article]
+  def base_article
+    @rpg_article
   end
 
   # imposta la quantità dell'articolo assicurandosi
@@ -341,6 +347,11 @@ class Game_Shop
     @fidelity_points += points * multiplier
   end
 
+  # rimuove gli articoli che non rispettano più le condizioni (tipo, già presente un oggetto dello stesso tipo)
+  def remove_forbidden_articles
+    articles.each { |article| deplenish_article(article, :all) unless article.base_article.conditions_met? }
+  end
+
   # determina se il giocatore può vendergli oggetti
   def permit_sell?
     rpg_shop.permit_sell
@@ -582,7 +593,7 @@ class Game_Shop
   # rimuove un bene dal negozio. Se il bene è illimitato, non fa nulla a
   # meno che non si definisca :all come numero, così li rimuoverà tutti.
   # @param [Shop_Article] article
-  # @param [Integer] item_number numero da rimuovere. :all se tutti
+  # @param [Integer, Symbol] item_number numero da rimuovere. :all se tutti
   def deplenish_article(article, item_number = 1)
     return false if article.nil?
     return false if article.unlimited? and item_number != :all

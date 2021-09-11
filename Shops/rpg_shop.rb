@@ -173,16 +173,20 @@ class RPG::Shop_Article
     variable_condition_met? and switch_condition_met? and no_item_met?
   end
 
+  # la condizione è soddisfatta se la variabile richiesta ha un valore maggiore o uguale di quello richiesto
   def variable_condition_met?
     return true if @required_var.nil?
-    $game_variables[@required_var] > @required_var_value
+    $game_variables[@required_var] >= @required_var_value
   end
 
+  # la condizione è soddisfatta se lo switch richiesto è true
   def switch_condition_met?
     return true if @required_sw.nil?
     $game_switches[@required_sw]
   end
 
+  # la condizione è soddisfatta se il party non possiede già un oggetto dello
+  # stesso tipo
   def no_item_met?
     return true if @required_noitem.nil?
     !$game_party.has_item?($data_items[@required_noitem])

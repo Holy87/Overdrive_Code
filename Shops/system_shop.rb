@@ -206,6 +206,7 @@ class Scene_Map < Scene_Base
   end
 
   def call_shop
+    $game_temp.next_scene = nil
     SceneManager.call(Scene_NewShop)
   end
 end

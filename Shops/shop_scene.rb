@@ -245,6 +245,7 @@ class Scene_NewShop < Scene_MenuBase
     @shop = $game_temp.custom_shop
     @action = :nothing
     @info = :general
+    shop.remove_forbidden_articles
     create_help_window
     create_shop_description_window
     create_gold_window
