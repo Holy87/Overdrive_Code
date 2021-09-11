@@ -115,6 +115,15 @@ class Window_PlayTime < Window_Base
   end
 end
 
+class Window_Gold < Window_Base
+  alias draw_text_gold refresh unless $@
+
+  def refresh
+    draw_text_gold
+    draw_icon(Icon_Settings::GOLD_ICON, 0, 0)
+  end
+end
+
 #===============================================================================
 # ** Scene_Menu
 #===============================================================================
