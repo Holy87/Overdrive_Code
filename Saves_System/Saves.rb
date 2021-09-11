@@ -110,11 +110,13 @@ module DataManager
 
   def self.save_game_without_rescue(index)
     rgss3_save_game_without_rescue(index)
+    return if index.is_a? String
     $game_settings[:last_savefile_index] = @last_savefile_index
   end
 
   def self.load_game_without_rescue(index)
     rgss3_load_game_without_rescue(index)
+    return if index.is_a? String
     $game_settings[:last_savefile_index] = @last_savefile_index
   end
 
