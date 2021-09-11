@@ -234,16 +234,21 @@ end
 # Per oggetti e abilità
 #===============================================================================
 class RPG::UsableItem
-  attr_reader :custom_sinergy # valore personalizzato di sinergia
+  attr_reader :sinery_rate # modificatore della sinergia
+  attr_reader :custom_sinergy
   attr_reader :special_skill # è un'abilità che richiede sinergia?
   # Caricamento attributi
   def load_sinergy_stats
     return if @sinergy_loaded
     @sinergy_loaded = true
     @special_skill = false
+    @sinery_rate = 1.0
+    @custom_sinergy = 0
     self.note.split(/[\r\n]+/).each { |riga|
       case riga
-      when /<sinergia:[ ]*(\d+)>/i
+      when /<sinergia:[ ]*(\d+)%>/i
+        @sinery_rate = $1.to_f/100
+      when /<sinergia:[ ]*([+\-]\d+)/i
         @custom_sinergy = $1.to_i
       when /<sinergico>/i
         @special_skill = true
@@ -402,17 +407,19 @@ class Game_Battler
     element_set = skill.nil? ? user.element_set : skill.element_set
     $game_party.add_sinergy(skill.custom_sinergy) if skill
     return unless damaged?
+    return if user.actor? and actor?
     if guard? and actor?
       $game_party.add_sinergy(sinergic_increase * sin_guard_bonus)
     end
-    mult = get_multiplier(element_set, user)
+    mult = get_multiplier(element_set, user, skill)
     $game_party.add_sinergy(user.sinergic_increase * mult)
   end
 
   # Ottiene il moltiplicatore Sinergia
   # @param [Game_Battler] attacker
   # @param [Array] element_set
-  def get_multiplier(element_set, attacker)
+  # @param [RPG::UsableItem] skill
+  def get_multiplier(element_set, attacker, skill)
     return 0 if guarding?
     mult = @critical ? attacker.sin_on_critical : 1
     if elements_max_rate(element_set) > 100
@@ -421,7 +428,8 @@ class Game_Battler
       mult -= ELEMENT_RESIST_MALUS
     end
     mult -= sinergic_defense if actor?
-    mult /= 2.0 if attacker.has2w
+    mult /= 2.0 if attacker.has2w && skill.nil? # se è un attacco
+    mult *= skill.sinery_rate if skill
     mult
   end
 
