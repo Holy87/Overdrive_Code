@@ -273,6 +273,7 @@ class Scene_Battle < Scene_Base
   end
 
   def update_basic(main = false)
+    #noinspection RubyArgCount
     h87_pop_update_basic(main)
     @popup_container.update
   end

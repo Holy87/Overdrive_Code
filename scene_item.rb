@@ -180,9 +180,11 @@ module Vocab
       'Tre nemici a caso',
       'Alleato',
       'Tutti gli alleati',
-      'Un alleato KO',
+      'Alleato KO',
       'Tutti gli alleati KO',
-      'L\'utilizzatore'
+      'L\'utilizzatore',
+      'Tutti i presenti',
+      'Nemici specifici'
   ]
   # Vocaboli per il tipo di armatura
   ARMOR_KINDS = {
@@ -640,7 +642,7 @@ class Window_ItemInfo < Window_DataInfo
     (0..icon_array.size - 1).each { |i|
       draw_icon(icon_array[i], 24 * (i % columns), @line + (i / columns * 24))
     }
-    @line += 24 * (icon_array.size / columns * 24 + 1)
+    @line += 24 * (icon_array.size / columns * 24 + 2)
   end
 
   # disegna il numero posseduto di quest'oggetto dal gruppo

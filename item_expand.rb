@@ -4,7 +4,7 @@ class Window_ItemInfo < Window_DataInfo
   #--------------------------------------------------------------------------
   def draw_script_detail
     if item.is_a?(RPG::Weapon) or item.is_a?(RPG::Armor)
-      draw_item_class
+      #draw_item_class
       draw_rarity
       draw_required_level
       draw_perc_increment
@@ -17,6 +17,7 @@ class Window_ItemInfo < Window_DataInfo
       draw_atb_start
       draw_magic_states_plus
       draw_heal_states_plus
+      draw_self_heal_rate
       draw_sinergy_bonuses
       draw_summon_bonuses
       draw_drop_prob
@@ -27,6 +28,8 @@ class Window_ItemInfo < Window_DataInfo
       draw_parry
       draw_super_guard
       draw_pharmacology
+      draw_show_atb
+      draw_avoid_defense
       draw_healing_magic_states
       draw_offensive_magic_states
       draw_hp_on_guard
@@ -66,7 +69,7 @@ class Window_ItemInfo < Window_DataInfo
   end
 
   def draw_parry
-    return unless item.parry
+    return unless item.has? :parry
     draw_feature('Contrattacco su schivata')
   end
 
@@ -85,13 +88,23 @@ class Window_ItemInfo < Window_DataInfo
   end
 
   def draw_super_guard
-    return unless item.super_guard
+    return unless item.has? :super_guard
     draw_feature('1/4 danni su Difendi')
   end
 
   def draw_pharmacology
-    return unless item.pharmacology
+    return unless item.has? :pharmacology
     draw_feature('Effetto pozioni doppio')
+  end
+
+  def draw_show_atb
+    return unless item.has? :show_atb
+    draw_feature('Mostra ATB nemici')
+  end
+
+  def draw_avoid_defense
+    return unless item.has? :avoid_defense
+    draw_feature('Ignora difesa bers.')
   end
 
   def draw_hp_on_guard
@@ -213,6 +226,11 @@ class Window_ItemInfo < Window_DataInfo
     return if item.heal_amplify == 0
     draw_parameter('Pot. cure', item.heal_amplify, true, 229)
   end
+
+  def draw_self_heal_rate
+    return if item.heal_rate == 0
+    draw_parameter('Bonus cure', item.heal_rate, true, 229)
+  end
   #--------------------------------------------------------------------------
   # * Disegna il bonus di caricamento ATB delle abilità
   #--------------------------------------------------------------------------
@@ -295,7 +313,7 @@ class Window_ItemInfo < Window_DataInfo
   end
 
   def draw_autoscan
-    return unless item.autoscan
+    return unless item.has? :autoscan
     draw_feature 'Scansiona i nemici'
   end
   #--------------------------------------------------------------------------

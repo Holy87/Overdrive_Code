@@ -1189,7 +1189,7 @@ class Conversion_Scheduler
     advance_step
     change_settings
     advance_step
-    rimuovi_oggetti_eliminati
+    process_items
     advance_step
     handle_old_equips
     advance_step
@@ -1319,7 +1319,7 @@ class Conversion_Scheduler
   end
 
   # rimuove gli oggetti non più esistenti
-  def rimuovi_oggetti_eliminati
+  def process_items
     Logger.info 'rimuovo oggetti eliminati'
     (201..206).each { |i| $game_party.lose_item($data_items[i], 99) }
     $game_party.lose_item($data_items[211], 99)
@@ -1333,6 +1333,7 @@ class Conversion_Scheduler
       $game_actors[14].change_equip(2, $data_armors[38])
       $game_actors[14].change_equip(4, $data_armors[191])
     end
+    $game_party.gain_item($data_items[242], 1) if $game_variables[160] > 0
   end
 
   # @param [RPG::Weapon] weapon

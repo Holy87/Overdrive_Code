@@ -61,6 +61,8 @@ class Sprite_MiniMap
     @x = viewport.rect.x
     @y = viewport.rect.y
     @viewport = viewport
+    @old_player_x = -1
+    @old_player_y = -1
     create_map
     self.visible = $game_system.minimap_activated?
   end
@@ -106,13 +108,21 @@ class Sprite_MiniMap
 
   def relocate_map
     return if @visible == false
+    return unless player_moved?
     @background.x = 0
     @background.y = 0
     mult = $game_system.minimap_zoom
-    @map_pic.x = (MAP_W/2 - $game_player.x) * mult
-    @map_pic.y = (MAP_H/2 - $game_player.y) * mult
+    @map_pic.x = [[(MAP_W/2 - $game_player.x), 0].min, $game_map.width].max * mult
+    @map_pic.y = [[(MAP_H/2 - $game_player.y), 0].min, $game_map.height].max * mult
     @map_pic.z = @background.z + 1
     @map_frame.z = @map_pic.z + 1
+  end
+
+  def player_moved?
+    return false if $game_player.x == @old_player_x and $game_player.y == @old_player_y
+    @old_player_x = $game_player.x
+    @old_player_y = $game_player.y
+    true
   end
 
   def check_commands
@@ -136,7 +146,7 @@ class Sprite_MiniMap
   end
 
   def background_bitmap
-    Cache.minimap_background
+    Cache.minimap_background($game_map.width, $game_map.height)
   end
 
 end
@@ -203,11 +213,11 @@ module Cache
     bitmap
   end
 
-  def self.minimap_background
+  def self.minimap_background(width = MapPopup_Options::MAP_W, height = MapPopup_Options::MAP_H)
     if @minim_bg.nil?
       color = MapPopup_Options::BG_COLOR
-      w = MapPopup_Options::MAP_W
-      h = MapPopup_Options::MAP_H
+      w = [width, MapPopup_Options::MAP_W].min
+      h = [height, MapPopup_Options::MAP_H].min
       @minim_bg = Bitmap.new(w, h)
       @minim_bg.fill_rect(0, 0, w, h, color)
     end

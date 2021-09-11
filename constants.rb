@@ -12,8 +12,6 @@ module CPanel
   EXPRATE = 95 #rateo esperienza
   APDRATE = 100 #rateo PA
   GOLDRATE = 100 #rateo oro
-
-  BOMB_SKILL = 549 #abilità bombifica
 end
 
 Font.default_name = ["VL PGothic","Verdana","Arial", "Courier New"]

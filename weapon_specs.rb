@@ -26,8 +26,9 @@ class Window_Base < Window
   # @return [Integer]
   #-----------------------------------------------------------------------------
   def draw_specialization(item, x, y, enabled = true, width = contents_width)
-    x2 = x + 25 + text_size(item.name).width
-    w = width - x2 + 2
+    used_width = 24 + text_width(item.name)
+    x2 = x + used_width + 1
+    w = width - used_width + 10
     old_font = contents.font.size
     old_color = contents.font.color.clone
     contents.font.size = 15

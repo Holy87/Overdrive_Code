@@ -1,7 +1,7 @@
 =begin
  ==============================================================================
   ■ Barra di scorrimento di Holy87
-      versione 1.0
+      versione 1.01
       Difficoltà utente: ★
       Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata
@@ -136,8 +136,15 @@ class Window_Selectable < Window_Base
     self.height - padding * 2
   end
 
+  # y coordinate in the window
+  # @return [Fixnum]
   def vert_scrollbar_position
-    self.oy * vert_scrollbar_rate
+    #noinspection RubyYardReturnMatch
+    [self.oy, max_y_scrollbar_position].min * vert_scrollbar_rate
+  end
+
+  def max_y_scrollbar_position
+    contents_height - scrollbar_height
   end
 
   def scrollbar_visible?

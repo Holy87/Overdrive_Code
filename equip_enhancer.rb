@@ -2,7 +2,7 @@
 # ** Impostazioni script
 #===============================================================================
 module H87EquipPowerUp
-  REQUIRETITLE = "Oggetto richiesto"
+  REQUIRETITLE = "Oggetti richiesti"
   PUPICON = 518 # icona di default del powerup (non funziona più)
   SUCCESSSOUND = "Item3" # suono del power up
   SUCCESSTEXT = "Hai aggiunto l'abilità %s su %s!"
@@ -576,7 +576,11 @@ class Window_DisenchantRequirements < Window_Base
       change_color(normal_color)
     end
     text = sprintf('%d/%d %s', price, $game_party.gold, Vocab.currency_unit)
-    draw_text(line_rect(1), text, 2)
+    rect = line_rect(1)
+    draw_icon($data_system.gold_icon, rect.x, rect.y)
+    rect.x += 24
+    rect.y -= 24
+    draw_text(rect, text, 2)
   end
   #--------------------------------------------------------------------------
   # * restituisce l'equipaggiamento

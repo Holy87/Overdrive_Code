@@ -25,6 +25,13 @@ module Popup_Settings
   POPUP_OUTLINE = false
   POPUP_BACKGROUND_IMAGE = "BarraPopup"
 
+  # Punto di creazione del popup.
+  # left: a sinistra (classico)
+  # character: sopra il personaggio
+  # bottom: in basso allo schermo
+  # center: al centro dello schermo (in basso)
+  POPUP_ORIGIN = :left
+
   SCREEN_X = 5
   SCREEN_Y = 300
   DISTANCE = 3
@@ -115,11 +122,30 @@ class Map_Popup_Data
     @tone = tone ? tone : DEFAULT_TONE
     @width = Cache.picture(POPUP_BACKGROUND_IMAGE).width
     @height = Cache.picture(POPUP_BACKGROUND_IMAGE).height
-    @x = 0 - width
-    @y = SCREEN_Y
+    init_position
     @life = LIFE
     fade_engine_init
     @speed = SPEED
+  end
+
+  def init_position
+    case POPUP_ORIGIN
+    when :left
+      @x = 0 - width
+      @y = SCREEN_Y
+    when :bottom
+      @x = SCREEN_X
+      @y = Graphics.height
+    when :center
+      @x = (Graphics.width - @width) / 2
+      @y = SCREEN_Y
+    when :character
+      @x = $game_player.screen_x - @width / 2
+      @y = $game_player.screen_y - 64
+    else
+      @x = 0 - width
+      @y = SCREEN_Y
+    end
   end
 
   # @return [Bitmap]

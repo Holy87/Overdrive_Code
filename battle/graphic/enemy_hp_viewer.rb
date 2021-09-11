@@ -392,7 +392,7 @@ class Game_Enemy < Game_Battler
   end
 
   def level
-    enemy.level
+    (enemy.level * level_multiplier).to_i
   end
 
   def hide_hp?

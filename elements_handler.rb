@@ -13,8 +13,8 @@ module Element_Settings
   ENEMY_TYPES = [17, 18, 19, 20, 21, 22, 23, 24, 25]
 
   ICONS = {
-      1 => 541, 2 => 539, 3 => 540, 4 => 542, 7 => 239,
-      8 => 1099, 9 => 104, 10 => 105,
+      1 => 541, 2 => 539, 3 => 540, 4 => 542, 7 => 510,
+      8 => 511, 9 => 104, 10 => 105,
       11 => 106, 12 => 107, 13 => 108, 14 => 109,
       15 => 110, 16 => 111, 26 => 1278
   }
@@ -27,10 +27,45 @@ module Element_Settings
       :types      => [0, 200, 200,  0,   0,  0, 0]
   }
 
+  STATES_REMOVED_BY_EARTH = [
+      2, # veleno
+      10, # turbodifesa
+      22, # ultima difesa
+      24, # riflesso
+      28, # catrame
+      29, # lucescudo
+      30, # buioscudo
+      33, # arma velenosa
+      75, # trincea
+      97, 98, 99, 100, 102, # scudi elementali tranne terra
+      114, # protezione
+      130, # combustione
+      131, # congelamento
+      132, # shockk
+      133, # bagnato
+      166, # barriera magica
+  ]
+
+  ENERGY_ELEMENT_ID = 7
+  FIRE_ELEMENT_ID = 9
+  ICE_ELEMENT_ID = 10
+  THUNDER_ELEMENT_ID = 11
+  WATER_ELEMENT_ID = 12
+  EARTH_ELEMENT_ID = 13
+  WIND_ELEMENT_ID = 14
+  BURN_STATE_ID = 130
+  ICED_STATE_ID = 131
+  SHOCK_STATE_ID = 132
+  WET_STATE_ID = 133
+
+  WIND_BEAR_PROBABILITY = 50
+
   MULTIPLE_REGEX = /\[(.+\/.+)\]/
   ELEMENT_AMPLIFY_REGEX = /<amplify[ _]element[ ]+(\d+)[ ]*:[ ]*([+\-]\d+)%>/i
   HEAL_AMPLIFY_REGEX = /<amplify[ _]heal[ ]*:[ ]*([+\-]\d+)%>/i
   ELEMENT_DEFENSE = /<element[ _]rate[ ]+(\d+)[ ]*:[ ]*([+\-]\d+)%>/i
+
+  BURN_TRIGGER = "La combustione è potenziata dal vento!"
 
   # icon index
   # @return [Integer]
@@ -181,6 +216,36 @@ class RPG::System
     elements_data.select {|ele| ele.id == attribute_id}.first.icon_index
   end
 
+  # @return [RPG::Element_Data, nil]
+  def fire_element
+    element_by_id(Element_Settings::FIRE_ELEMENT_ID)
+  end
+
+  # @return [RPG::Element_Data, nil]
+  def ice_element
+    element_by_id Element_Settings::ICE_ELEMENT_ID
+  end
+
+  # @return [RPG::Element_Data, nil]
+  def thunder_element
+    element_by_id Element_Settings::THUNDER_ELEMENT_ID
+  end
+
+  # @return [RPG::Element_Data, nil]
+  def water_element
+    element_by_id Element_Settings::WATER_ELEMENT_ID
+  end
+
+  # @return [RPG::Element_Data, nil]
+  def wind_element
+    element_by_id Element_Settings::WIND_ELEMENT_ID
+  end
+
+  # @return [RPG::Element_Data, nil]
+  def earth_element
+    element_by_id Element_Settings::EARTH_ELEMENT_ID
+  end
+
   alias element_icon attribute_icon
 end
 
@@ -307,7 +372,8 @@ class RPG::State
 end
 
 class Game_Battler
-  alias h87_elements_make_obj_damage_value make_obj_damage_value
+  alias h87_elements_make_obj_damage_value make_obj_damage_value unless $@
+  alias h87_elements_apply_state_changes apply_state_changes unless $@
   # @param [Integer] element_id
   # @return [String]
   def element_rank(element_id)
@@ -352,6 +418,71 @@ class Game_Battler
     1.0 + features_sum(:element_amplify_rate, element_id)
   end
 
+  # @param [RPG::Skill] obj
+  def apply_state_changes(obj)
+    h87_elements_apply_state_changes(obj)
+    apply_element_effect_strategy(obj)
+  end
+
+  # @param [RPG::Skill, Game_Battler] obj
+  #noinspection RubyYardParamTypeMatch
+  def apply_element_effect_strategy(obj)
+    return if obj.is_a?(Game_Battler)
+    return unless obj.offensive_magic?
+    apply_wind_effect(obj)
+    apply_earth_effect(obj)
+    apply_energy_effect(obj)
+  end
+
+  # @param [RPG::Skill] obj
+  def apply_wind_effect(obj)
+    return if @hp_damage <= 0
+    return unless obj.element_set.include?(Element_Settings::WIND_ELEMENT_ID)
+    if burning?
+      burn_dmg = custom_slip_damages[Element_Settings::BURN_STATE_ID]
+      if burn_dmg * 20 > @hp_damage
+        custom_slip_damages[Element_Settings::BURN_STATE_ID] = (burn_dmg * 1.5).to_i
+        push_popup(Element_Settings::BURN_TRIGGER)
+      else
+        remove_state(Element_Settings::BURN_STATE_ID)
+        @removed_states.push(Element_Settings::BURN_STATE_ID)
+      end
+    end
+  end
+
+  # @param [RPG::Skill] obj
+  def apply_earth_effect(obj)
+    return unless obj.element_set.include?(Element_Settings::EARTH_ELEMENT_ID)
+    rate = element_rate(Element_Settings::EARTH_ELEMENT_ID)
+    @states.each do |state_id|
+      remove_state(state_id) if Element_Settings::STATES_REMOVED_BY_EARTH.include?(state_id) and rand(200) <= rate
+    end
+  end
+
+  # @param [RPG::Skill] obj
+  def apply_energy_effect(obj)
+    return if @mp_damage <= 0
+    return unless obj.element_set.include?(Element_Settings::ENERGY_ELEMENT_ID)
+    return unless shocked?
+    @hp_damage += @mp_damage * 2
+    remove_state(Element_Settings::SHOCK_STATE_ID)
+  end
+
+  def burning?
+    states.include?($data_states[Element_Settings::BURN_STATE_ID])
+  end
+
+  def iced?
+    states.include?($data_states[Element_Settings::ICED_STATE_ID])
+  end
+
+  def shocked?
+    states.include?($data_states[Element_Settings::SHOCK_STATE_ID])
+  end
+
+  def wet?
+    states.include?($data_states[Element_Settings::WET_STATE_ID])
+  end
 end
 
 class Game_Enemy < Game_Battler

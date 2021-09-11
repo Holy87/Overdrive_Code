@@ -586,7 +586,7 @@ class Scene_Forge < Scene_MenuBase
   # * crea la finestra del nome del fabbro
   #--------------------------------------------------------------------------
   def create_bs_window
-    @blacksmith_window = Window_ForgeBlacksmith.new(0, 0, Graphics.width)
+    @blacksmith_window = Window_ForgeBlacksmith.new(0, 0, Graphics.width - 160)
   end
   #--------------------------------------------------------------------------
   # * crea la finestra dell'elenco degli oggetti craftabili
@@ -617,18 +617,21 @@ class Scene_Forge < Scene_MenuBase
   # * crea la finestra dei materiali richiesti
   #--------------------------------------------------------------------------
   def create_materials_window
-    width = @gold_window.width
+    width = Graphics.width / 2
     @materials_window = Window_ForgeMaterials.new(0, 0, width)
-    y = @gold_window.y - @materials_window.height
+    y = Graphics.height - @materials_window.height
+    #y = @gold_window.y - @materials_window.height
     @materials_window.y = y
   end
   #--------------------------------------------------------------------------
   # * crea la finestra dell'oro richiesto
   #--------------------------------------------------------------------------
   def create_gold_window
-    width = Graphics.width / 2
-    @gold_window = Window_ForgeGold_Restricted.new(0, 0, width)
-    @gold_window.y = Graphics.height - @gold_window.height
+    #noinspection RubyArgCount
+    window = Window_Gold.new(Graphics.width - 160, 0)
+    #width = Graphics.width / 2
+    #@gold_window = Window_ForgeGold_Restricted.new(0, 0, width)
+    #@gold_window.y = Graphics.height - @gold_window.height
   end
   #--------------------------------------------------------------------------
   # * crea la finestra delle conferme
@@ -653,7 +656,7 @@ class Scene_Forge < Scene_MenuBase
   def command_select
     @items_window.smooth_move(0 - @items_window.width, @items_window.y)
     @materials_window.smooth_move(0 - @materials_window.width, @materials_window.y)
-    @gold_window.smooth_move(0 - @gold_window.width, @gold_window.y)
+    #@gold_window.smooth_move(0 - @gold_window.width, @gold_window.y)
     @details_window.smooth_move(Graphics.width, @details_window.y)
     @confirm_window.set_item(@items_window.item)
     @confirm_window.open
@@ -665,7 +668,7 @@ class Scene_Forge < Scene_MenuBase
     @confirm_window.close
     @items_window.smooth_move(0, @items_window.y)
     @materials_window.smooth_move(0, @materials_window.y)
-    @gold_window.smooth_move(0, @gold_window.y)
+    #@gold_window.smooth_move(0, @gold_window.y)
     @details_window.smooth_move(Graphics.width/2, @details_window.y)
     @items_window.activate
   end
@@ -754,6 +757,7 @@ class Window_ForgeList < Window_Selectable
     enabled = enable?(item)
     draw_item_name(item.item, rect.x, rect.y, enabled)
     draw_item_number(item, rect)
+    draw_item_forge_cost(item, rect, enabled)
   end
   #--------------------------------------------------------------------------
   # * disegna il numero degli oggetti prodotti dalla forgiatura
@@ -764,6 +768,15 @@ class Window_ForgeList < Window_Selectable
     return if item.result_n == 1
     num = sprintf('x%d', item.result_n)
     draw_text(rect, num, 2)
+  end
+
+  # disegna il costo dell'oggetto
+  # @param [Forge_Product] item
+  # @param [Rect] rect
+  def draw_item_forge_cost(item, rect, enabled)
+    change_color normal_color, enabled
+    rect.width -= 4
+    draw_text(rect, sprintf("%d%s", item.gold, Vocab.currency_unit), 2)
   end
   #--------------------------------------------------------------------------
   # * restituisce il prodotto della forgiatura
@@ -1015,7 +1028,7 @@ class Window_ForgeConfirm < Window_Base
   # * inizializzazione
   #--------------------------------------------------------------------------
   def initialize
-    super(0, 0, 250, fitting_height(3))
+    super(0, 0, 280, fitting_height(3))
     self.openness = 0
     @quantity = 0
     @item = nil
@@ -1591,6 +1604,7 @@ class Scene_Map < Scene_Base
   end
 
   def call_forge
+    $game_temp.next_scene = nil
     SceneManager.call(Scene_Forge)
   end
 end
