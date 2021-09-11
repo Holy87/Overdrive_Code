@@ -22,13 +22,11 @@ module StatusSettings
   DSTATES = [1, 2, 3, 4, 5, 6, 7, 8, 79, 94]
 
 
-  }
-
   STATS = {
       :mhp => {:text => 'PV massimi',
-               :description => 'Punti vita massimi. Rappresentano la vita dell\'eroe ed i|danni che può subire prima di andare KO.'},
-      :mmp => {:text => 'PM massimi',
-               :description => 'Punti mana massimi.|Rappresentano l\'energia per utilizzare le abilità.'},
+               :description => 'Punti vita massimi. Rappresentano la vita dell\'eroe ed i danni che|può subire prima di andare KO.'},
+      :mmp => {:text => 'PM massimi', :condition => :mp_gauge?,
+               :description => 'Punti mana massimi. Rappresentano l\'energia|a disposizione per utilizzare le magie e abilità.'},
       :atk => {:text => 'Attacco',
                :description => 'La potenza d\'attacco. Influisce sul danno del comando Attacca e le|abilità, e la probabilità di infliggere stati alterati con queste'},
       :def => {:text => 'Difesa',
@@ -92,17 +90,17 @@ module StatusSettings
                             :description => 'Rappresenta la percentuale di danni che viene respinta al nemico|quando vieni colpito da un attacco fisico ravvicinato.',
                             :format => '%d%%',
                             :formula => '(x*100).to_i'},
-      :anger_incr => {:text => 'Carica Furia',
+      :anger_incr => {:text => 'Carica Furia', :condition => :charge_gauge?, :default => 10,
                       :description => 'Rappresenta la Furia che ottieni ad ogni attacco.'},
-      :anger_kill => {:text => 'Furia su uccisione',
+      :anger_kill => {:text => 'Furia su uccisione', :condition => :charge_gauge?,
                       :description => 'La Furia che ottieni mettendo KO un nemico.'},
-      :initial_anger => {:text => 'Furia iniziale',
+      :initial_anger => {:text => 'Furia iniziale', :condition => :charge_gauge?,
                          :description => 'La Furia minima che possiederai ad inizio battaglia.'},
-      :anger_turn => {:text => 'Incremento Furia',
+      :anger_turn => {:text => 'Incremento Furia', :condition => :charge_gauge?,
                       :description => 'La Furia che otterrai automaticamente ad ogni turno.'},
       :win_hp => {:text => 'Cura su Vittoria',
                   :description => 'I PV che recupererai vincendo le battaglie.'},
-      :win_mp => {:text => 'Ricarica su Vittoria',
+      :win_mp => {:text => 'Ricarica su Vittoria', :default => 0, :condition => :mp_gauge?,
                   :description => 'I PM che recupererai vincendo le battaglie.'},
       :mag => {:text => 'Furia Massima', :default => 100, :condition => :charge_gauge?,
                :description => 'Rappresenta La Furia massima che può accumulare.|Questa serve per utilizzare le abilità e si carica attaccando.'},
