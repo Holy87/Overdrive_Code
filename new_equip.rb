@@ -1,3 +1,115 @@
+=begin
+  ** NUOVA SCHERMATA DI EQUIPAGGIAMENTI **
+  di HOLY87
+
+  Questo script crea una nuova schermata di equip (parallela) a quella classica.
+  Parallela poiché è progettata come uno script RGSS3 per VX Ace, quindi funziona
+  su Overdrive grazie al modulo di compatibilità.
+  Per farlo funzionare sul vostro gioco ci saranno delle rogne, così come farlo
+  funzionare su VX Ace (ma molte meno). Intanto io lascio i commenti, poi sta
+  a voi decidere se volerlo oppure no. 👍🏻
+=end
+
+#==============================================================================
+# ** EquipSettings
+#------------------------------------------------------------------------------
+# Impostazioni della schermata equipaggiamenti
+#==============================================================================
+module EquipSettings
+  #--------------------------------------------------------------------------
+  # * I parametri che verranno mostrati nella finestra dell'eroe
+  #--------------------------------------------------------------------------
+  PARAMS = [:mhp, nil, :mmp, :atk, :def, :spi, :agi, :hit, :cri, :eva,
+            :odds, :res]
+  #--------------------------------------------------------------------------
+  # * Le icone dei parametri
+  #--------------------------------------------------------------------------
+  ICONS = {:mhp => 1008, :mmp => 1009, :atk => 1010, :def => 1011,
+           :spi => 1012, :agi => 1013, :hit => 1015, :cri => 1014,
+           :eva => 1016, :odds => 1249, :res => 1251,
+           :mag => 1250, :maxhp => 1008, :maxmp => 1009,
+           :max_anger => 1250 }
+  # quali parametri vengono mostrati in percentuale?
+  PARAM_PERCENTAGES = [:hit, :cri, :eva, :res]
+  # quali parametri occupano il doppio dello spazio?
+  DOUBLE_SIZED_PARAMS = [:mhp]
+  #--------------------------------------------------------------------------
+  # * Altri parametri
+  #--------------------------------------------------------------------------
+  UNEQUIP_ICON = 238 #icona disequipaggia
+  EQUIP_WIDTH = 360 #larghezza della finestra equipaggiamento
+  #--------------------------------------------------------------------------
+  # * Vocaboli per equipaggiamento
+  #--------------------------------------------------------------------------
+  NONE_VOCABS = {
+    :weapon => 'Nessun\'arma',
+    :shield => 'Nessun supporto',
+    :helmet => 'Nessun elmo',
+    :armour => 'Nessuna armatura',
+    :other => 'Nessun accessorio',
+    :gloves => 'Nessun guanto',
+    :boots => 'Nessuno stivale',
+    :esper => 'Nessuna evocazione'
+  }
+  #--------------------------------------------------------------------------
+  # * Regole (preso da YEM Equip)
+  #--------------------------------------------------------------------------
+  TYPE_RULES = {
+    # Equip  => [ Nome,       Tipo, Vuoto?],
+    :weapon => ['Arma', nil, true],
+    :shield => ['Supporto', 0, true],
+    :helmet => ['Testa', 1, true],
+    :armour => ['Corpo', 2, true],
+    :other => ['Acc.', 3, true],
+    :gloves => ['Mani', 5, true],
+    :boots => ['Gambe', 6, true],
+    :esper => ['Pietra', 7, true]
+  } # Do not remove this.
+
+  SUPPORT_CHANGE_WEAPON_GROUPS = {
+    #gruppo => nome supporto
+    :gun => ['Munizioni', 'No muniz. speciali'],
+    :bow => ['Faretra','Nessuna faretra']
+  }
+
+  # imposta questo flag a true se vuoi che non si possa
+  # equipaggiare due volte lo stesso accessorio.
+  UNIQUE_ACCESSORY = true
+
+  # Restituisce se può essere disequipaggiato
+  # @param [Symbol] type
+  # @return [Boolean]
+  def self.can_unequip?(type)
+    TYPE_RULES[type][2]
+  end
+
+  # Restituisce il tipo slot equipaggiamento
+  def self.equip_type(symbol)
+    TYPE_RULES[symbol][1]
+  end
+
+  # Restituisce se il parametro è a doppia dimensione
+  def self.param_dsized?(symbol)
+    DOUBLE_SIZED_PARAMS.include?(symbol)
+  end
+
+  # Restituisce l'array dei nomi degli equip
+  def self.type_vocabs
+    vocabs = []
+    TYPE_RULES.each_value do |value|
+      vocabs.push(value[0])
+    end
+    vocabs
+  end
+
+  #--------------------------------------------------------------------------
+  # * Restituisce il vocabolo più lungo
+  #--------------------------------------------------------------------------
+  def self.longest_vocab
+    type_vocabs.max {|x| x.size}
+  end
+end
+
 #==============================================================================
 # ** Vocab
 #==============================================================================
@@ -32,102 +144,6 @@ module Vocab
   #--------------------------------------------------------------------------
   def self.help_actor_change
     ' scorri eroe '
-  end
-end
-
-#==============================================================================
-# ** EquipSettings
-#------------------------------------------------------------------------------
-# Impostazioni della schermata equipaggiamenti
-#==============================================================================
-module EquipSettings
-  #--------------------------------------------------------------------------
-  # * I parametri che verranno mostrati nella finestra dell'eroe
-  #--------------------------------------------------------------------------
-  PARAMS = [:mhp, nil, :mmp, :atk, :def, :spi, :agi, :hit, :cri, :eva,
-            :odds, :res]
-  #--------------------------------------------------------------------------
-  # * Le icone dei parametri
-  #--------------------------------------------------------------------------
-  ICONS = {:mhp => 1008, :mmp => 1009, :atk => 1010, :def => 1011,
-           :spi => 1012, :agi => 1013, :hit => 1015, :cri => 1014,
-           :eva => 1016, :odds => 1249, :res => 1251,
-           :mag => 1250, :maxhp => 1008, :maxmp => 1009,
-           :max_anger => 1250 }
-  # quali parametri vengono mostrati in percentuale?
-  PARAM_PERCENTAGES = [:hit, :cri, :eva, :res]
-  # quali parametri occupano il doppio dello spazio?
-  DOUBLE_SIZED_PARAMS = [:mhp]
-  #--------------------------------------------------------------------------
-  # * Altri parametri
-  #--------------------------------------------------------------------------
-  UNEQUIP_ICON = 238 #icona disequipaggia
-  EQUIP_WIDTH = 360 #larghezza della finestra equipaggiamento
-  #--------------------------------------------------------------------------
-  # * Vocaboli per equipaggiamento
-  #--------------------------------------------------------------------------
-  NONE_VOCABS = {
-      :weapon => 'Nessun\'arma',
-      :shield => 'Nessun supporto',
-      :helmet => 'Nessun elmo',
-      :armour => 'Nessuna armatura',
-      :other => 'Nessun accessorio',
-      :gloves => 'Nessun guanto',
-      :boots => 'Nessuno stivale',
-      :esper => 'Nessuna evocazione'
-  }
-  #--------------------------------------------------------------------------
-  # * Regole (preso da YEM Equip)
-  #--------------------------------------------------------------------------
-  TYPE_RULES = {
-      # Equip  => [ Nome,       Tipo, Vuoto?],
-      :weapon => ['Arma', nil, true],
-      :shield => ['Supporto', 0, true],
-      :helmet => ['Testa', 1, true],
-      :armour => ['Corpo', 2, true],
-      :other => ['Acc.', 3, true],
-      :gloves => ['Mani', 5, true],
-      :boots => ['Gambe', 6, true],
-      :esper => ['Pietra', 7, true]
-  } # Do not remove this.
-
-  SUPPORT_CHANGE_WEAPON_GROUPS = {
-      #gruppo => nome supporto
-      :gun => ['Munizioni', 'No muniz. speciali'],
-      :bow => ['Faretra','Nessuna faretra']
-  }
-
-  # Restituisce se può essere disequipaggiato
-  # @param [Symbol] type
-  # @return [Boolean]
-  def self.can_unequip?(type)
-    TYPE_RULES[type][2]
-  end
-
-  # Restituisce il tipo slot equipaggiamento
-  def self.equip_type(symbol)
-    TYPE_RULES[symbol][1]
-  end
-
-  # Restituisce se il parametro è a doppia dimensione
-  def self.param_dsized?(symbol)
-    DOUBLE_SIZED_PARAMS.include?(symbol)
-  end
-
-  # Restituisce l'array dei nomi degli equip
-  def self.type_vocabs
-    vocabs = []
-    TYPE_RULES.each_value do |value|
-      vocabs.push(value[0])
-    end
-    vocabs
-  end
-
-  #--------------------------------------------------------------------------
-  # * Restituisce il vocabolo più lungo
-  #--------------------------------------------------------------------------
-  def self.longest_vocab
-    type_vocabs.max {|x| x.size}
   end
 end
 
@@ -172,9 +188,18 @@ class Game_Actor < Game_Battler
       return false unless first_weapon.changes_support_type?
       first_weapon.use_support == item.support_type
     else
+      return false if same_kind_accessory_not_allowed?
       return false if item.is_a?(RPG::Armor) and first_weapon != nil and first_weapon.changes_support_type? and item.kind == 0
       class_equippable?(item)
     end
+  end
+
+  # determina se non è permesso avere due accessori dello stesso tipo
+  def same_kind_accessory_not_allowed?
+    EquipSettings::UNIQUE_ACCESSORY and
+      item.is_a?(RPG::Armor) and
+      item.kind == 3 and
+      equips.select { |equip| equip.real_id == item.real_id}.size > 0
   end
 end
 
