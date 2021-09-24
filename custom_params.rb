@@ -58,18 +58,18 @@ end
 # ** Game_Actor
 #==============================================================================
 class Game_Actor < Game_Battler
-  alias h87_hit_mod hit unless $@
-  alias h87_eva_mod eva unless $@
+  alias :base_native_hit :native_hit
+  alias :base_native_eva :native_eva
   #-----------------------------------------------------------------------------
   # * alias della mira
   #-----------------------------------------------------------------------------
-  def hit
-    h87_hit_mod + H87_CustomHit.hit_modifier(self.id)
+  def native_hit
+    base_native_hit + H87_CustomHit.hit_modifier(self.id)
   end
   #-----------------------------------------------------------------------------
   # * alias dell'evasione
   #-----------------------------------------------------------------------------
-  def eva
-    h87_eva_mod + H87_CustomHit.eva_modifier(self.id)
+  def native_eva
+    base_native_eva + H87_CustomHit.eva_modifier(self.id)
   end
 end
