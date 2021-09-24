@@ -179,9 +179,9 @@ module Vocab
       'Due nemici a caso',
       'Tre nemici a caso',
       'Alleato',
-      'Tutti gli alleati',
+      'Alleati',
       'Alleato KO',
-      'Tutti gli alleati KO',
+      'Alleati KO',
       'L\'utilizzatore',
       'Tutti i presenti',
       'Nemici specifici'
@@ -652,6 +652,7 @@ class Window_ItemInfo < Window_DataInfo
 
   # Disegna il prezzo di un oggetto
   def draw_item_price
+    return unless item.sellable?
     draw_detail(Vocab::ITEM_VALUE, sprintf("%d %s", item.selling_price, Vocab.gold))
   end
 
@@ -719,7 +720,7 @@ class Window_ItemInfo < Window_DataInfo
     when :agi
       draw_agi
     when :hit
-      item.is_a?(RPG::Weapon) ? draw_wht : draw_hit
+      draw_hit
     when :eva
       draw_eva
     when :odds
@@ -999,10 +1000,6 @@ class Window_ItemInfo < Window_DataInfo
   # Mostra vari parametri
   def draw_hit
     draw_parameter(Vocab.hit, item.hit, true);
-  end
-
-  def draw_wht
-    draw_parameter(Vocab.hit, item.hit - 95, true);
   end
 
   def draw_cri
