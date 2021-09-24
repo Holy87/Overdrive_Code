@@ -1,7 +1,7 @@
 =begin
  ==============================================================================
   ■ Barra di scorrimento di Holy87
-      versione 1.01
+      versione 1.02
       Difficoltà utente: ★
       Licenza: CC. Chiunque può scaricare, modificare, distribuire e utilizzare
       lo script nei propri progetti, sia amatoriali che commerciali. Vietata
@@ -78,9 +78,13 @@ class Window_Selectable < Window_Base
     @scrollbar_visible = true
     @vert_scrollbar_background = Sprite.new(@viewport)
     @vert_scrollbar_foreground = Sprite.new(@viewport)
+    refresh_scrollbar_graphic
+    update_scrollbar
+  end
+
+  def refresh_scrollbar_graphic
     @vert_scrollbar_background.bitmap = scrollbar_background_bitmap
     @vert_scrollbar_foreground.bitmap = scrollbar_foreground_bitmap
-    update_scrollbar
   end
 
   def set_scrollbar_viewport(viewport)
@@ -186,8 +190,7 @@ class Window_Selectable < Window_Base
     def refresh_windowskin(need_refresh = false)
       super
       init_scrollbar if @vert_scrollbar_foreground.nil?
-      @vert_scrollbar_background.bitmap = scrollbar_background_bitmap
-      @vert_scrollbar_foreground.bitmap = scrollbar_foreground_bitmap
+      refresh_scrollbar_graphic
     end
   end
 end
