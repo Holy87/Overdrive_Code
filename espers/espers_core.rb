@@ -24,9 +24,9 @@
 # all'interno di quest'evento devi mettere un call script inserendo:
 # Espers.evoca(id) dove id è l'ID dell'esper.
 module Espers
-#===============================================================================
-# CONFIGURAZIONE
-#===============================================================================
+  #===============================================================================
+  # CONFIGURAZIONE
+  #===============================================================================
 
   #--------------------------------------------------------------------------
   # * Skill evocazioni
@@ -134,10 +134,12 @@ module Vocab
   def self.new_boost;"%s ha sbloccato %s!";end
   def self.skill_desc;"Vedi e attiva/disattiva le abilità della dominazione.";end
   def self.milky_desc;"Usa le scorte di latte per ricaricare le dominazioni.";end
+  def self.affinity_desc;"I parametri dell'evocatore daranno un bonus alla Dominazione|in proporzione alla loro affinità.";end
   def self.in_use_by;"In uso da";end
   def self.esper_duration;"Durata:";end
   def self.no_user;"nessuno";end
   def self.act_bonus;"Bonus";end
+  def self.affinity;"Affinità";end
   def self.activate_skill;'Attiva/Disattiva abilità';end
   def self.bonus_desc;"Visualizza i potenziamenti attivati dal tempio delle|Dominazioni.";end
   def self.summon_number;"Evocato:";end
@@ -162,6 +164,7 @@ module EsperConfig
   BarH = 3 #altezza della barra
   DURATION_LEVEL_BONUS = 0.15 #bonus di durata dominazione per ogni livello
   BOOST_APPRAISED_SE = 'PopUp' # suono del popp quando una turbo è appresa
+  AFFINITY_ICON = 395
 
   SW_Dom = {
       #ID    SWITCH
@@ -229,6 +232,22 @@ module EsperConfig
       27 => 233
   }
 
+  # Affinità della dominazione sull'eroe
+  ACTOR_AFFINITY = {
+    17 => {2 => 5, 6 => 3, 14 => 1},
+    18 => {9 => 5, 15 => 3, 7 => 1},
+    19 => {14 => 5, 6 => 3, 1 => 1},
+    20 => {10 => 5, 7 => 3, 5 => 1},
+    21 => {5 => 5, 8 => 3, 12 => 1},
+    22 => {1 => 5, 2 => 3, 13 => 1},
+    23 => {3 => 5, 12 => 3, 9 => 1},
+    24 => {7 => 5, 10 => 3, 6 => 1},
+    25 => {8 => 5, 14 => 3, 7 => 1},
+    27 => {11 => 5, 1 => 3, 3 => 1},
+  }
+
+  AFFINITY_RATE = 0.06
+
   #--------------------------------------------------------------------------
   # * Turbo sbloccabili
   #--------------------------------------------------------------------------
@@ -278,6 +297,17 @@ module EsperConfig
   #--------------------------------------------------------------------------
   def self.menu_unlocked?
     $game_switches[DomiActSw]
+  end
+
+  # ottiene i valori di affinità con l'eroe a seconda della dominazione
+  # @param [Integer] esper_id
+  # @return [Array<Esper_Affinity>]
+  def self.get_actor_affinities(esper_id)
+    affinities_h = EsperConfig::ACTOR_AFFINITY[esper_id]
+    return [] if affinities_h.nil?
+    affinities = []
+    affinities_h.each_pair {|actor_id, affinity| affinities.push(Esper_Affinity.new(actor_id, affinity)) }
+    affinities
   end
 end #esperconfig
 
@@ -330,6 +360,14 @@ class RPG::State
   #--------------------------------------------------------------------------
   def description; message1; end
 end #RPG::State
+
+class Window_MenuCommand < Window_Command
+  alias :no_domination_commands :add_original_commands
+  def add_original_commands
+    no_domination_commands
+    add_command(Vocab::dominations,   :dominations,   $game_system.domination_unlocked)
+  end
+end
 
 #===============================================================================
 # ** classe Game_System
@@ -446,6 +484,13 @@ end
 # ** classe Game_Actor
 #===============================================================================
 class Game_Actor < Game_Battler
+  attr_reader :maxhp_plus
+  attr_reader :maxmp_plus
+  attr_reader :atk_plus
+  attr_reader :def_plus
+  attr_reader :agi_plus
+  attr_reader :spi_plus
+
   include Espers
   unless $@
     alias esp_batk base_atk
@@ -609,7 +654,7 @@ class Game_Actor < Game_Battler
   end
   #--------------------------------------------------------------------------
   # * restituisce il proprietario dell'evocazione
-  # @return [Game_Actor]
+  # @return [Game_Actor, nil]
   #--------------------------------------------------------------------------
   def esper_master
     return unless domination?
@@ -725,6 +770,14 @@ class Game_Actor < Game_Battler
       add_hidden_skill(skill.id)
     end
   end
+
+  # @param [Fixnum] summoner_id
+  # @return [Fixnum]
+  def summoner_affinity(summoner_id = esper_master.id)
+    return 0 if summoner_id.nil?
+    return 0 unless is_esper?
+    Espers::ACTOR_AFFINITY[self.id][summoner_id] || 0
+  end
   #--------------------------------------------------------------------------
   # * abilita o disabilita il boost
   # @param [RPG::State] boost
@@ -782,15 +835,21 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   # * ridetermina i parametri di base
   #--------------------------------------------------------------------------
-  def base_atk; esp_batk + esper_ups[:atk] * ESPER_UPS_INCREMENTS[:atk]; end
-  def base_def; esp_bdef + esper_ups[:def] * ESPER_UPS_INCREMENTS[:def]; end
-  def base_spi; esp_bspi + esper_ups[:spi] * ESPER_UPS_INCREMENTS[:spi]; end
-  def base_agi; esp_bagi + esper_ups[:agi] * ESPER_UPS_INCREMENTS[:agi]; end
-  def base_maxhp; esp_bhp + esper_ups[:mhp] * ESPER_UPS_INCREMENTS[:mhp]; end
-  def base_maxmp; esp_bmp + esper_ups[:mmp] * ESPER_UPS_INCREMENTS[:mmp]; end
+  def base_atk;  esp_batk +  summoner_param_bonus(:native_atk); end
+  def base_def;  esp_bdef +  summoner_param_bonus(:native_def); end
+  def base_spi;  esp_bspi +  summoner_param_bonus(:native_spi); end
+  def base_agi;  esp_bagi +  summoner_param_bonus(:native_agi); end
+  def base_maxhp; esp_bhp + summoner_param_bonus(:native_maxhp); end
+  def base_maxmp; esp_bmp + summoner_param_bonus(:native_maxmp); end
   #--------------------------------------------------------------------------
   # *
   #--------------------------------------------------------------------------
+  def summoner_param_bonus(param)
+    return 0 unless is_esper?
+    summoner = esper_master
+    return 0 if summoner.nil?
+    (summoner.send(param) * summoner_affinity(summoner.id) * EsperConfig::AFFINITY_RATE).to_i
+  end
 end
 
 #===============================================================================
@@ -840,14 +899,10 @@ class Game_Party < Game_Unit
   end
   #--------------------------------------------------------------------------
   # * restituisce i latticini :)
-  # @return [Hash<RPG::Item>]
+  # @return [Array<RPG::Item>]
   #--------------------------------------------------------------------------
   def milks
-    result = []
-    @items.keys.sort.each {|i|
-      result.push($data_items[i]) if @items[i] > 0 and $data_items[i].is_milk?
-    }
-    result
+    items.select{ |item| item.is_a?(RPG::Item) and item.is_milk? }
   end
 end #game_party
 
@@ -1033,5 +1088,25 @@ class Game_BattleAction
       @value += rand if @value == 0.0
       @value *= Espers::Powers[skill.id]/100.0
     end
+  end
+end
+
+class Esper_Affinity
+  attr_reader :actor_id
+  attr_reader :affinity
+
+  def initialize(actor_id, affinity)
+    @actor_id = actor_id
+    @affinity = affinity
+  end
+
+  # @return [Game_Actor]
+  def actor
+    $data_actors[@actor_id]
+  end
+
+  # @return [String]
+  def to_s
+    sprintf('Esper_affinity{actor_id:%d, affinity:%d}', @actor_id, @affinity)
   end
 end
