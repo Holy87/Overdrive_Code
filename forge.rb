@@ -600,7 +600,7 @@ class Scene_Forge < Scene_MenuBase
     @items_window.set_handler(:cancel, method(:return_scene))
     @items_window.help_window = @help_window
     @items_window.mat_window = @materials_window
-    @items_window.gold_window = @gold_window
+    #@items_window.gold_window = @gold_window
   end
   #--------------------------------------------------------------------------
   # * crea la finestra dei dettagli
@@ -628,7 +628,7 @@ class Scene_Forge < Scene_MenuBase
   #--------------------------------------------------------------------------
   def create_gold_window
     #noinspection RubyArgCount
-    window = Window_Gold.new(Graphics.width - 160, 0)
+    @gold_window = Window_Gold.new(Graphics.width - 160, 0)
     #width = Graphics.width / 2
     #@gold_window = Window_ForgeGold_Restricted.new(0, 0, width)
     #@gold_window.y = Graphics.height - @gold_window.height
