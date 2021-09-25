@@ -361,7 +361,7 @@ module ExtraAttr
     @hit = 0 if @hit == nil; @eva = 0 if @eva == nil
     @atk = 0 if @atk.nil?; @def = 0 if @def.nil?
     @spi = 0 if @spi.nil?; @agi = 0 if @agi.nil?
-    @stat_per ={ :hp => 0, :mp => 0, :atk => 0, :def => 0, :spi => 0, :maxhp => 0, :maxmp => 0,
+    @stat_per ={ :atk => 0, :def => 0, :spi => 0, :maxhp => 0, :maxmp => 0,
                  :agi => 0, :hit => 0, :eva => 0, :cri => 0, :odds => 0}
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help

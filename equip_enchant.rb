@@ -190,7 +190,7 @@ module H87Enchant
       128 => ['Kakariki'],
       129 => ['Karaka'],
 
-      # ULTRA - viene applicata dai drop random
+      # ULTRA - viene applicata dai drop random (?)
       130 => ['Ultra A', 'atk +15', 'Aumenta l\'attacco del 15%.',120],
       131 => ['Ultra D', 'def +15', 'Aumenta la difesa del 15%.',121],
       132 => ['Ultra S', 'spi +15', 'Aumenta lo spirito del 15%.',122],
@@ -203,6 +203,12 @@ module H87Enchant
       150 => ['Penetrante', 'pnt', 'Ignora la difesa del bersaglio negli attacchi normali', 1052],
       151 => ['Veggente', 'scn', 'Permette di conoscere le debolezze del bersaglio', 815],
       152 => ['Opportunista', 'duk, eva +10', 'Aumenta l\'evasione. Contrattacca su schivata', 1071],
+
+      # Abilità notte nera
+      153 => ['Caricante', 'amp 4, ico 570', 'Ogni volta che si esegue un attacco normale, recupera 4 PM.'],
+      154 => ['Energica', 'ela 7 +30 , ico 571', 'Potenzia i danni da Energia del 30%.'],
+      155 => ['Energica', 'ela 7 +30 , ico 572', 'Potenzia i danni da Energia del 30%.'],
+
 
 
 
@@ -435,9 +441,9 @@ module EquipEnchant
     id = effect[2] ? effect[2] : 0
     case effect[0]
     when :mhp
-      @stat_per[:hp] += value
+      @stat_per[:maxhp] += value
     when :mmp
-      @stat_per[:mp] += value
+      @stat_per[:maxmp] += value
     when :atk
       @stat_per[:atk] += value
     when :def
