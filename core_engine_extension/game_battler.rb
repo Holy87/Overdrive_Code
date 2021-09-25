@@ -593,7 +593,7 @@ class Game_Battler
     # @return [Array<RPG::State>]
     def added_states
       #noinspection RubyResolve
-      @added_states.compact{|state_id| $data_states[state_is]}
+      @added_states.map{|state_id| $data_states[state_id]}
     end
   
     # restituisce gli stati rimossi nel turno
@@ -601,7 +601,7 @@ class Game_Battler
     # @return [Array<RPG::State>]
     def removed_states
       #noinspection RubyResolve
-      @removed_states.compact{|state_id| $data_states[state_is]}
+      @removed_states.map{|state_id| $data_states[state_is]}
     end
   
     # Effetto attacco

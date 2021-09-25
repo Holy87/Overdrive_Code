@@ -48,7 +48,8 @@ class Game_Actor < Game_Battler
   end
 
   def state_rank(state_id)
-    enemy.state_ranks[state_id]
+    #noinspection RubyResolve
+    self.class.state_ranks[state_id]
   end
 end
 
@@ -57,7 +58,7 @@ class Game_Enemy < Game_Battler
 
   def state_rank(state_id)
     #noinspection RubyResolve
-    self.class.state_ranks[state_id]
+    enemy.state_ranks[state_id]
   end
 
   def state_probability(state_id)
