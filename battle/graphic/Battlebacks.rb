@@ -698,13 +698,13 @@ class Animated_Sprite
   # * Aggiornamento della coordinata X in movimento
   #--------------------------------------------------------------------------
   def update_x
-    @picture.x += @x_speed
+    @picture.move_x_a_bit @x_speed
   end
   #--------------------------------------------------------------------------
   # * Aggiornamento della coordinata Y in movimento
   #--------------------------------------------------------------------------
   def update_y
-    @picture.y += @y_speed
+    @picture.move_y_a_bit @y_speed
   end
   #--------------------------------------------------------------------------
   # * Aggiorna i movimenti dello Sprite

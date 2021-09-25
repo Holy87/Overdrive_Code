@@ -22,6 +22,24 @@ module Sprite_Engine
     @zoom_move_speed = [[speed / 100.0, 0.001].max, 1].min
   end
 
+  def move_x_a_bit(speed)
+    @float_x += speed
+    intval = @float_x.to_i
+    if intval != 0
+      @float_x -= intval
+      self.x += intval
+    end
+  end
+
+  def move_y_a_bit(speed)
+    @float_y += speed
+    intval = @float_y.to_i
+    if intval != 0
+      @float_y -= intval
+      self.y += intval
+    end
+  end
+
   # Cambia la tonalità gradualmente nel tempo
   # @param [Tone] new_tone
   # @param [Integer] time
@@ -136,7 +154,8 @@ module Sprite_Engine
 
   # Inizializzazione
   def sprite_engine_init
-    # niente!
+    @float_x = 0.0
+    @float_y = 0.0
   end
 
   # Aggiornamento
