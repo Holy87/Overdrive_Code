@@ -4,6 +4,7 @@
 # Contiene delle informazioni su un qualsiasi giocatore online
 #===============================================================================
 class Online_Player
+  include DateParser
   attr_accessor :player_id # ID giocatore sul server
   attr_accessor :name #Nome
   attr_accessor :avatar #ID Avatar
@@ -18,6 +19,7 @@ class Online_Player
   attr_accessor :gold # oro attuale del giocatore
   attr_accessor :hours # ore di gioco totali
   attr_accessor :minutes # minuti di gioco totali
+  attr_accessor :points
   #--------------------------------------------------------------------------
   # * Inizializzazione
   # @param [Hash] player_data
@@ -37,6 +39,10 @@ class Online_Player
     @title_id = player_data['title_id']
     @exp = player_data['exp'] || 0
     @gold = player_data['gold'] || 0
+    @points = player_data['points'] || 0
+    @last_online = date_from_string(player_data['last_update'])
+    @follows = nil
+    @followers = nil
   end
 
   #--------------------------------------------------------------------------
@@ -49,6 +55,43 @@ class Online_Player
   # @return [Player_Title, nil]
   def title
     Player_Titles.get_title @title_id
+  end
+
+  def follows_loaded?
+    @follows != nil
+  end
+
+  # restituisce l'elenco dei giocatori che segue il giocatore
+  # @return [Array<Online_Player>]
+  def follows
+    @follows ||= refresh_follows
+  end
+
+  # restituisce l'elenco dei giocatori che seguono il giocatore
+  # @return [Array<Online_Player>]
+  def followers
+    @followers ||= refresh_followers
+  end
+
+  def refresh_follows
+    @follows = Follow_Service.get_follows(@player_id)
+  end
+
+  def refresh_followers
+    @followers = Follow_Service.get_followers(@player_id)
+  end
+
+  # @return [Time]
+  def last_online
+    @last_online
+  end
+
+  def hours_from_last_online
+    (Time.now - last_online).to_i / (60 * 60)
+  end
+
+  def days_from_last_online
+    hours_from_last_online / 24
   end
 
   # scarica i dati di un giocatore da internet e restituisce l'oggetto

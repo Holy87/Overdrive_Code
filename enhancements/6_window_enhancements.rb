@@ -7,6 +7,12 @@ $imported = {} if $imported == nil
 $imported["H87-Window_Enhancement"] = 1.0
 
 class Window_Base < Window
+  ICON_WIDTH = 24
+  FACE_WIDTH = 92
+  # larghezza del face su una riga
+  LFACE_WIDTH = 83
+  LFACE_Y_IND = 22
+
   alias draw_no_emoji_text_ex draw_text_ex unless $@
   alias process_no_emoji_character process_character unless $@
   alias process_no_emoji_escape process_escape_character unless $@
@@ -172,6 +178,31 @@ class Window_Base < Window
   def draw_actor_equip_icons(actor, x, y, width = 110)
     icons = actor.equips.compact.map { |e| e.icon_index }
     draw_icons(icons, x, y, width)
+  end
+
+  # disegna il volto del personaggio tagliato per entrare in una riga di 24 pixel
+  # @param [Game_Actor] actor
+  # @param [Fixnum] x
+  # @param [Fixnum] y
+  def draw_actor_line_face(actor, x, y)
+    draw_line_face(actor.face_name, actor.face_index, x, y)
+  end
+
+  # disegna un face tagliato per entrare in una riga di 24 pixel
+  # @param [String] face_name
+  # @param [Fixnum] face_index
+  # @param [Fixnum] x
+  # @param [Fixnum] y
+  def draw_line_face(face_name, face_index, x, y)
+    bitmap = Cache.face(face_name)
+    rect = Rect.new(0, 0, 0, 0)
+    x_index = FACE_WIDTH - LFACE_WIDTH
+    rect.x = (face_index % 4 * 96 + (96 - size) / 2) + x_index
+    rect.y = (face_index / 4 * 96 + (96 - size) / 2) + LFACE_Y_IND
+    rect.width = LFACE_WIDTH
+    rect.height = 24
+    self.contents.blt(x, y, bitmap, rect)
+    bitmap.dispose
   end
 
   # Restituisce il massimo numero di righe nella finestra
@@ -349,8 +380,21 @@ end
 # Aggiunge metodi utili alla finestra
 #===============================================================================
 class Window_Selectable < Window_Base
-  alias h87_ph process_handling unless $@
-  alias h87_uc update_cursor unless $@
+  alias :h87_ph :process_handling unless $@
+  alias :h87_uc :update_cursor unless $@
+  alias :h87_dai :draw_all_items unless $@
+
+  # testo da mostrare nel caso la lista sia vuota
+  # @return [String, nil]
+  def empty_text
+    nil
+  end
+
+  # elimina il listener evento
+  def delete_handler(symbol)
+    @handler.delete(symbol)
+  end
+
   # Ottiene il rettangolo in coordinate dello schermo dell'oggetto
   # @param [Integer] index
   # @return [Rect]
@@ -361,7 +405,7 @@ class Window_Selectable < Window_Base
     rect
   end
 
-  alias absolute_rect get_absolute_rect
+  alias :absolute_rect :get_absolute_rect
 
   # Disegna sulla bitmap l'icona dell'oggetto
   # @param [Bitmap] bitmap
@@ -507,6 +551,15 @@ class Window_Selectable < Window_Base
   # Esecuzione dell'handler destra
   def call_right_handler
     call_handler(:right)
+  end
+
+  def draw_all_items
+    if @data != nil and empty_text != nil and @data.empty?
+      change_color normal_color, false
+      draw_text(item_rect_for_text(0), empty_text)
+    else
+      h87_dai
+    end
   end
 end
 

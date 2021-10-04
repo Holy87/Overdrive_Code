@@ -11,8 +11,8 @@ class Window_KeyHelp < Window_Base
   # columns: numero di colonne
   # y: coordinata y (in fondo allo schermo se non usato)
   #--------------------------------------------------------------------------
-  def initialize(columns = 2, y = Graphics.height - fitting_height(1))
-    super(0, y, Graphics.width, line_height)
+  def initialize(columns = 2, x = 0, y = Graphics.height - fitting_height(1), width = Graphics.width)
+    super(x, y, width, fitting_height(1))
     @commands = []
     @columns = columns
     @controller_connected = Input.controller_connected?
@@ -35,12 +35,18 @@ class Window_KeyHelp < Window_Base
     super
     refresh if controller_changed?
   end
+
+  # aggiorna tutti i comandi
+  def refresh
+    @commands.each_with_index {|command, index| set_command(index, command, true)}
+  end
   #--------------------------------------------------------------------------
   # * determina se un controller è stato connesso o disconnesso
   #--------------------------------------------------------------------------
   def controller_changed?
     if @controller_connected != Input.controller_connected?
       @controller_connected = Input.controller_connected?
+      Logger.info 'Controller changed'
       true
     else
       false
@@ -54,18 +60,19 @@ class Window_KeyHelp < Window_Base
   # * imposta il comando su una colonna
   # @param [Integer] index
   # @param [Key_Command_Container] new_command
+  # @param [Boolean] force
   #--------------------------------------------------------------------------
-  def set_command(index, new_command)
-    return if @commands[index] == new_command
+  def set_command(index, new_command, force = false)
+    return if @commands[index] == new_command and !force
     @commands[index] = new_command
     rect = command_rect(index)
     self.contents.clear_rect(rect)
     new_command.keys.each_with_index {|key, i|
-      draw_key_icon(rect.x * i, rect.y, key, new_command.enabled)
+      draw_key_icon(key, rect.x + ICON_WIDTH * i, rect.y, new_command.enabled?)
     }
-    rect.x += 24 * new_command.keys.size
-    rect.width = rect.width - rect.x
-    change_color(normal_color, new_command.enabled)
+    rect.x += ICON_WIDTH * new_command.keys.size
+    rect.width -= (ICON_WIDTH * new_command.keys.size)
+    change_color(normal_color, new_command.enabled?)
     draw_text(rect, new_command.text)
   end
   #--------------------------------------------------------------------------
@@ -85,7 +92,7 @@ class Window_KeyHelp < Window_Base
   def change_enable(index, enabled)
     return if @commands[index].enabled == enabled
     @commands[index].enabled = enabled
-    set_command(index, @commands[index])
+    set_command(index, @commands[index], true)
   end
   #--------------------------------------------------------------------------
   # * reimposta il testo del comando
@@ -117,6 +124,10 @@ class Key_Command_Container
     @keys = keys.is_a?(Array) ? keys : [keys]
     @text = text
     @enabled = enabled
+  end
+
+  def enabled?
+    @enabled
   end
   #--------------------------------------------------------------------------
   # * confronto

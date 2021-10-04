@@ -4,9 +4,13 @@
 # Finestra di dialogo che mostra un messaggio di popup
 #===============================================================================
 class Window_PopupDialog < Window_Selectable
-  INFO_ICON_INDEX = 612
-  WARNING_ICON_INDEX = 632
-  ERROR_ICON_INDEX = 633
+  ICON_TYPES = {
+    :normal => 0,
+    :info => 612,
+    :warning => 632,
+    :error => 633,
+    :success => 634
+  }
 
   attr_accessor :next_window
 
@@ -72,11 +76,6 @@ class Window_PopupDialog < Window_Selectable
 
   def draw_message
     draw_icon(icon_type, 0, 0)
-    x = @type == :normal ? 0 : 24
-    width = contents_width - x
-    lines.each_with_index do |text, index|
-      draw_text()
-    end
     draw_text_ex(@type == :normal ? 0 : 24, 0, sprintf("%s",@text))
   end
 
@@ -87,12 +86,7 @@ class Window_PopupDialog < Window_Selectable
   end
 
   def icon_type
-    {
-        :normal => 0,
-        :info => INFO_ICON_INDEX,
-        :warning => WARNING_ICON_INDEX,
-        :error => ERROR_ICON_INDEX
-    }[@type]
+    ICON_TYPES[@type] || 0
   end
 
   def calc_height
@@ -189,8 +183,10 @@ class Scene_MenuBase < Scene_Base
     @dialog_window.pause = true
   end
 
+  # mostra una finestra di dialogo con scelte
+  # @deprecated non implementato
   def show_choice(text, choices = {}, &block)
-
+    fail NotImplementedError
   end
 
   # Popup con messaggio di attesa
@@ -202,6 +198,6 @@ class Scene_MenuBase < Scene_Base
   end
 
   def close_dialog_window
-
+    @dialog_window.close
   end
 end

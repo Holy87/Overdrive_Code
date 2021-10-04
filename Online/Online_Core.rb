@@ -67,6 +67,7 @@ module Online
   NO_PLAYER_VOCAB = 'Giocatore non trovato.'
   WRONG_DATA_VOCAB = 'Errore del server.'
   CONN_ERROR_VOCAB = 'Non riesco a connettermi al server.'
+  SERVER_CONNECTION = 'Connessione in corso...'
 
   # Costanti per registrazione personaggio
   NAME_VALID = 0
@@ -84,23 +85,26 @@ module Online
   UNPROCESSED = 2
   DATA_ERROR = 700
   NO_CONNECTION_ERROR = 600
+  PLAYER_SAME = 6
 
   OPERATION_FAILED_ADVICES = {
-      PLAYER_UNREGISTERED => "Sembra che ci siano problemi con l'autenticazione. Contatta il supporto.",
-      PLAYER_BANNED => "Non ti è più concessa questa azione: accesso bloccato.",
-      UNPROCESSED => "Non sono riuscito ad eseguire l'operazione. Per favore, riprova.",
-      NO_CONNECTION_ERROR => "Non riesco a contattare il server. Controlla la connessione.",
-      HTTP::HTTP_STATUS_SERVER_ERROR => "Errore del server. Per favore contatta il supporto tecnico.",
-      HTTP::HTTP_STATUS_DENIED => "Operazione non permessa. Contatta il supporto tecnico.",
-      HTTP::HTTP_STATUS_SERVICE_UNAVAIL => "Server in manutenzione. Prova più tardi.",
-      DATA_ERROR => "Errore nella ricezione dei dati."
+    PLAYER_UNREGISTERED => "Sembra che ci siano problemi con l'autenticazione. Contatta il supporto.",
+    PLAYER_BANNED => "Non ti è più concessa questa azione: accesso bloccato.",
+    UNPROCESSED => "Non sono riuscito ad eseguire l'operazione. Per favore, riprova.",
+    NO_CONNECTION_ERROR => "Non riesco a contattare il server. Controlla la connessione.",
+    HTTP::HTTP_STATUS_SERVER_ERROR => "Errore del server. Per favore contatta il supporto tecnico.",
+    HTTP::HTTP_STATUS_DENIED => "Operazione non permessa. Contatta il supporto tecnico.",
+    HTTP::HTTP_STATUS_SERVICE_UNAVAIL => "Server in manutenzione. Prova più tardi.",
+    DATA_ERROR => "Errore nella ricezione dei dati.",
+    PLAYER_SAME => "Stai eseguendo l'operazione su te stesso.",
+    CREATION_ERROR => "Errore di creazione record"
   }
 
   SERVER_STATUS_MESSAGES = {
-      :down => "Non riesco a connettermi.\nControlla la tua connessione e rirpova.",
-      :maintenance => "Mi spiace, ma al momento il server di\ngioco è in manutenzione. Riprova più tardi!",
-      :unknown => "Ci sono dei problemi con la connessione al server.\nControlla la connessione e riprova!",
-      :up => "Tutto ok, sei connesso!"
+    :down => "Non riesco a connettermi.\nControlla la tua connessione e rirpova.",
+    :maintenance => "Mi spiace, ma al momento il server di\ngioco è in manutenzione. Riprova più tardi!",
+    :unknown => "Ci sono dei problemi con la connessione al server.\nControlla la connessione e riprova!",
+    :up => "Tutto ok, sei connesso!"
   }
 
   ONLINE_MODE_TERM = "Modalità di gioco"
@@ -121,7 +125,7 @@ module Online
 
   # Percorso directory contenenti le chiamate alle azioni
   def self.api_path
-    HTTP.domain + (SUBPATH_API ?  '/' + SUBPATH_API + '/' : '/')
+    HTTP.domain + (SUBPATH_API ? '/' + SUBPATH_API + '/' : '/')
   end
 
   # effettua il login al servizio
@@ -170,7 +174,7 @@ module Online
   def self.get(resource, action, params = {})
     raise InternetConnectionException.new('Disconnected', NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.get(api_path + "#{resource}/#{action}.json", params)
-    Logger.info("📡",response.body) if $TEST
+    Logger.info("📡", response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
     raise InternetConnectionException.new(response.body, code) unless response.ok?
     response
@@ -218,7 +222,7 @@ module Online
   # @return [String]
   def self.check_name_valid(name)
     begin
-      response = get :player, :check_name_valid, {:name => name}
+      response = get :player, :check_name_valid, { :name => name }
       return Online::NO_CONNECTION_ERROR if response.code == 0
       return response.body.to_i
     rescue => error
@@ -238,7 +242,7 @@ module Online
   # @return [Online::Operation_Result]
   def self.register_new_player(name, face, title = nil)
     return Operation_Result.from_code(HTTP::HTTP_STATUS_DENIED) if $game_system.user_registered?
-    data = {:name => name, :face_id => face, :game_token => $game_system.game_token}
+    data = { :name => name, :face_id => face, :game_token => $game_system.game_token }
     data[:title_id] = title if title != nil
     data[:old_token] = $game_party.id_partita if $game_party.id_partita != nil
     post :player, :create, data
@@ -256,7 +260,7 @@ module Online
   # @return [Online::Operation_Result]
   def self.change_title(title_id)
     return unless $game_system.can_upload?
-    params = {:title_id => title_id || 0}
+    params = { :title_id => title_id || 0 }
     upload :player, :update_title, params
   end
 
@@ -265,14 +269,14 @@ module Online
   # @return [Online::Operation_Result]
   def self.change_avatar(avatar_id)
     return unless $game_system.can_upload?
-    params = {:face_id => avatar_id}
+    params = { :face_id => avatar_id }
     upload :player, :update_face, params
   end
 
   # invia la segnalazione di un messaggio anomalo
   def self.report_board_message(message_id, type)
     return unless $game_system.can_upload?
-    params = {:message_id => message_id, :report_type => type}
+    params = { :message_id => message_id, :report_type => type }
     upload :feedback, :report_message, params
   end
 
@@ -280,14 +284,15 @@ module Online
   # @return [Hash{Symbol->String or Fixnum}]
   def self.get_play_data
     data = {
-        :level => $game_party.total_max_level, # <- daglli achievement
-        :hours => $game_system.playtime / 60 / 60,
-        :minutes => $game_system.playtime / 60 % 60,
-        :story => $game_system.story_progress,
-        :quests => $game_system.completed_quests, # <- dal nuovo quest system
-        :exp => $game_actors[2].exp, # <- Exp di Monica
-        :gold => $game_party.gold,
-        :party => share_party? ? $game_party.base64_party : nil
+      :level => $game_party.total_max_level, # <- livello più alto del gruppo
+      :hours => $game_system.playtime / 60 / 60,
+      :minutes => $game_system.playtime / 60 % 60,
+      :story => $game_system.story_progress,
+      :quests => $game_system.completed_quests, # <- dal nuovo quest system
+      :exp => $game_actors[2].exp, # <- Exp di Monica
+      :gold => $game_party.gold,
+      :points => H87_Achievements.gained_points,
+      :party => share_party? ? $game_party.base64_party : nil
     }
     data
   end
@@ -304,16 +309,15 @@ module Online
   # @param [Hash] params
   # @return [Online::Operation_Result]
   def self.post(resource, action, params)
-    Logger.info("➡",params) if $TEST
+    Logger.info("➡", params) if $TEST
     return Operation_Result.from_code(NO_CONNECTION_ERROR) if @disconnected
     response = HTTP.post(api_path + "#{resource}/#{action}.json", params)
-    Logger.info("⬅",response.body) if $TEST
+    Logger.info("⬅", response.body) if $TEST
     code = response.code == 0 ? NO_CONNECTION_ERROR : response.code
     return Operation_Result.from_code(code) unless response.ok?
     Operation_Result.new(response.decode_json) rescue Operation_Result.from_code(DATA_ERROR)
   end
 end
-
 
 #===============================================================================
 # ** Operation_Result
@@ -327,7 +331,7 @@ class Online::Operation_Result
   end
 
   def self.from_code(error_code)
-    Online::Operation_Result.new({'status' => false, 'error_code' => error_code})
+    Online::Operation_Result.new({ 'status' => false, 'error_code' => error_code })
   end
 
   # true se l'operazione è andata a buon fine, false altrimenti
@@ -384,11 +388,36 @@ class HTTP::Response
 end
 
 #===============================================================================
+# ** DateParser
+# Include le funzioni di parse delle date, da includere nelle classi
+#===============================================================================
+module DateParser
+  # @param [String] date_str
+  def date_from_string(date_str)
+    if date_str =~ /(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)/
+      Time.local($1.to_i, $2.to_i, $3.to_i, $4.to_i, $5.to_i, $6.to_i)
+    end
+  end
+
+  # restituisce la data formattata come testo
+  # @param [Time] date
+  def formatted_date(date)
+    return '' if date.nil?
+    sprintf('%d/%d/%d alle %d:%d', date.day, date.month, date.year,
+            date.hour, date.min)
+  end
+end
+
+#===============================================================================
 # ** Vocab
 #-------------------------------------------------------------------------------
 # Stringhe necessarie al gioco
 #===============================================================================
 module Vocab
+  def self.server_connection
+    Online::SERVER_CONNECTION
+  end
+
   def self.no_player
     Online::NO_PLAYER_VOCAB
   end
@@ -402,24 +431,45 @@ module Vocab
   end
 end
 
+class Scene_MenuBase
+  # mostra una finestra di dialogo di connessione in corso mentre
+  # scarica i dati dal server
+  def await_server(message = Vocab.server_connection, &block)
+    show_dialog_waiting(message, true)
+    @error = nil
+    Graphics.update
+    Thread.new do
+      begin
+        block.call
+      rescue => err
+        Logger.error(err.class.to_s + ": " + err.message + "; " + err.backtrace[0])
+        @error = err
+      ensure
+        close_dialog_window
+      end
+    end
+    raise(@error) if @error != nil
+  end
+end
+
 # Attivare o disattivare invio dati di gioco
 H87Options.push_internet_option({
-                                    :type => :switch,
-                                    :text => Online::ONLINE_MODE_TERM,
-                                    :help => Online::ONLINE_MODE_HELP,
-                                    :on => Online::ONLINE_MODE_ON,
-                                    :off => Online::ONLINE_MODE_OFF,
-                                    :sw => Online::ACTIVATION_SWITCH
+                                  :type => :switch,
+                                  :text => Online::ONLINE_MODE_TERM,
+                                  :help => Online::ONLINE_MODE_HELP,
+                                  :on => Online::ONLINE_MODE_ON,
+                                  :off => Online::ONLINE_MODE_OFF,
+                                  :sw => Online::ACTIVATION_SWITCH
                                 })
 
 H87Options.push_internet_option({
-                                    :type => :switch,
-                                    :text => Online::SHARE_PARTY_TERM,
-                                    :help => Online::SHARE_PARTY_HELP,
-                                    :on => Online::SHARE_PARTY_ON,
-                                    :off => Online::SHARE_PARTY_OFF,
-                                    :sw => Online::SHARE_PARTY_SW,
-                                    :default => true
+                                  :type => :switch,
+                                  :text => Online::SHARE_PARTY_TERM,
+                                  :help => Online::SHARE_PARTY_HELP,
+                                  :on => Online::SHARE_PARTY_ON,
+                                  :off => Online::SHARE_PARTY_OFF,
+                                  :sw => Online::SHARE_PARTY_SW,
+                                  :default => true
                                 })
 
 # Attivare o disattivare popup messaggi sfera dimensionale

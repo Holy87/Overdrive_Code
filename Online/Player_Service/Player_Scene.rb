@@ -19,6 +19,14 @@ module Vocab
     'Messaggi'
   end
 
+  def self.follows
+    'Giocatori seguiti'
+  end
+
+  def self.followers
+    'I tuoi fan'
+  end
+
   def self.command_online_dashboard
     'Online'
   end
@@ -61,29 +69,48 @@ class Scene_OnlinePlayer < Scene_MenuBase
     create_command_window
     create_dashboard_window
     create_titles_window
-    create_gift_code_window
-    create_gift_code_input_window
+    create_gifts_windows
     create_avatar_window
     create_notifications_window
+    create_friends_windows
     reset_help
     @dialog_window.back_opacity = 255
   end
 
+  # crea le finestre necessarie al sistema dei regali
+  def create_gifts_windows
+    create_gift_code_window
+    create_gift_code_input_window
+  end
+
+  # crea le finestre necessarie al sistema degli amici
+  def create_friends_windows
+    create_follow_command_window
+    create_follows_window
+    create_player_search_window
+    create_friend_player_window
+    create_friend_command_window
+  end
+
+  # crea la finestra d'aiuto
   def create_help_window
     super
     @help_window.y = @player_window.bottom_corner
   end
 
+  # scarica le informazioni sul giocatore attuale
   def get_player_data
     Online.login unless Online.logged_in?
     @player = Online_Player.get($game_system.player_id)
   end
 
+  # restituisce il giocatore attuale
   # @return [Online_Player]
   def current_player
     @player
   end
 
+  # crea il contenitore dei titoli sbloccati dal giocatore
   def create_titles_window
     y = Graphics.width
     width = Graphics.width
@@ -96,6 +123,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @titles_window.deactivate
   end
 
+  # crea il contenitore degli avatar sbloccati dal giocatore
   def create_avatar_window
     y = Graphics.width
     width = Graphics.width
@@ -106,6 +134,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @avatar_window.deactivate
   end
 
+  # crea il menu principale
   def create_command_window
     @command_window = Window_PlayerCommand.new(0, @help_window.bottom_corner)
     @command_window.set_handler(:title, method(:command_title))
@@ -114,15 +143,19 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @command_window.set_handler(:cancel, method(:return_scene))
     @command_window.set_handler(:messages, method(:command_messages))
     @command_window.set_handler(:support, method(:command_support))
+    @command_window.set_handler(:follows, method(:command_follows))
+    @command_window.set_handler(:followers, method(:command_followers))
     @command_window.activate
     @command_window.index = 0
   end
 
+  # crea la finestra del giocatore
   def create_player_window
     @player_window = Window_PlayerInfo.new(0, 0, Graphics.width)
     @player_window.player = @player
   end
 
+  # crea la finestra di input del codice regalo
   def create_gift_code_input_window
     params = {:upcase => true, :permitted => Text_Inputable::ALPHA_WITH_SPACING,
               :max_characters => 20, :placeholder => 'XXXX-XXXX-XXXX',
@@ -135,6 +168,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @gift_input_window.deactivate
   end
 
+  # crea la finestra che mostra le ricompense del codice regalo
   def create_gift_code_window
     @gift_code_window = Window_GiftCode.new
     @gift_code_window.openness = 0
@@ -144,6 +178,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @gift_code_window.deactivate
   end
 
+  # crea la finestra che mostra le informazioni sull'online (stato, eventi ecc...)
   def create_dashboard_window
     x = @command_window.right_corner
     y = @help_window.bottom_corner
@@ -153,12 +188,69 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @dashboard_window.set_player @player
   end
 
+  # crea la finestra che mostra i pulsanti da premere sulla finestra degli amici
+  def create_follow_command_window
+    @follows_help_window = Window_FollowHelp.new(Graphics.height)
+    @follows_help_window.visible = false
+  end
+
+  # crea la finestra degli amici
+  def create_follows_window
+    y = @player_window.height
+    height = Graphics.height - y - @follows_help_window.height
+    @follows_window = Window_Follows.new(Graphics.width, y, Graphics.width, height)
+    @follows_window.visible = false
+    @follows_window.x = Graphics.width
+    @follows_window.set_handler(:cancel, method(:reset_main_windows))
+    @follows_window.set_handler(:ok, method(:command_open_player))
+    @follows_window.info_window = @follows_help_window
+    @follows_window.deactivate
+    @follows_data = nil
+    @followers_data = nil
+  end
+
+  # crea la finestra di input nome giocatore per cercarlo
+  def create_player_search_window
+    params = {:max_characters => Settings::MAX_NICKNAME_LEN, :title => Vocab::Add_Follow_Player}
+    @player_search_window = Window_SingleLineInput.new(0, 0, params)
+    @player_search_window.center_window
+    @player_search_window.y -= 100
+    @player_search_window.openness = 0
+    @player_search_window.set_done_handler(method(:search_player))
+    @player_search_window.set_cancel_handler(method(:cancel_search))
+    @player_search_window.deactivate
+  end
+
+  # crea la finestra del giocatore (diverso da quello attuale) per mostrare il giocatore cercato o selezionato dalla lista
+  def create_friend_player_window
+    @friend_window = Window_PlayerInfo.new(0, @player_window.height, Graphics.width)
+    @friend_window.openness = 0
+  end
+
+  # crea la finestra del menu del giocatore amico
+  def create_friend_command_window
+    @friend_command_window = Window_FriendCommand.new(@friend_window.bottom_corner)
+    @friend_command_window.openness = 0
+    @friend_command_window.deactivate
+    @friend_command_window.set_handler(:cancel, method(:command_close_friend))
+    @friend_command_window.set_handler(:follow, method(:command_follow))
+    @friend_command_window.set_handler(:unfollow, method(:command_unfollow))
+    @friend_command_window.set_handler(:party, method(:command_party))
+    @friend_command_window.set_handler(:achievements, method(:command_achievements))
+  end
+
+  # crea la finestra dei messaggi
   def create_notifications_window
     @notifications_downloaded = false
     @notifications_window = Window_NotificationMessages.new(0, Graphics.height, Graphics.width, Graphics.height - @help_window.height)
     @notifications_window.visible = false
     @notifications_window.set_handler(:cancel, method(:reset_main_windows))
     @notifications_window.deactivate
+  end
+
+  def create_message_window
+    @message_window = Window_NotificationMessage.new(Graphics.width, 0, Graphics.width, Graphics.height)
+    @message_window.visible = false
   end
 
   def reset_main_windows
@@ -170,6 +262,9 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @avatar_window.smooth_move(@avatar_window.x, Graphics.height)
     @titles_window.smooth_move(@titles_window.x, Graphics.height)
     @notifications_window.smooth_move(0, Graphics.height)
+    @follows_window.smooth_move(Graphics.width, @follows_window.y)
+    @follows_help_window.smooth_move(0, Graphics.height)
+    @follows_window.index = -1
     @gift_input_window.close
     @gift_code_window.close
     @command_window.activate
@@ -179,10 +274,17 @@ class Scene_OnlinePlayer < Scene_MenuBase
   def reset_help
     @help_window.set_text(Vocab.online_info_help)
   end
+  
+  def hide_player_window
+    @player_window.smooth_move(0, 0 - @player_window.height)
+  end
+  
+  def show_player_window
+    @player_window.smooth_move(0, 0)
+  end
 
-  def hide_main_windows
-    #@player_window.smooth_move(0, 0 - @player_window.height)
-    #@help_window.smooth_move(0, 0)
+  def hide_main_windows(including_player = false)
+    hide_player_window if including_player
     hide_help_window
     stash_command_window
     stash_dashboard_window
@@ -226,6 +328,103 @@ class Scene_OnlinePlayer < Scene_MenuBase
     show_dialog(text, method(:reset_main_windows), :info)
   end
 
+  # apre la finestra dei giocatori seguiti
+  def command_follows
+    hide_main_windows
+    @follows_help_window.visible = true
+    @follows_window.visible = true
+    @follows_help_window.change_enable(0, true)
+    @follows_window.set_handler(:shift, method(:command_search_player))
+    if follows_loaded?
+      @follows_window.set_data @follows_data
+      @follows_window.activate
+      @follows_window.index = 0
+    else
+      await_server do
+        @follows_data = Follow_Service.get_follows($game_system.player_id)
+        @follows_window.set_data @follows_data
+        @follows_window.index = 0
+        @follows_window.activate
+      end
+    end
+    @follows_window.smooth_move(0, @follows_window.y)
+    @follows_help_window.smooth_move(0, Graphics.height - @follows_help_window.height)
+  end
+
+  # apre la finestra dei giocatori che ti seguono
+  def command_followers
+    hide_main_windows
+    @follows_help_window.visible = true
+    @follows_window.visible = true
+    @follows_help_window.change_enable(0, false)
+    @follows_window.delete_handler(:shift)
+    if followers_loaded?
+      @follows_window.set_data @followers_data, true
+      @follows_window.activate
+      @follows_window.index = 0
+    else
+      await_server do
+        @followers_data = Follow_Service.get_followers($game_system.player_id)
+        @follows_window.set_data @followers_data, true
+        @follows_window.index = 0
+        @follows_window.activate
+      end
+    end
+    @follows_window.smooth_move(0, @follows_window.y)
+    @follows_help_window.smooth_move(0, Graphics.height - @follows_help_window.height)
+  end
+
+  def command_follow
+    friend_player = @friend_window.player
+    response = Follow_Service.follow_player(friend_player.player_id)
+    if response.success?
+      @friend_command_window.set_follow(true)
+      show_dialog(sprintf(Vocab::Follow_Success, friend_player.name), @friend_command_window, :success)
+      @follows_data.push(friend_player)
+      trigger_follow_update
+    else
+      Logger.error(response)
+      show_dialog(response.failed_message, @friend_command_window, :error)
+    end
+  end
+
+  def command_unfollow
+    friend_player = @friend_window.player
+    response = Follow_Service.unfollow_player(friend_player.player_id)
+    if response.success?
+      @friend_command_window.set_follow(false)
+      show_dialog(sprintf(Vocab::Unfollow_Success, friend_player.name), @friend_command_window, :success)
+      @follows_data.delete_if { |p| p.player_id == friend_player.player_id}
+      trigger_follow_update
+    else
+      show_dialog(response.failed_message, @friend_command_window, :error)
+    end
+  end
+
+  def command_party
+    fail NotImplementedError
+  end
+
+  def command_achievements
+    fail NotImplementedError
+  end
+
+  def command_close_friend
+    @friend_command_window.close
+    @friend_window.close
+    @follows_window.open
+    @follows_help_window.open
+    @follows_window.activate
+  end
+
+  def cancel_search
+    @player_search_window.close
+    show_player_window
+    @follows_window.open
+    @follows_help_window.open
+    @follows_window.activate
+  end
+
   def command_giftcode
     hide_main_windows
     @gift_input_window.clear_text
@@ -248,11 +447,13 @@ class Scene_OnlinePlayer < Scene_MenuBase
     end
   end
 
+  # annulla l'utilizzo del codice regalo
   def cancel_code
     @gift_input_window.close
     reset_main_windows
   end
 
+  # utilizza il codice regalo
   def accept_code
     begin
       result = Gift_Code_Service.use_code(@gift_input_window.text)
@@ -269,11 +470,13 @@ class Scene_OnlinePlayer < Scene_MenuBase
     end
   end
 
+  # mostra il messaggio che le ricompense sono state reclamate.
   def rewards_claimed
     @gift_code_window.close
     show_dialog(Vocab::Gift_Code_All_Claimed, method(:reset_main_windows))
   end
 
+  # apre la finestra dei messaggi ricevuti.
   def command_messages
     @help_window.smooth_move(0, 0)
     @help_window.set_text(Vocab.online_notifications_help)
@@ -294,6 +497,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @notifications_window.index = 0
   end
 
+  # comando di selezione dell'avatar da modificare. Aggiorna l'avatar e torna al menu principale.
   def avatar_confirmation
     reset_main_windows
     if @avatar_window.index != current_player.avatar
@@ -315,6 +519,7 @@ class Scene_OnlinePlayer < Scene_MenuBase
     end
   end
 
+  # comando di selezione del titolo da modificare. Aggiorna il titolo e torna al menu principale
   def title_confirmation
     reset_main_windows
     if @titles_window.title != current_player.title
@@ -336,7 +541,66 @@ class Scene_OnlinePlayer < Scene_MenuBase
     end
   end
 
+  # comando di selezione del giocatore dall'elenco
+  def command_open_player
+    open_player @follows_window.item
+  end
 
+  # apre la finestra di ricerca del giocatore
+  def command_search_player
+    hide_player_window
+    @follows_window.close
+    @follows_help_window.close
+    @player_search_window.open
+    @player_search_window.activate
+  end
+
+  # avvia la ricerca del giocatore ed apre la finestra, se trovato
+  def search_player
+      player_found = Online_Player.find_by_name(@player_search_window.text)
+      if player_found.nil?
+        show_dialog(Vocab::Player_Not_Found, @player_search_window, :error)
+      elsif player_found.player_id == $game_system.player_id
+        show_dialog(Vocab::Player_Same, @player_search_window, :error)
+      elsif @follows_data.map { |player| player.player_id }.include?(player_found.player_id)
+        show_dialog(sprintf(Vocab::Player_Already_Followed, player_found.name), @player_search_window, :warning)
+      else
+        @player_search_window.close
+        show_player_window
+        open_player(player_found)
+      end
+  end
+
+  # @param [Online_Player] player
+  def open_player(player)
+    @follows_window.close
+    @follows_help_window.close
+    @friend_window.player = player
+    @friend_window.open
+    @friend_command_window.set_follow following_player_id?(player.player_id)
+    @friend_command_window.open
+    @friend_command_window.activate
+  end
+
+  # determina se i giocatori seguiti sono stati scaricati dal server
+  def follows_loaded?
+    @follows_data != nil
+  end
+
+  # determina se l'elenco dei giocatori che ti seguono è stato caricato
+  def followers_loaded?
+    @followers_data != nil
+  end
+
+  # determina se stai seguendo un determinato giocatore
+  def following_player_id?(player_id)
+    return false unless follows_loaded?
+    @follows_data.map { |follows| follows.player_id == player_id }.any?
+  end
+
+  def trigger_follow_update
+    @follows_window.set_data(@follows_data) unless @follows_window.following
+  end
 end
 
 class Window_PlayerCommand < Window_Command
@@ -358,6 +622,8 @@ class Window_PlayerCommand < Window_Command
     add_command(Vocab.messages, :messages, has_messages?, :message_n)
     add_command(Vocab.change_avatar, :avatar, can?)
     add_command(Vocab.change_title, :title, can?)
+    add_command(Vocab.follows, :follows, can?)
+    add_command(Vocab.followers, :followers, can?)
     add_command(Vocab.command_gift_code, :gift_code, can?)
     add_command(Vocab.support, :support)
     add_command(Vocab.cancel, :cancel)

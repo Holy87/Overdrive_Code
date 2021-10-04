@@ -1,14 +1,30 @@
+module Face_Cache_Settings
+  AVAILABLE_FACES = %w(Actor1_o Actor2_o Actor3_o Actor4 Actor5 Evil J_Actor1 J_Actor3)
+  AVATAR_ADJUST = {
+    0=>31,1=>18,3=>20,7=>18,8=>18,9=>18,10=>18,11=>30,13=>28,15=>31,16=>24,19=>27,
+    23=>48,24=>30,25=>43,26=>35,27=>25,28=>33,29=>28,30=>28,31=>19,32=>37,33=>32,
+    34=>38,35=>32,36=>36,37=>38,38=>35,39=>25,40=>38,41=>25,42=>20,43=>30,45=>33
+  }
+end
 #===============================================================================
 # * Window_Base
 #===============================================================================
 class Window_Base < Window
-
   # Disegna l'avatar di un giocatore online.
   # @param [Integer] avatar_id
   # @param [Integer] x
   # @param [Integer] y
   def draw_avatar(avatar_id, x, y)
     contents.blt(x, y, $game_temp.avatars[avatar_id], Rect.new(0,0,96,96))
+  end
+
+  # Disegna l'avatar di un giocatore online all'interno di una riga
+  # @param [Integer] avatar_id
+  # @param [Integer] x
+  # @param [Integer] y
+  def draw_inline_avatar(avatar_id, x, y)
+    y_offs = Face_Cache_Settings::AVATAR_ADJUST[avatar_id].nil? ? LFACE_Y_IND : Face_Cache_Settings::AVATAR_ADJUST[avatar_id]
+    contents.blt(x, y, $game_temp.avatars[avatar_id], Rect.new(FACE_WIDTH - LFACE_WIDTH, y_offs, LFACE_WIDTH,24))
   end
 end
 
@@ -31,7 +47,7 @@ end
 #===============================================================================
 class Face_Cache
   attr_reader :images
-  AVAILABLE_FACES = %w(Actor1_o Actor2_o Actor3_o Actor4 Actor5 Evil J_Actor1 J_Actor3)
+  include Face_Cache_Settings
 
   def initialize
     @images = AVAILABLE_FACES

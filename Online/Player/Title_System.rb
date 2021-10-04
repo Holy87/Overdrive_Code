@@ -109,6 +109,10 @@ class Player_Title
   def global?
     @multi_save
   end
+
+  def empty?
+    @type == 0
+  end
 end
 
 #===============================================================================
@@ -187,7 +191,7 @@ class Game_System
 
   def check_auto_titles_on_load_game
     unlock_title(46) if $TEST
-    unlock_title(47) if Date.new.day == 25 and Date.new.month == 12
+    unlock_title(47) if Time.now.day == 25 and Time.now.month == 12
     unlock_title(48) if Win.username.downcase.include?('francesc')
   end
 
