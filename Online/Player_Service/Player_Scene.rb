@@ -432,6 +432,24 @@ class Scene_OnlinePlayer < Scene_MenuBase
     @gift_input_window.activate
   end
 
+  # apre un messaggio dall'elenco
+  def command_open_message
+    @notifications_window.smooth_move(0 - @notifications_window.width, @notifications_window.y)
+    @help_window.smooth_move(0, 0 - @help_window.height)
+    @message_window.set_notification(@notifications_window.item)
+    @message_window.smooth_move(0, 0)
+    @message_window.visible = true
+  end
+
+  # chiude il messaggio e torna all'elenco
+  def command_close_message
+    @notifications_window.smooth_move(0, @notifications_window.y)
+    @help_window.smooth_move(0, 0)
+    @message_window.smooth_move(Graphics.width, 0)
+    @notifications_window.activate
+  end
+
+  # invia il codice regalo al server, controlla la validità e le ricompense
   def send_code
     @gift_input_window.close
     Online.login unless Online.logged_in?
@@ -626,7 +644,7 @@ class Window_PlayerCommand < Window_Command
     add_command(Vocab.followers, :followers, can?)
     add_command(Vocab.command_gift_code, :gift_code, can?)
     add_command(Vocab.support, :support)
-    add_command(Vocab.cancel, :cancel)
+    #add_command(Vocab.cancel, :cancel)
   end
 
   def can?

@@ -6,10 +6,13 @@ module Notification_Service
   AUCTION_SELL_TYPE = 4
   EVENT_TYPE_STARTED_TYPE = 5
   SERVICE_TYPE = 6
+  FOLLOW_TYPE = 7
   CUSTOM_TYPE = 10
 
   UNREAD_ICON = 148
   READ_ICON = 149
+
+  SHOW_MESSAGE_PREVIEW = false
 
   NOTIFICATION_TONE = Tone.new(20, 200, 180, 100)
   NOTIFICATION_SE = 'Chime1'
@@ -17,6 +20,17 @@ module Notification_Service
   # Intervallo (in numero di secondi) per controllare
   # se ci sono nuovi messaggi
   CHECK_INTERVAL = 60 * 10
+
+  NOTIFICATION_TYPES_SENDER = {
+    GET_FAME_TYPE => :system,
+    GET_INFAME_TYPE => :system,
+    BANNED_TYPE => :admin,
+    BOARD_REPLY_TYPE => :system,
+    AUCTION_SELL_TYPE => :auction,
+    EVENT_TYPE_STARTED_TYPE => :system,
+    SERVICE_TYPE => :system,
+    FOLLOW_TYPE => :system
+  }
 end
 
 module Vocab
@@ -28,6 +42,16 @@ module Vocab
         :reply => 'Hai ricevuto una risposta',
         :auction => 'Oggetto venduto'
     }[notification_type]
+  end
+
+  # @param [String] from_type
+  def self.notification_from(from_type)
+    {
+      :system => 'Overdrive Online',
+      :auction => 'Casa d\'aste',
+      :admin => 'Amministrazione',
+
+    }[from_type]
   end
 
   def self.notification_message(notification_type)
@@ -47,7 +71,13 @@ module Vocab
 
   New_Message = 'Nuovo'
   New_Messages_Popup = "Hai nuovi messaggi non letti. Controlla il menu Online."
-
+  Online_Notification_From = "Da: "
+  Online_Notification_Subject = "Oggetto: "
+  Online_Notification_Commands = {
+    :delete => "Elimina",
+    :back => "Indietro",
+    :follow => "Segui anche tu"
+  }
 end
 
 module Notification_Service
@@ -154,6 +184,11 @@ class Online_Notification
     end
   end
 
+  # Imposta il "Da..." del messaggio personalizzato
+  def set_sender(sender)
+    @sender = sender
+  end
+
   # imposta un titolo personalizzato
   # @param [String] title
   def set_title(title)
@@ -179,6 +214,11 @@ class Online_Notification
     return '' if @date.nil?
     sprintf('%d/%d/%d alle %d:%02d', @date.day, @date.month, @date.year,
             @date.hour, @date.min)
+  end
+
+  def sender
+    return @sender if @sender != nil
+
   end
 
   # Il titolo della notifica
@@ -325,7 +365,7 @@ end
 class Window_NotificationMessages < Window_Selectable
   # l'altezza del contenuto dell'elemento
   def item_height
-    line_height * 3
+    Notification_Service::SHOW_MESSAGE_PREVIEW ? line_height * 3 : line_height
   end
 
   # aggiorna la grafica
@@ -360,7 +400,7 @@ class Window_NotificationMessages < Window_Selectable
     item = message index
     rect = item_rect index
     draw_message_title(rect, item)
-    draw_message_text(rect, item)
+    draw_message_text(rect, item) if Notification_Service::SHOW_MESSAGE_PREVIEW
   end
 
   # @param [Rect] rect
@@ -386,6 +426,90 @@ class Window_NotificationMessages < Window_Selectable
     y = rect.y + line_height
     change_color normal_color
     draw_text_wrapped(rect.x, y, notification.message, rect.width)
+  end
+end
+
+class Window_NotificationMessage < Window_Base
+  def initialize(x, y, width, height)
+    super
+    @notification = nil
+    refresh
+  end
+
+  # @param [Online_Notification] new_notification
+  def set_notification(new_notification)
+    return if @notification == new_notification
+    @notification = new_notification
+    refresh
+  end
+
+  # @return [Online_Notification]
+  def notification
+    @notification
+  end
+
+  def refresh
+    contents.clear
+    return if @notification.nil?
+    draw_from
+    draw_subject
+    draw_message
+    draw_keys
+  end
+
+  def draw_from
+    change_color system_color
+    rect = line_rect
+    draw_text(rect, Vocab::Online_Notification_From)
+    w = text_width Vocab::Online_Notification_From
+    rect.x += w
+    rect.width -= w
+    change_color normal_color
+    draw_text rect, notification.sender
+  end
+
+  def draw_subject
+    change_color system_color
+    rect = line_rect 1
+    draw_text(rect, Vocab::Online_Notification_Subject)
+    w = text_width Vocab::Online_Notification_Subject
+    rect.x += w
+    rect.width -= w
+    change_color normal_color
+    draw_text rect, notification.title
+    draw_underline 1
+  end
+
+  def draw_message
+    rect = line_rect 2
+    draw_formatted_text(rect.x, rect.y, rect.width, notification.message)
+  end
+
+  def draw_keys
+    case notification.type
+    when Notification_Service::FOLLOW_TYPE
+      draw_follow_commands
+    else
+      draw_simple_commands
+    end
+  end
+
+  def draw_simple_commands
+    y = contents_height - line_height
+    draw_key_icon(:B, 0, 0)
+    draw_text(24, 0, contents_width, line_height, Vocab::Online_Notification_Commands[:back])
+    draw_key_icon(:X, contents_width/2, 0)
+    draw_text(contents_width/2 + 24, 0, contents_width / 2, line_height, Vocab::Online_Notification_Commands[:delete])
+  end
+
+  def draw_follow_commands
+    y = contents_height - line_height
+    draw_key_icon(:B, 0, y)
+    draw_text(24, y, contents_width/3, line_height, Vocab::Online_Notification_Commands[:back])
+    draw_key_icon(:X, contents_width/3, y)
+    draw_text(contents_width/3 + 24, y, contents_width / 3, line_height, Vocab::Online_Notification_Commands[:delete])
+    draw_key_icon(:Y, contents_width/3*2, y)
+    draw_text(contents_width/3*2 + 24, y, contents_width/3, line_height, Vocab::Online_Notification_Commands[:follow])
   end
 end
 
