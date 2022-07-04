@@ -32,17 +32,36 @@ end
 # modulo per la gestione generale dei negozi
 #==============================================================================
 module Shop_Core
-  ITEM_REGEXP = /([iwa])(\d+)(x(\d+))?/i
+  ITEM_REGEXP = /([iwac])(\d+)(x(\d+))?/i
 
   # determina se "riacquista è disponibile"
   def self.rebuy_active?
     ShopsSettings::REBUY
   end
 
+  # @return [Hash{Symbol->RPG::Shop}]
   def self.init_shops
     data = {}
     ShopsSettings::SHOPS.each_pair do |key, hash|
       data[key] = RPG::Shop.new(key, hash)
+    end
+    data
+  end
+
+  # @return [Hash{Symbol->RPG::Currency}]
+  def self.init_currencies
+    data = {}
+    ShopsSettings::CUSTOM_CURRENCIES.each do |hash|
+      data[hash[:key]] = RPG::Currency.new(hash)
+    end
+    data
+  end
+
+  # @return [Hash{Integer->RPG::Currency}]
+  def self.init_fake_items
+    data = {}
+    ShopsSettings::FAKE_ITEMS.each_pair do |key, hash|
+      data[key] = RPG::Fake_Item.new(hash)
     end
     data
   end

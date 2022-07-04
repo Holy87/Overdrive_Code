@@ -10,8 +10,6 @@ class Shop_Article
   attr_reader :item_id 
   # quantità dell'articolo disponibile
   attr_reader :quantity
-  # se true, non può andare in saldo
-  attr_accessor :sales_off
   # ammontare dei saldi (in percentuale)
   # @return [Float]
   attr_accessor :sale_value # valore di saldi
@@ -30,7 +28,6 @@ class Shop_Article
     @item_id = details.item_id
     @item_type = details.item_type
     @sale_value = 0
-    @sales_off = details.deny_sales || false
     @sell_locked = details.sell_locked || false
     @replenishment_rate = details.repl_rate
     @rpg_article = details
@@ -46,9 +43,15 @@ class Shop_Article
       $data_weapons[@item_id]
     when 3
       $data_armors[@item_id]
+    when 4
+      $data_fake_items[@item_id]
     else
       nil
     end
+  end
+
+  def conditions_met?
+    base_article.conditions_met?
   end
 
   # @return [RPG::Shop_Article]
@@ -97,7 +100,7 @@ class Shop_Article
   end
 
   def deny_sales?
-    @sales_off
+    base_article.deny_sales == true
   end
 
   # determina se l'oggetto è in offerta
@@ -126,6 +129,15 @@ class Shop_Article
   # @return [Float]
   def discount_rate
     @sale_value / 100.0
+  end
+
+  def custom_currency?
+    base_article.custom_currency?
+  end
+
+  # @return [Symbol]
+  def currency_key
+    base_article.custom_currency
   end
 
   # @return [String]
@@ -431,11 +443,13 @@ class Game_Shop
   # @param [Shop_Article] article
   # @param [Boolean] include_sale
   def article_price(article, include_sale = false)
-    discount = 1.0
-    discount -= $game_party.shop_discount
-    discount -= buy_discount
-    discount -= article.discount_rate if include_sale
-    (article.original_price * discount).to_i
+    price_rate = 1.0
+    unless article.custom_currency?
+      price_rate -= $game_party.shop_discount
+      price_rate -= buy_discount
+    end
+    price_rate -= article.discount_rate if include_sale
+    (article.original_price * price_rate).to_i
   end
 
   # ottiene il costo dell'oggetto
@@ -468,7 +482,7 @@ class Game_Shop
 
   # restituisce il bene dall'oggetto
   # @param [RPG::Item, RPG::Weapon, RPG::Armor] item
-  # @return [Shop_Article]
+  # @return [Shop_Article, nil]
   def article_from_item(item)
     articles.select{ |article| article.item.equal?(item) }.first
   end
@@ -573,6 +587,10 @@ class Game_Shop
   # non rifornisce oltre la soglia max_quantity dell'articolo
   # @param [RPG::Shop_Article] article
   def valuate_add_article(article)
+    if article.nil?
+      Logger.error("Articolo nullo nel negozio " + self.name)
+      return
+    end
     return unless article.conditions_met?
     i_num = item_number(article.item)
     return if i_num >= article.max_quantity

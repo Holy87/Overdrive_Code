@@ -189,7 +189,11 @@ class Window_ShopBuyN < Window_ShopItems
     return false if shop.sold_out? item
     return false if shop.item_number(item) == 0
     return false if $game_party.item_number(item) >= $game_party.max_item_number(item)
-    $game_party.gold >= @shop.article_price(article, true)
+    if article.custom_currency?
+      $game_party.currency_gained(article.currency_key) >= @shop.article_price(article, true)
+    else
+      $game_party.gold >= @shop.article_price(article, true)
+    end
   end
 
   # disegna la quantità dell'oggetto
@@ -218,8 +222,15 @@ class Window_ShopBuyN < Window_ShopItems
   def draw_price(good, rect, enabled)
     width = rect.width - @item_number_width
     change_color(power_up_color, enabled) if good.in_sale?
-    text = sprintf('%d %s', @shop.article_price(good, true), Vocab::currency_unit)
-    draw_text(rect.x, rect.y, width, line_height, text, 2)
+    if good.custom_currency?
+      currency = $data_currencies[good.currency_key]
+      text =  @shop.article_price(good, true)
+      draw_text(rect.x, rect.y, width - 24, line_height, text, 2)
+      draw_icon(currency.icon_index, rect.x + rect.width - 24, rect.y, enabled)
+    else
+      text = sprintf('%d %s', @shop.article_price(good, true), Vocab::currency_unit)
+      draw_text(rect.x, rect.y, width, line_height, text, 2)
+    end
     x2 = text_size(good.item.name).width + 24
     if good.sale_value != 0
       contents.font.size -= 7
@@ -434,9 +445,19 @@ class Window_ShopNumberN < Window_Base
     cost *= @quantity
     change_color(system_color)
     draw_text(line_rect(line), Vocab::shop_total)
-    text = sprintf('%d %s', cost, Vocab::currency_unit)
     change_color(normal_color)
-    draw_text(line_rect(line), text, 2)
+    article = shop.article_from_item(item)
+    if article.custom_currency?
+      currency = $data_currencies[article.currency_key]
+      text = sprintf("%dx", cost)
+      x = 24 + text_width(currency.name) + text_width(text)
+      draw_text(x, line_rect(line).y, contents_width, line_height)
+      draw_icon(currency.icon_index, x + text_width(text), line_rect(line).y)
+      draw_text(line_rect(line), currency.name, 2)
+    else
+      text = sprintf('%d %s', cost, Vocab::currency_unit)
+      draw_text(line_rect(line), text, 2)
+    end
   end
 
   def draw_next_possessed(line)

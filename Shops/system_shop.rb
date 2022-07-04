@@ -27,6 +27,8 @@ module DataManager
   def self.load_normal_database
     h87_shop_load_normal_database
     $data_shops = Shop_Core.init_shops
+    $data_currencies = Shop_Core.init_currencies
+    $data_fake_items = Shop_Core.init_fake_items
     $data_states.compact.each { |state| state.init_shop_stats }
     $data_armors.compact.each { |armor| armor.init_shop_stats }
     $data_weapons.compact.each { |weapon| weapon.init_shop_stats }
@@ -149,6 +151,26 @@ class Game_Party
   # @return [Array<RPG::Item>]
   def sellable_items
     all_items.select { |item| item.traddable? }
+  end
+
+  # restituisce la quantità accumulata di una certa valuta
+  # @param [Symbol] currency_key
+  def currency_gained(currency_key)
+    currency = $data_currencies[currency_key]
+    return item_number($data_items[currency.object_id]) if currency.item?
+    return $game_variables[currency.object_id] if currency.variable?
+    0
+  end
+  
+  # @param [Object] currency_key
+  # @param [Object] number
+  def lose_currency(currency_key, number)
+    currency = $data_currencies[currency_key]
+    if currency.item?
+      lose_item($data_items[currency.object_id], number)
+    elsif currency.variable?
+      $game_variables[currency.object_id] -= [number, currency_gained(currency_key)].min
+    end
   end
 end
 

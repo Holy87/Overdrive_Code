@@ -141,8 +141,17 @@ class Scene_NewShop < Scene_MenuBase
 
   def buy
     n = @shop_number_window.quantity
-    $game_party.gain_item(current_item, n)
-    $game_party.lose_gold(shop.item_price(current_item, true) * n)
+    if current_item.is_a? RPG::Fake_Item
+      n.times { current_item.process_buy }
+    else
+      $game_party.gain_item(current_item, n)
+    end
+    article = shop.article_from_item current_item
+    if article.custom_currency?
+      $game_party.lose_currency(article.currency_key, shop.item_price(current_item, true) * n)
+    else
+      $game_party.lose_gold(shop.item_price(current_item, true) * n)
+    end
     shop.apply_fidelity(current_item, n)
     shop.deplenish_item(current_item, n)
   end

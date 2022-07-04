@@ -91,6 +91,8 @@ class RPG::Shop
       2
     when RPG::Armor
       3
+    when RPG::Fake_Item
+      1
     else
       0
     end
@@ -114,6 +116,7 @@ class RPG::Shop_Article
   attr_reader :price # prezzo di vendita
   attr_reader :sell_locked # blocca la rivendita
   attr_reader :deny_sales # blocca saldi per quest'oggetto
+  attr_reader :custom_currency # ID valuta personalizzata
 
   # inizializzazione
   # @param [Hash] hash_info
@@ -135,10 +138,11 @@ class RPG::Shop_Article
     @required_var = hash_info[:variable]
     @required_var_value = hash_info[:variable_val] || 1
     @required_noitem = hash_info[:if_not_item]
+    @custom_currency = hash_info[:currency]
   end
 
   # restituisce l'oggetto reale del database
-  # @return [RPG::Item]
+  # @return [RPG::Item, RPG::Weapon, RPG::Armor, RPG::FakeItem]
   def item
     case @item_type
     when 1
@@ -147,9 +151,15 @@ class RPG::Shop_Article
       $data_weapons[@item_id]
     when 3
       $data_armors[@item_id]
+    when 4
+      $data_fake_items[@item_id]
     else
       nil
     end
+  end
+
+  def custom_currency?
+    @custom_currency != nil
   end
 
   # determina se è un oggetto con quantità illimitate
@@ -160,7 +170,7 @@ class RPG::Shop_Article
   # restituisce il numero del tipo oggetto dalla stringa
   # noinspection RubyStringKeysInHashInspection
   def item_type_from_char(char)
-    {'i' => 1, 'w' => 2, 'a' => 3}[char]
+    {'i' => 1, 'w' => 2, 'a' => 3, 'c' => 4}[char]
   end
 
   # alias attributo max_quantity
@@ -190,5 +200,88 @@ class RPG::Shop_Article
   def no_item_met?
     return true if @required_noitem.nil?
     !$game_party.has_item?($data_items[@required_noitem])
+  end
+end
+
+class RPG::Fake_Item < RPG::BaseItem
+  attr_reader :switch_id
+  attr_reader :variable_id
+  attr_reader :script
+  attr_reader :price
+  def initialize(data)
+    @icon_index = data[:icon]
+    @id = data[:id]
+    @name = data[:name]
+    @description = data[:description]
+    @price = data[:price]
+    @switch_id = data[:switch_id]
+    @variable_id = data[:variable_id]
+    @script = data[:script]
+  end
+
+  def for_switch?
+    @switch_id != nil
+  end
+
+  def for_variable?
+    @variable_id != nil
+  end
+
+  def execute_script?
+    @script != nil
+  end
+
+  def process_buy
+    return process_switch if for_switch?
+    return process_variable if for_variable?
+    return process_script if execute_script?
+    nil
+  end
+
+  private
+
+  def process_switch
+    $game_switches[@switch_id] = true
+  end
+
+  def process_script
+    eval @script
+  end
+
+  def process_variable
+    $game_variables[@variable_id] += 1
+  end
+end
+
+class RPG::Currency
+  # @return [String]
+  attr_reader :name
+  # @return [Integer]
+  attr_reader :icon_index
+  # @return [Integer]
+  attr_reader :id
+  # @return [Integer]
+  attr_reader :object_id
+
+  # @param [Hash] currency_data
+  def initialize(currency_data)
+    @type = currency_data[:type]
+    @id = currency_data[:key]
+    @object_id = currency_data[:id]
+    @price = currency_data[:price]
+    @name = item? ? $data_items[@object_id].name : currency_data[:name]
+    @icon_index = item? ? $data_items[@object_id].icon_index : currency_data[:icon]
+  end
+
+  def selling_price
+    @price
+  end
+
+  def item?
+    @type == :item
+  end
+
+  def variable?
+    @type == :variable
   end
 end

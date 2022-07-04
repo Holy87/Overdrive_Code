@@ -88,6 +88,29 @@ module ShopsSettings
   # città.
   HOLD_UPDATE_MAPS = [87, 89]
 
+  CUSTOM_CURRENCIES = [
+    # gettoni kora kora
+    {:key => :kora, :type => :item, :id => 132}
+  ]
+
+  # Definizione degli oggetti finti.
+  # ISTRUZIONI
+  # Gli oggetti finti non entreranno a far parte dell'inventario,
+  # ma
+  FAKE_ITEMS = [
+    {:id => 1, :name => 'Slot Accessori +', :icon => 568, :price => 7,
+     :switch_id => 527, :variable_id => 131,
+     :description => 'I personaggi avranno a disposizione uno slot per gli accessori|aggiuntivo.',
+     :script => 'ary = [:shield,:helmet,:armour,:other,:other,:esper]
+      15.times {|i| $game_actors[i+1].equip_type = ary}'
+    },
+    {
+      :id => 2, :name => 'Sinergia +', :icon => 568, :price => 5,
+      :variable_id => 131,
+      :description => 'La Sinergia carica il 20% più velocemente.'
+    }
+  ]
+
   # definizione dei negozi
   # ISTRUZIONI
   # Inserire nell'hash un nuovo negozio con un simbolo identificativo ed i
@@ -116,6 +139,7 @@ module ShopsSettings
   # facoltativamente anche la quantità massima.
   # esempio: 'i10x5' -> il negozio vende 5 item con ID 10
   # esempio: 'w1' -> l'oggetto vende l'arma con ID 1 (illimitate)
+  # currency: imposta una valuta personalizzata (definita su) tramite chiave
   # La differenza tra goods e random_goods è l'elenco degli oggetti disponibili
   # la prima volta che si visita il negozio. Gli oggetti limitati NON torneranno.
   # Nell'elenco random_goods invece potrebbero comparire casualmente dopo un po'.
