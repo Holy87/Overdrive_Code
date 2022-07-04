@@ -33,7 +33,7 @@ Seleziona Ripristina o premi %s per resettare.'
     # Tasti configurabili nella schermata. Nota che puoi aggiungere
     # anche :X, :Y e :Z, nonché i nuovi :START e :SELECT.
     # Sono configurabili solo se i comandi sono ARRAY
-    INPUTS = [:UP, :DOWN, :LEFT, :RIGHT, :C, :B, :A, :L, :R]
+    INPUTS = [:UP, :DOWN, :LEFT, :RIGHT, :C, :B, :A, :L, :R, :START]
 
     # Descrizione dei comandi.
     INPUT_DESCRIPTION = {
@@ -45,7 +45,8 @@ Seleziona Ripristina o premi %s per resettare.'
         :B => 'Menu/Indietro',
         :A => 'Corri',
         :L => 'Precedente',
-        :R => 'Successivo'
+        :R => 'Successivo',
+        :START => 'Pausa'
     }
 
     # Comandi che sono in sola lettura così da non bloccare il giocatore

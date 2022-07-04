@@ -60,7 +60,7 @@ module Keyboard
         :DOWN => [:VK_DOWN],
         :LEFT => [:VK_LEFT],
         :RIGHT => [:VK_RIGHT],
-        :START => [], #not really used by RPG Maker
+        :START => [:KEY_P], #not really used by RPG Maker
         :SELECT => [], #not used too, but you can if you want
         :L => [:KEY_Q, :VK_PRIOR],
         :R => [:KEY_W, :VK_NEXT],
@@ -347,6 +347,7 @@ module Keyboard
   def self.unicode_char(key, buff_size = 10)
     key = key_symbol_to_code(key)
     buffer = ' ' * buff_size
+    # this step makes the game crash
     res = ToUnicode.call(key, map_virtual_key(key), get_keyboard_state, buffer, buff_size, 0)
     return '' if res != 1
     unicode_to_char(sprintf('\u%04x', buffer.unpack('Q')[0]))

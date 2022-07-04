@@ -57,7 +57,7 @@ Seleziona Ripristina o premi CTRL per resettare.'
   #--------------------------------------------------------------------------
   # * Tasti configurabili nella schermata.
   #--------------------------------------------------------------------------
-  INPUTS = [:UP, :DOWN, :LEFT, :RIGHT, :C, :B, :A, :L, :R]
+  INPUTS = [:UP, :DOWN, :LEFT, :RIGHT, :C, :B, :A, :L, :R, :START]
   #--------------------------------------------------------------------------
   # * Tasti da escludere nella selezione
   #--------------------------------------------------------------------------
@@ -78,7 +78,8 @@ Seleziona Ripristina o premi CTRL per resettare.'
       :B      => 'Menu/Indietro',
       :A      => 'Corri',
       :L      => 'Precedente',
-      :R      => 'Successivo'
+      :R      => 'Successivo',
+      :START  => 'Pausa'
   }
 end
 
@@ -357,8 +358,7 @@ class Window_PadKeys < Window_Selectable
   # * Draws a command with friendly name and controller input
   #--------------------------------------------------------------------------
   def draw_key_command(key, index)
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     change_color(normal_color)
     draw_text(rect.x, rect.y, rect.width/2, line_height, Vocab.command_name(key))
     if $game_system.xinput_key_set[key]
@@ -373,8 +373,7 @@ class Window_PadKeys < Window_Selectable
   # * Draws the reset command
   #--------------------------------------------------------------------------
   def draw_reset_command(index)
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     change_color(normal_color)
     draw_text(rect, ControllerSettings::RESET_COMMAND, 1)
   end

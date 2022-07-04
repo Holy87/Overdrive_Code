@@ -287,3 +287,50 @@ class Sprite_Container
     sprites.select { |sprite| sprite.disposed? }.any?
   end
 end
+
+class Window_Base < Window
+  include Fade_Engine
+
+  alias :h87_en_window_init :initialize
+  alias :h87_en_window_upd :update
+
+  def initialize(x, y, width, height)
+    h87_en_window_init(x, y, width, height)
+    fade_engine_init
+  end
+
+  def update
+    h87_en_window_upd
+    update_fading
+  end
+
+  def smooth_left
+    save_position
+    smooth_move(0 - self.width, self.y)
+  end
+
+  def smooth_right
+    save_position
+    smooth_move(Graphics.width, self.y)
+  end
+
+  def smooth_down
+    save_position
+    smooth_move(self.x, Graphics.height)
+  end
+
+  def smooth_up
+    save_position
+    smooth_move(self.x, 0 - self.height)
+  end
+
+  def smooth_reset_position
+    return unless @old_position
+    smooth_move(@old_position[:x], @old_position[:y])
+    @old_position = nil
+  end
+
+  def save_position
+    @old_position = {:x => self.x, :y => self.y}
+  end
+end
