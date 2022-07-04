@@ -393,6 +393,14 @@ class Game_Actor < Game_Battler
     def apply_hp_limiter(value)
       [[value, 1].max, maxhp_limit].min
     end
+
+    def maxhp
+      apply_hp_limiter(super)
+    end
+
+    def maxmp
+      apply_hp_limiter(super)
+    end
   
     # Restituisce l'attacco dell'eroe. Riscritto completamente.
     def atk
