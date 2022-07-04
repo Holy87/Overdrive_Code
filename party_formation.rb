@@ -123,9 +123,11 @@ class Game_Party < Game_Unit
   # i membri del gruppo in riserva
   # @return [Array<Game_Actor>]
   def stand_by_members
+    return [] if all_members.size <= max_battle_members
     all_members[max_battle_members, 99].select { |actor| actor.exist? }
   end
 
+  # restituisce il numero massimo consentito per i membri in battaglia
   # @return [Integer]
   def max_battle_members
     @max_battle_member_count ||= FormationConfig::DEFAULT_BATTLE_MEMBERS
@@ -169,11 +171,29 @@ class Game_Party < Game_Unit
     @actors.insert(index, actor_id)
   end
 
+  # aggiunge un eroe "ospite" nel gruppo: gli eroi ospiti aumentano il numero
+  # massimo dei membri di battaglia e non possono essere spostati
+  # @param [Fixnum] actor_id
+  def add_guest(actor_id)
+    @max_battle_member_count += 1 if battle_members.size >= max_battle_members
+    fix_actor(actor_id)
+  end
+
+  # rimuove
+  # @param [Fixnum] actor_id
+  def remove_guest(actor_id)
+    unfix_actor actor_id
+    if battle_member?(actor_id) and party_larger?
+      @max_battle_member_count -= 1
+    end
+    remove_actor actor_id
+  end
+
   # rende un personaggio fisso o meno.
   # Se il personaggio non è presente nel gruppo, lo aggiunge.
   # Se il personaggio non è tra i membri attivi, lo aggiunge
   # sostituendo l'ultimo presente.
-  def fix_actor(actor_id, fixed = false)
+  def fix_actor(actor_id, fixed = true)
     fixed ? apply_fix_actor(actor_id) : unfix_actor(actor_id)
   end
 
@@ -195,6 +215,14 @@ class Game_Party < Game_Unit
   # per compatibilità con il vecchio KGC
   def set_max_battle_member_count(new_value)
     @max_battle_member_count = new_value
+  end
+
+  def party_larger?
+    max_battle_members > FormationConfig::DEFAULT_BATTLE_MEMBERS
+  end
+
+  def battle_member?(actor_id)
+    battle_members.map { |member| member.id }.include?(actor_id)
   end
 
   def full?
@@ -238,7 +266,7 @@ class Window_PartyMembers < Window_Selectable
   def draw_item(index)
     actor = get_actor(index)
     return if actor.nil?
-    rect = item_rect(index)
+    rect = item_rect_for_text(index)
     enabled = enable? actor
     if @active_index == index
       contents.fill_rect(rect, pending_color)

@@ -28,11 +28,9 @@ module Espers
   # CONFIGURAZIONE
   #===============================================================================
 
-  #--------------------------------------------------------------------------
-  # * Skill evocazioni
+  # Skill evocazioni
   # Questa lista associa l'ID della skill d'invocazione con l'ID dell'eroe
   # evocato. Serve per disattivare il potere quando l'esper deve ricaricarsi.
-  #--------------------------------------------------------------------------
   Evocazioni = {484 => 18,
                 480 => 17,#Nymeria
                 481 => 21,#Thartaros
@@ -48,15 +46,11 @@ module Espers
                 360 => 29, #homunculus
 
   }
-  #--------------------------------------------------------------------------
-  # * Configurazioni
-  #--------------------------------------------------------------------------
+  # Configurazioni
   Switch_Esp_On = 420 #switch che se attivato, disattiva le evocazioni.
   Variabile_Esper = 105 #Variabile usata per tenere in conto l'esper usato.
 
-  #--------------------------------------------------------------------------
-  # * Lista e configurazione evocazioni
-  #--------------------------------------------------------------------------
+  # Lista e configurazione evocazioni
                 #ID   var attacca? ricarica turni solo 1 a batt
   Esper_List = {18 => [106, true,    9,      14,   true],#Cerbero
                 17 => [109, true,    7,      15,   true],#Nymeria 15
@@ -156,9 +150,7 @@ end
 #===============================================================================
 module EsperConfig
   module_function #può essere integrato
-  #--------------------------------------------------------------------------
-  # * Configurazione
-  #--------------------------------------------------------------------------
+  # Configurazione
   DomiActSw = 590 #switch che attiva il menu dominazioni
   BarL = 200 #lunghezzza della barra
   BarH = 3 #altezza della barra
@@ -180,9 +172,7 @@ module EsperConfig
       27 => 583, #juggernaut
   }
 
-  #--------------------------------------------------------------------------
-  # * Descrizione delle evocazioni
-  #--------------------------------------------------------------------------
+  # Descrizione delle evocazioni
   Ds_Dom = {
       17 => "Un gatto delle nevi molto bravo nell'uso delle magie del ghiaccio.",
       18 => "Un mastino infernale utile nel corpo a corpo.",
@@ -196,9 +186,7 @@ module EsperConfig
       27 => "Un carro robotizzato che bersaglia i nemici con colpi a ripetizione.",
   }
 
-  #--------------------------------------------------------------------------
-  # * Abilità e potenziamenti delle dominazioni
-  #--------------------------------------------------------------------------
+  # Abilità e potenziamenti delle dominazioni
   BonusStates = {#abilità passive delle evocazioni
                  #ID    Descrizione
                  39 => "Max PV +20%",
@@ -215,9 +203,7 @@ module EsperConfig
                  239=> "Durata +20%",
   }
 
-  #--------------------------------------------------------------------------
-  # * Oggetti magnetite associati alla dominazione
-  #--------------------------------------------------------------------------
+  # Oggetti magnetite associati alla dominazione
   Magnetite = {
       #ID magnetite con ID dominazione
       17 => 224,
@@ -248,9 +234,7 @@ module EsperConfig
 
   AFFINITY_RATE = 0.06
 
-  #--------------------------------------------------------------------------
-  # * Turbo sbloccabili
-  #--------------------------------------------------------------------------
+  # Turbo sbloccabili
   Boosts = {
       #Nymeria: Antispirito, dif. freddo, att. freddo, spir+, autoenergia
       17 => {253 => 6, 275 => 12, 261 => 20, 245 => 35, 252 => 50},
@@ -273,28 +257,20 @@ module EsperConfig
       #juggernaut
       27 => {},}
 
-  #--------------------------------------------------------------------------
-  # * Mostra il numero predefinito di battaglie da ricaricare
-  #--------------------------------------------------------------------------
+  # Mostra il numero predefinito di battaglie da ricaricare
   def time_recharge(domination_id)
     Espers::Esper_List[domination_id][2]
   end
-  #--------------------------------------------------------------------------
-  # * Mostra quante battaglie si è ricaricato
-  #--------------------------------------------------------------------------
+  # Mostra quante battaglie si è ricaricato
   def recharged(domid)
     time_recharge(domid) + $game_variables[Espers::Esper_List[domid][0]]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se la dominazione è stata sbloccata
-  #--------------------------------------------------------------------------
+  # Restituisce true se la dominazione è stata sbloccata
   def domination_unlocked?(domination_id)
     $game_party.domination_unlocked?(domination_id)
     #$game_switches[SW_Dom[domination_id]]
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se il menu è stato sbloccato
-  #--------------------------------------------------------------------------
+  # Restituisce true se il menu è stato sbloccato
   def self.menu_unlocked?
     $game_switches[DomiActSw]
   end
@@ -315,15 +291,11 @@ end #esperconfig
 # ** RPG::Item
 #===============================================================================
 class RPG::Item
-  #--------------------------------------------------------------------------
-  # * Potenza del latte
-  #--------------------------------------------------------------------------
+  # Potenza del latte
   def milk_power
     @milk_power ||= get_milk_power
   end
-  #--------------------------------------------------------------------------
-  # * inizializza la potenza del latte
-  #--------------------------------------------------------------------------
+  # inizializza la potenza del latte
   def get_milk_power
     self.note.split(/[\r\n]+/).each { |line|
       if line =~ /<milky[ ]+(\d+)>/
@@ -332,9 +304,7 @@ class RPG::Item
     }
     0
   end
-  #--------------------------------------------------------------------------
-  # * è del latte?
-  #--------------------------------------------------------------------------
+  # è del latte?
   def is_milk?; milk_power > 0; end
 end
 
@@ -342,9 +312,7 @@ end
 # ** classe RPG::State
 #===============================================================================
 class RPG::State
-  #--------------------------------------------------------------------------
-  # * restituisce il malus del turbo
-  #--------------------------------------------------------------------------
+  # restituisce il malus del turbo
   def boost_malus
     if @boost_malus.nil?
       self.note.split(/[\r\n]+/).each { |line|
@@ -355,14 +323,13 @@ class RPG::State
     end
     @boost_malus
   end
-  #--------------------------------------------------------------------------
-  # * restituisce il testo di descrizione del turbo
-  #--------------------------------------------------------------------------
+  # restituisce il testo di descrizione del turbo
   def description; message1; end
 end #RPG::State
 
 class Window_MenuCommand < Window_Command
   alias :no_domination_commands :add_original_commands
+
   def add_original_commands
     no_domination_commands
     add_command(Vocab::dominations,   :dominations,   $game_system.domination_unlocked)
@@ -373,9 +340,7 @@ end
 # ** classe Game_System
 #===============================================================================
 class Game_System
-  #--------------------------------------------------------------------------
-  # * determina se il menu Dominazioni nel menu è sbloccato
-  #--------------------------------------------------------------------------
+  # determina se il menu Dominazioni nel menu è sbloccato
   def domination_unlocked; EsperConfig.menu_unlocked?; end
 end
 
@@ -383,61 +348,51 @@ end
 # ** classe Game_Temp
 #===============================================================================
 class Game_Temp
-  #--------------------------------------------------------------------------
-  # * imposta se l'evocazione è attiva
-  #--------------------------------------------------------------------------
+  # imposta se l'evocazione è attiva
   def esper_active=(new_value)
     @esper_active = new_value
   end
-  #--------------------------------------------------------------------------
-  # * restituisce true se l'evocazione è in battaglia
-  #--------------------------------------------------------------------------
+
+  # restituisce true se l'evocazione è in battaglia
   def esper_active
     @esper_active = false if @esper_active.nil?
     @esper_active
   end
-  #--------------------------------------------------------------------------
-  # * restituisce true se è già stata usata un'evocazione in battaglia
-  #--------------------------------------------------------------------------
+
+  # restituisce true se è già stata usata un'evocazione in battaglia
   def esper_used
     @esper_used = false if @esper_used.nil?
     @esper_used
   end
-  #--------------------------------------------------------------------------
-  # * imposta l'uso della dominazione
-  #--------------------------------------------------------------------------
+
+  # imposta l'uso della dominazione
   def esper_used=(value)
     @esper_used = value
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i turni rimanenti all'evocazione
-  #--------------------------------------------------------------------------
+
+  # restituisce i turni rimanenti all'evocazione
   def domination_energy
     @domination_energy = 0 if @domination_energy.nil?
     @domination_energy
   end
-  #--------------------------------------------------------------------------
-  # * imposta i turni rimanenti all'evocazione
-  #--------------------------------------------------------------------------
+
+  # imposta i turni rimanenti all'evocazione
   def domination_energy=(value)
     @domination_energy = 0 if @domination_energy.nil?
     @domination_energy=value
   end
-  #--------------------------------------------------------------------------
-  # * restituisce il numero di turni a disposizione della dominazione
-  #--------------------------------------------------------------------------
+
+  # restituisce il numero di turni a disposizione della dominazione
   def domination_max_turns
     @domination_max_turns
   end
-  #--------------------------------------------------------------------------
-  # * imposta i turni massimi della dominazione
-  #--------------------------------------------------------------------------
+
+  # imposta i turni massimi della dominazione
   def domination_max_turns=(value)
     @domination_max_turns = value
   end
-  #--------------------------------------------------------------------------
-  # * restituisce il rapporto di turni della dominazione
-  #--------------------------------------------------------------------------
+
+  # restituisce il rapporto di turni della dominazione
   def domination_turns_rate
     @domination_energy.to_f / @domination_max_turns.to_f
   end
@@ -449,24 +404,21 @@ end
 class Game_Battler
   alias uso_skill skill_can_use?
   alias add_boost_states states unless $@
-  #--------------------------------------------------------------------------
-  # * restituisce gli status attuali + bonus attivati
-  #--------------------------------------------------------------------------
+
+  # restituisce gli status attuali + bonus attivati
   def states
     all_states = add_boost_states
     all_states |= self.boost_states if self.actor?
     all_states
   end
-  #--------------------------------------------------------------------------
-  # * ridefinisce se la skill può essere usata
-  #--------------------------------------------------------------------------
+
+  # ridefinisce se la skill può essere usata
   def skill_can_use?(skill)
     return false if esper_type(skill)
     uso_skill(skill)
   end
-  #--------------------------------------------------------------------------
-  # * definisce il tipo di skill della dominazione
-  #--------------------------------------------------------------------------
+
+  # definisce il tipo di skill della dominazione
   def esper_type(skill)
     esper = $game_party.actual_esper
     return false if esper.nil?
@@ -492,102 +444,79 @@ class Game_Actor < Game_Battler
   attr_reader :spi_plus
 
   include Espers
-  unless $@
-    alias esp_batk base_atk
-    alias esp_bdef base_def
-    alias esp_bspi base_spi
-    alias esp_bagi base_agi
-    alias esp_bhp  base_maxhp
-    alias esp_bmp  base_maxmp
-    alias esp_jp   jp
-  end
-  #--------------------------------------------------------------------------
-  # * determina se è un'evocazione
-  #--------------------------------------------------------------------------
+  alias :esp_ap :ap unless $@
+
+  # determina se è un'evocazione
   def is_esper?; Esper_List.has_key?(@actor_id); end
-  #--------------------------------------------------------------------------
-  # * determina se può attaccare
-  #--------------------------------------------------------------------------
+
+  # determina se può attaccare
   def can_attack?
     return false unless is_esper?
     Esper_List[@actor_id][1]
   end
-  #--------------------------------------------------------------------------
-  # * aggiunge il messaggio di nuovo turbo sbloccato per mostrarlo su mappa
-  #--------------------------------------------------------------------------
+
+  # aggiunge il messaggio di nuovo turbo sbloccato per mostrarlo su mappa
   def push_message(stateid)
     state = $data_states[stateid]
     text = sprintf(Vocab.new_boost, self.name, state.name)
     tone = Tone.new(200,200,0,0)
     $game_map.stack_popup([state.icon_index, text], tone, EsperConfig::BOOST_APPRAISED_SE)
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i turbo sbloccati
+
+  # restituisce i turbo sbloccati
   # @return [Array<RPG::State>]
-  #--------------------------------------------------------------------------
   def dom_boosts
     $game_party.unlocked_boosts
   end
-  #--------------------------------------------------------------------------
-  # * aggiunge un turbo sbloccato
-  #--------------------------------------------------------------------------
+
+  # aggiunge un turbo sbloccato
   def add_boost(stateid)
     unless $game_party.unlocked_boosts.include?(stateid)
       $game_party.add_boost(stateid)
       push_message(stateid)
     end
   end
-  #--------------------------------------------------------------------------
-  # * rimuove un turbo (al momento è inutile, vuoto)
-  #--------------------------------------------------------------------------
+
+  # rimuove un turbo (al momento è inutile, vuoto)
   def remove_boost(stateid)
     self.dom_boosts.delete(stateid)
   end
-  #--------------------------------------------------------------------------
-  # * restituisce true se... vabbè, lo sai.
-  #--------------------------------------------------------------------------
+
+  # restituisce true se... vabbè, lo sai.
   def has_boost?(stateid); $game_party.unlocked_boosts.include?(stateid); end
-  #--------------------------------------------------------------------------
-  # * tempo di ricarica massimo della dominazione
-  #--------------------------------------------------------------------------
+
+  # tempo di ricarica massimo della dominazione
   def recharge_max; @recharge_max ||= default_recharge; end
-  #--------------------------------------------------------------------------
-  # * Tempo di ricarica predefinito
-  #--------------------------------------------------------------------------
+
+  # Tempo di ricarica predefinito
   def default_recharge; EsperConfig.time_recharge(self.id); end
-  #--------------------------------------------------------------------------
-  # * imposta il tempo di ricarica
-  #--------------------------------------------------------------------------
+
+  # imposta il tempo di ricarica
   def set_recharge_max(value, dead = false)
     @recharge_max = value
     @recharge_max *= 2 if dead && !save_domination?
     @recharge_max = (@recharge_max * (1 - fast_ready_bonus)).to_i
     @charge_state = 0
   end
-  #--------------------------------------------------------------------------
-  # * restituisce lo stato di ricarica
-  #--------------------------------------------------------------------------
+
+  # restituisce lo stato di ricarica
   def recharge_status; @charge_state ||= recharge_max; end
-  #--------------------------------------------------------------------------
-  # * restituisce lo stato di ricarica
-  #--------------------------------------------------------------------------
+
+  # restituisce lo stato di ricarica
   def charge_state; @charge_state ||= recharge_max; end
-  #--------------------------------------------------------------------------
-  # * Imposta lo stato della ricarica
-  #--------------------------------------------------------------------------
+
+  # Imposta lo stato della ricarica
   def charge_state=(value)
     @charge_state ||= recharge_max
     @charge_state = value
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce la percentuale di ricarica (valore da 0 a 1)
-  #--------------------------------------------------------------------------
+
+  # Restituisce la percentuale di ricarica (valore da 0 a 1)
   def charge_state_rate
     recharge_status.to_f / recharge_max.to_f
   end
-  #--------------------------------------------------------------------------
-  # * Carica la dominazione di una battaglia
-  #--------------------------------------------------------------------------
+
+  # Carica la dominazione di una battaglia
   def battle_add_recharge
     return if recharged?
     @charge_state = recharge_max if @charge_state.nil?
@@ -597,53 +526,42 @@ class Game_Actor < Game_Battler
       $game_map.stack_popup([sprintf(Vocab.ready_dom, self.name)], tone)
     end
   end
-  #--------------------------------------------------------------------------
-  # * restituisce true se la dominazione è pronta
-  #--------------------------------------------------------------------------
+
+  # restituisce true se la dominazione è pronta
   def recharged?; recharge_status >= recharge_max; end
-  #--------------------------------------------------------------------------
-  # * rende subito disponibile la dominazione
-  #--------------------------------------------------------------------------
+
+  # rende subito disponibile la dominazione
   def recharge_domination(value = recharge_max)
     $game_variables[Espers::Esper_List[self.id][0]] = 0
     @charge_state += value
   end
-  #--------------------------------------------------------------------------
-  # * ricarica la dominazione in percentuale
-  #--------------------------------------------------------------------------
+
+  # ricarica la dominazione in percentuale
   def apply_domination_recharge(perc)
     value = recharge_max * perc / 100
     recharge_domination(value)
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i turbo attivati sulla dominazione
-  #--------------------------------------------------------------------------
+
+  # restituisce i turbo attivati sulla dominazione
   def activated_boosts; @act_boosts ||= []; end
-  #--------------------------------------------------------------------------
-  # * disattiva il turbo sulla dominazione
-  #--------------------------------------------------------------------------
+
+  # disattiva il turbo sulla dominazione
   def deactivate_boost(stateid)
     @act_boosts = [] if @act_boosts.nil?
     @act_boosts.delete(stateid)
   end
-  #--------------------------------------------------------------------------
-  # * attiva il turbo alla dominazione
-  #--------------------------------------------------------------------------
+
+  # attiva il turbo alla dominazione
   def activate_boost(stateid)
     @act_boosts = [] if @act_boosts.nil?
     @act_boosts.push(stateid) unless @act_boosts.include?(stateid)
   end
-  #--------------------------------------------------------------------------
-  # * restituisce true se la dominazione ha Grinta
-  #--------------------------------------------------------------------------
+
+  # restituisce true se la dominazione ha Grinta
   def rech_bonus?; boost_activated?(266); end
-  #--------------------------------------------------------------------------
-  # * restituisce true se il turbo stateid è attivato sulla dominazione
-  #--------------------------------------------------------------------------
-  def boost_activated?(stateid); activated_boosts.include?(stateid); end
-  #--------------------------------------------------------------------------
-  # * restituisce il malus causato dai turbo attivati
-  #--------------------------------------------------------------------------
+
+  # restituisce true se il turbo stateid è attivato sulla dominazione
+  def boost_activated?(stateid); activated_boosts.include?(stateid); end# restituisce il malus causato dai turbo attivati
   def domination_duration_malus
     duration_malus = 1.0
     activated_boosts.each do |boostid|
@@ -651,11 +569,8 @@ class Game_Actor < Game_Battler
       duration_malus += boost.boost_malus
     end
     duration_malus
-  end
-  #--------------------------------------------------------------------------
-  # * restituisce il proprietario dell'evocazione
+  end# restituisce il proprietario dell'evocazione
   # @return [Game_Actor, nil]
-  #--------------------------------------------------------------------------
   def esper_master
     return unless domination?
     $game_party.members.each {|member|
@@ -666,44 +581,38 @@ class Game_Actor < Game_Battler
     }
     nil
   end
-  #--------------------------------------------------------------------------
-  # * Se è un'evocazione, restituisce i PA dell'evocatore assegnato.
-  #--------------------------------------------------------------------------
-  def jp(cl_id = 0)
+
+  # Se è un'evocazione, restituisce i PA dell'evocatore assegnato.
+  def ap(cl_id = 0)
     if is_esper?
       esper_master ? esper_master.ap(cl_id) : 0
     else
       esp_ap=cl_id
     end
   end
-  #--------------------------------------------------------------------------
-  # * restituisce il numero di volte che è stato evocato
-  #--------------------------------------------------------------------------
+
+  # restituisce il numero di volte che è stato evocato
   def summon_times; @summoned ||= 0; end
-  #--------------------------------------------------------------------------
-  # * imposta il numero di volte che è stato evocato
-  #--------------------------------------------------------------------------
+
+  # imposta il numero di volte che è stato evocato
   def summon_times=(value)
     @summoned = 0 if @summoned.nil?
     @summoned = value
     check_boosts
   end
-  #--------------------------------------------------------------------------
-  # * aggiorna il livello dominazione con il party
-  #--------------------------------------------------------------------------
+
+  # aggiorna il livello dominazione con il party
   def adjust_level
     return unless domination?
     return if self.level >= $game_party.max_level
     change_level($game_party.max_level, false)
     requery_skills
   end
-  #--------------------------------------------------------------------------
-  # * restituisce tutti i turbo che può apprendere la dominazione
-  #--------------------------------------------------------------------------
+
+  # restituisce tutti i turbo che può apprendere la dominazione
   def boosts_to_learn; EsperConfig::Boosts[self.id]; end
-  #--------------------------------------------------------------------------
-  # * imposta i turbo che ha appreso la dominazione
-  #--------------------------------------------------------------------------
+
+  # imposta i turbo che ha appreso la dominazione
   def check_boosts
     return if boosts_to_learn == nil
     self.boosts_to_learn.each_key do |boost|
@@ -712,9 +621,8 @@ class Game_Actor < Game_Battler
       end
     end
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i bonus set attivati
-  #--------------------------------------------------------------------------
+
+  # restituisce i bonus set attivati
   def boost_states
     bonus_states = []
     activated_boosts.each {|state_id|
@@ -724,21 +632,18 @@ class Game_Actor < Game_Battler
     }
     bonus_states
   end
-  #--------------------------------------------------------------------------
-  # * Ricalcola le skill apprese
-  #--------------------------------------------------------------------------
+
+  # Ricalcola le skill apprese
   def requery_skills
     self.class.learnings.each {|learning|
       learn_skill(learning.skill_id) if learning.level <= @level
     }
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce i turni massimi della Dominazione
-  #--------------------------------------------------------------------------
+
+  # Restituisce i turni massimi della Dominazione
   def base_duration; Espers::Esper_List[self.id][3] if domination?; end
-  #--------------------------------------------------------------------------
-  # * Restituisce i turni massimi della Dominazione calcolando il malus
-  #--------------------------------------------------------------------------
+
+  # Restituisce i turni massimi della Dominazione calcolando il malus
   def duration
     begin
       return ((base_duration+duration_bonus)/domination_duration_malus).to_i
@@ -746,22 +651,19 @@ class Game_Actor < Game_Battler
       print $!.backtrace
     end
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce il bonus di durata per il livello della dominazione
-  #--------------------------------------------------------------------------
+
+  # Restituisce il bonus di durata per il livello della dominazione
   def duration_bonus; self.level * EsperConfig::DURATION_LEVEL_BONUS; end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se è una dominazione
-  #--------------------------------------------------------------------------
+
+  # Restituisce true se è una dominazione
   def domination?
     return false if Espers::Esper_List[self.id].nil?
     Espers::Esper_List[self.id][4]
   end
-  #--------------------------------------------------------------------------
-  # * abilita o disabilita la skill
+
+  # abilita o disabilita la skill
   # noinspection RubyResolve
   # @param [RPG::Skill] skill
-  #--------------------------------------------------------------------------
   def toggle_skill(skill)
     return unless skills.include?(skill)
     if skill_hidden?(skill.id)
@@ -778,10 +680,9 @@ class Game_Actor < Game_Battler
     return 0 unless is_esper?
     Espers::ACTOR_AFFINITY[self.id][summoner_id] || 0
   end
-  #--------------------------------------------------------------------------
-  # * abilita o disabilita il boost
+
+  # abilita o disabilita il boost
   # @param [RPG::State] boost
-  #--------------------------------------------------------------------------
   def toggle_boost(boost)
     if boost_activated?(boost.id)
       deactivate_boost(boost.id)
@@ -789,19 +690,17 @@ class Game_Actor < Game_Battler
       activate_boost(boost.id)
     end
   end
-  #--------------------------------------------------------------------------
-  # * restituisce l'hash dei potenziamenti
+
+  # restituisce l'hash dei potenziamenti
   # @return [Hash]
-  #--------------------------------------------------------------------------
   def esper_ups
     check_init_esper_ups
     @esper_ups
   end
-  #--------------------------------------------------------------------------
-  # * potenzia il parametro
+
+  # potenzia il parametro
   # @param [Symbol] sym
   # @return [Hahs]
-  #--------------------------------------------------------------------------
   def esper_up_param(sym)
     check_init_esper_ups
     if esper_can_up?(sym)
@@ -812,38 +711,35 @@ class Game_Actor < Game_Battler
       false
     end
   end
-  #--------------------------------------------------------------------------
-  # * ottiene il costo per potenziare il parametro
-  #--------------------------------------------------------------------------
+
+  # ottiene il costo per potenziare il parametro
   def get_cost_esper_up(sym)
     ((esper_ups[sym] * ESPER_UPS_COST_INCREASE / 100.0 + 1) * ESPER_UPS_INITIAL_COST).to_i
   end
-  #--------------------------------------------------------------------------
-  # * determina se l'esper ha i requisiti per potenziare il parametro
-  #--------------------------------------------------------------------------
+
+  # determina se l'esper ha i requisiti per potenziare il parametro
   def esper_can_up?(sym)
     self.jp >= get_cost_esper_up(sym)
   end
-  #--------------------------------------------------------------------------
-  # * controlla se esiste l'hash dei potenziamenti
-  #--------------------------------------------------------------------------
+
+  # controlla se esiste l'hash dei potenziamenti
   def check_init_esper_ups
     return if @esper_ups
     @esper_ups = {}
     ESPER_UPS_INCREMENTS.each_key {|key| @esper_ups[key] = 0}
   end
-  #--------------------------------------------------------------------------
-  # * ridetermina i parametri di base
-  #--------------------------------------------------------------------------
-  def base_atk;  esp_batk +  summoner_param_bonus(:native_atk); end
-  def base_def;  esp_bdef +  summoner_param_bonus(:native_def); end
-  def base_spi;  esp_bspi +  summoner_param_bonus(:native_spi); end
-  def base_agi;  esp_bagi +  summoner_param_bonus(:native_agi); end
-  def base_maxhp; esp_bhp + summoner_param_bonus(:native_maxhp); end
-  def base_maxmp; esp_bmp + summoner_param_bonus(:native_maxmp); end
-  #--------------------------------------------------------------------------
-  # *
-  #--------------------------------------------------------------------------
+
+  # imposta i bonus parametri
+  def setup_esper_param_bonus
+    @atk_plus = summoner_param_bonus(:native_atk)
+    @def_plus = summoner_param_bonus(:native_def)
+    @spi_plus = summoner_param_bonus(:native_spi)
+    @agi_plus = summoner_param_bonus(:native_agi)
+    @maxhp_plus = summoner_param_bonus(:native_maxhp)
+    @maxmp_plus = summoner_param_bonus(:native_maxmp)
+  end
+
+  # determina il bonus parametro da affinità con l'evocatore
   def summoner_param_bonus(param)
     return 0 unless is_esper?
     summoner = esper_master
@@ -857,50 +753,43 @@ end
 #===============================================================================
 class Game_Party < Game_Unit
   attr_reader :actual_esper #evocazione attualmente in campo
-  #--------------------------------------------------------------------------
-  # * imposta l'evocazione in campo
-  #--------------------------------------------------------------------------
+
+  # imposta l'evocazione in campo
   def actual_esper=(actor)
     @actual_esper = actor
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i turbo sbloccati
-  #--------------------------------------------------------------------------
+
+  # restituisce i turbo sbloccati
   def unlocked_boosts; @unlocked_boosts ||= []; end
-  #--------------------------------------------------------------------------
-  # * aggiunge un turbo sbloccato al gruppo
-  #--------------------------------------------------------------------------
+
+  # aggiunge un turbo sbloccato al gruppo
   def add_boost(boost)
     @unlocked_boosts = [] if @unlocked_boosts.nil?
     @unlocked_boosts.push(boost) unless @unlocked_boosts.include?(boost)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce le dominazioni sbloccate
+
+  # Restituisce le dominazioni sbloccate
   # @return [Array<Game_Actor>]
-  #--------------------------------------------------------------------------
   def unlocked_dominations
     @unlocked_espers ||= []
     @unlocked_espers.collect{|dom_id| $game_actors[dom_id]}.sort_by{|esp| esp.name}
   end
-  #--------------------------------------------------------------------------
-  # * Sblocca una dominazione
-  #--------------------------------------------------------------------------
+
+  # Sblocca una dominazione
   def unlock_domination(esper_id)
     @unlocked_espers ||= []
     return unless $game_actors[esper_id].domination?
     @unlocked_espers.push(esper_id) unless @unlocked_espers.include?(esper_id)
   end
-  #--------------------------------------------------------------------------
-  # * Restituisce true se la dominazione è sbloccata
+
+  # Restituisce true se la dominazione è sbloccata
   #   esper_id: id dell'evocazione
-  #--------------------------------------------------------------------------
   def domination_unlocked?(esper_id)
     unlocked_dominations.include?($game_actors[esper_id])
   end
-  #--------------------------------------------------------------------------
-  # * restituisce i latticini :)
+
+  # restituisce i latticini :)
   # @return [Array<RPG::Item>]
-  #--------------------------------------------------------------------------
   def milks
     items.select{ |item| item.is_a?(RPG::Item) and item.is_milk? }
   end
@@ -908,28 +797,24 @@ end #game_party
 
 # noinspection RubyResolve
 class Scene_Battle < Scene_Base
-  #--------------------------------------------------------------------------
-  # * alias
-  #--------------------------------------------------------------------------
+  # alias
   alias esper_start start unless $@
   alias modifica_vittoria process_victory unless $@
   alias execute_action_skill_evocation execute_action_skill unless $@
   alias termina_in_sicurezza terminate unless $@
-  #--------------------------------------------------------------------------
-  # * Inizializzazione della battaglia
-  #--------------------------------------------------------------------------
+
+  # Inizializzazione della battaglia
   def start
     esper_start
     $game_temp.esper_active = false
     $game_temp.esper_used = false
     $game_temp.domination_energy = 0
   end
-  #--------------------------------------------------------------------------
-  # * Modifica del processo di vittoria
-  #--------------------------------------------------------------------------
+
+  # Modifica del processo di vittoria
   def process_victory
     if $game_temp.esper_active
-      rimuovi_esper
+      remove_esper
       if $game_party.all_dead?
         $game_party.members.each {|member|
           member.remove_state(1)
@@ -939,88 +824,78 @@ class Scene_Battle < Scene_Base
     modifica_vittoria
     Espers.incrementa
   end
-  #--------------------------------------------------------------------------
-  # * Modifica della fine del turno
-  #--------------------------------------------------------------------------
+
+  # Modifica della fine del turno
   alias fine_turno turn_end unless $@
   def turn_end(member = nil)
     fine_turno(member)
     if $game_temp.esper_active
       if $game_party.actual_esper.hp == 0
-        rimuovi_esper(true)
+        remove_esper(true)
       elsif $game_temp.domination_energy < 0
-        rimuovi_esper
+        remove_esper
       end
       $game_temp.domination_energy -= 1
     end
   end
-  #--------------------------------------------------------------------------
-  # * evoca l'esper in battaglia
-  #--------------------------------------------------------------------------
-  def evoca_esper(esper_id)
-    prepara_azzeramento
+
+  # evoca l'esper in battaglia
+  def summon_esper(esper_id)
+    reset_battle_status
     esper = $game_actors[esper_id]
     #livello = $game_party.max_level#livello_esper
+    setup_esper(esper)
     add_esper_in_battle(esper)
     $game_temp.domination_energy = esper.duration
     $game_temp.esper_used = true if esper.domination?
     $game_temp.domination_max_turns = esper.duration
-    esper.summon_times += 1
     azzera_tutto
   end
-  #--------------------------------------------------------------------------
-  # * aggiunge l'evocazione in battaglia
+
+  # aggiunge l'evocazione in battaglia
   # @param [Game_Actor] esper
-  #--------------------------------------------------------------------------
   def add_esper_in_battle(esper)
-    size = $game_party.members.size+1
-    $game_party.add_actor(esper.id)
     $game_party.actual_esper = esper #nuova aggiunta
-    esper.change_level($game_party.max_level, false)
-    esper.recover_all
-    KGC::Commands.set_max_battle_member_count(size)
-    KGC::Commands.add_battle_member(esper.id)
-    KGC::Commands.fix_actor(esper.id)
+    $game_party.add_guest(esper.id)
     $game_temp.esper_active = true
   end
-  #--------------------------------------------------------------------------
-  # * rimuovi l'evocazione dalla battaglia
-  # dead: se l'evocazione è morta
-  # finebatt: se la battaglia è finita
-  # noinspection RubyResolve
-  #--------------------------------------------------------------------------
-  def rimuovi_esper(dead = false, finebatt = false)
-    prepara_azzeramento unless finebatt
-    actor = $game_party.actual_esper
-    actors = $game_party.all_members
-    #battle_actors = $game_party.battle_members
-    #index = actor.index
-    if !actor.nil? and !finebatt
-      @command_members.delete(actor)
-      @action_battlers.delete(actor)
-      $game_party.set_member(actors.compact)
-    end
-    KGC::Commands.fix_actor(actor.id, false)
-    KGC::Commands.remove_battle_member(actor.id)
-    KGC::Commands.set_max_battle_member_count(4)
-    $game_party.remove_actor(actor.id)
-    actor.set_recharge_max(actor.default_recharge, dead)
-    $game_temp.esper_active = false
-    azzera_tutto unless finebatt
+
+  # @param [Game_Actor] esper
+  def setup_esper(esper)
+    esper.change_level($game_party.max_level, false)
+    esper.setup_esper_param_bonus
+    esper.recover_all
+    esper.summon_times += 1
   end
-  #--------------------------------------------------------------------------
-  # * prepara l'azzeramento della barra
-  #--------------------------------------------------------------------------
-  def prepara_azzeramento
+
+  # rimuovi l'evocazione dalla battaglia
+  # dead: se l'evocazione è morta
+  # battle_end: se la battaglia è finita
+  # noinspection RubyResolve
+  def remove_esper(dead = false, battle_end = false)
+    esper = $game_party.actual_esper
+    return if esper.nil?
+    unless battle_end
+      reset_battle_status
+      @command_members.delete(esper)
+      @action_battlers.delete(esper)
+    end
+    $game_party.remove_guest(esper.id)
+    esper.set_recharge_max(actor.default_recharge, dead)
+    $game_temp.esper_active = false
+    azzera_tutto unless battle_end
+  end
+
+  # prepara l'azzeramento della barra
+  def reset_battle_status
     target_select_cleanup
     end_skill_selection
     end_target_selection
     reset_atb_actor rescue return
     azzera_tutto rescue nil
   end
-  #--------------------------------------------------------------------------
-  # * azzera tutti i parametri ATB
-  #--------------------------------------------------------------------------
+
+  # azzera tutti i parametri ATB
   def azzera_tutto
     actor = $game_actors[7]
     if $game_party.members.include?(actor) and actor.has_state?(20)
@@ -1041,21 +916,19 @@ class Scene_Battle < Scene_Base
       return
     end
   end
-  #--------------------------------------------------------------------------
-  # * esegue l'azione della skill
-  #--------------------------------------------------------------------------
+
+  # esegue l'azione della skill
   def execute_action_skill
     execute_action_skill_evocation
     skill = @active_battler.action.skill
-    evoca_esper(skill.esper) if !skill.nil? && skill.esper > 0
+    summon_esper(skill.esper) if !skill.nil? && skill.esper > 0
   end
-  #--------------------------------------------------------------------------
-  # * fine
-  #--------------------------------------------------------------------------
+
+  # fine
   def terminate
     termina_in_sicurezza
     if $game_temp.esper_active
-      rimuovi_esper(false, true)
+      remove_esper(false, true)
     end
   end
 end
@@ -1067,10 +940,9 @@ end
 class Game_BattleAction
   alias nuovo_valore evaluate_attack unless $@
   alias nuovo_skill evaluate_skill unless $@
-  #--------------------------------------------------------------------------
-  # * ridefinizione del metodo evaluate_attack
+
+  # ridefinizione del metodo evaluate_attack
   # Vieta l'attacco se l'evocazione ha l'attacco disattivato
-  #--------------------------------------------------------------------------
   def evaluate_attack
     nuovo_valore
     if $game_temp.esper_active
@@ -1078,10 +950,9 @@ class Game_BattleAction
       @value = -99999 unless esper.can_attack?
     end
   end
-  #--------------------------------------------------------------------------
-  # * ridefinizione del metodo evaluate_skill
+
+  # ridefinizione del metodo evaluate_skill
   # Permette l'utilizzo di altri poteri
-  #--------------------------------------------------------------------------
   def evaluate_skill
     nuovo_skill
     if Espers::Powers.include?(skill.id) and battler.skill_can_use?(skill)
