@@ -344,7 +344,7 @@ class Battle_Hud
     samples.times do |i|
       y += (5 * i)
       next if bitmap.get_pixel(x, y).alpha == 0
-      brightnesses.push(bitmap.get_pixel(x, y).brightness)
+      brightnesses.push(bitmap.get_pixel(x, y).luminance)
     end
     return 255 if brightnesses.empty?
     brightnesses.inject(0) {|s, b| s + b} / brightnesses.size

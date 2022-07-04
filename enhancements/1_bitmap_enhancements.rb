@@ -399,13 +399,31 @@ class Color
     end
   end
 
+  # @param [Color] other_color
+  # @return [Color]
+  def merge_with(other_color)
+    r = (red + other_color.red) / 2
+    g = (green + other_color.green) / 2
+    b = (blue + other_color.blue) / 2
+    a = (alpha + other_color.alpha) / 2
+    Color.new(r, g, b, a)
+  end
+
   # restituisce il codice di colore in intero (escludendo l'opacità)
   # @return [Fixnum]
   def to_i
     (red * 255 * 255) + (green * 255) + blue
   end
 
-  # restituisce la luminosità da 0 a 255
+  # restituisce la luminosità da 0 a 255 come percepita dall'occhio umano
+  # https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+  def luminance
+    (self.red * 0.2126 + self.green * 0.7152 + self.blue * 0.0722)
+  end
+
+  # restituisce la luminosità da 0 a 255.
+  # Meno fedele all'occhio umano
+  # @deprecated
   def brightness
     (self.red + self.green + self.blue) / 3
   end
@@ -428,6 +446,7 @@ class Color
     cl
   end
 
+  TRANSPARENT = Color.new(0,0,0,0)
   # Costanti che restituiscono colori CSS
   ALICEBLUE = Color.new('#F0F8FF')
   ANTIQUEWHITE = Color.new('#FAEBD7')
