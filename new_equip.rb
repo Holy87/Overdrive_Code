@@ -396,7 +396,7 @@ class Window_ActorStats < Window_Base
       text = param2
       text = sprintf('%d%%', param2) if param_perc?(param_type)
       draw_text(x2, y, drawing_width, line_height, text)
-      draw_text(x + 24, y, width - 24, line_height, '>', 1)
+      draw_text(x + 24, y, width - 24, line_height, '→', 1)
     end
   end
 

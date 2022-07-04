@@ -1464,19 +1464,21 @@ class Conversion_Scheduler
   # @param [Game_Actor] actor
   # @param [Hash<Integer,Integer>] skills
   def forget_skills(actor, skills)
-    skills.each_pair { |skill_id, jp|
+    skills.each_pair { |skill_id, ap|
       next unless actor.skill_learn?($data_skills[skill_id])
       actor.forget_skill(skill_id)
-      actor.earn_jp(jp)
+      actor.ap += ap
     }
+    @skills = []
   end
 
   def forget_passives(actor, states)
-    states.each_pair { |state_id, jp|
+    states.each_pair { |state_id, ap|
       next unless actor.passive_learn?($data_states[state_id])
       actor.forget_passive(state_id)
-      actor.earn_jp(jp)
+      actor.ap += ap
     }
+    @learned_passives = []
   end
 
   # sposta le skill sulla nuova posizione

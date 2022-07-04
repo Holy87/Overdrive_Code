@@ -10,50 +10,71 @@ module H87Item
     DRAW_PRICE = true
     # Impostare la formula di vendita
     SELLPRICE_FORMULAS = {
-        :default => 'item.price/3',
-        :weapons => 'item.price/3',
-        :armors => 'item.price/2',
-        :items => 'item.price * 3 / 4'
+      :default => 'item.price / 3',
+      :weapons => 'item.price / 3',
+      :armors => 'item.price / 2',
+      :items => 'item.price * 3 / 4'
     }
     # Dettagli da disegnare per oggetti e skill
     USABLE_DETAILS = [
-        :scope,
-        :occasion,
-        :damage,
-        :attack_attribute,
-        :absorb,
-        :elements,
-        :state_plus,
-        :state_minus,
+      :scope,
+      :formula,
+      :mp_damage,
+      :elements,
+      :absorb,
+      :type_effectiveness,
+      :plus_state_set,
+      :minus_state_set,
+      :anger_rate,
+      :state_properties
     ]
     # Dettagli da disegnare negli oggetti
-    ITEM_DETAILS = [
-        :hp_recover,
-        :mp_recover,
-        :param_growth,
-    ]
+    ITEM_DETAILS = [:hp_recover, :mp_recover, :param_growth,]
     # Dettagli da disegnare nelle skill
     SKILL_DETAILS = [
-        :spi_f, :atk_f, :agi_f, :def_f,
-        :mp_cost, :hp_cost, :item_price, :gold_cost, :recharge, :aggro, :sinergy,
-        :tank_odd, :state_inf_bonus, :state_inf_per,
-        :state_inf_dur, :type_effectiveness]
-    # quali dettagli mostrare per le categorie
-    EQUIP_DETAILS = [:atk, :def, :spi, :agi, :hit, :cri, :eva, :odds]
-    ARMOR_DETAILS = [:kind, :states, :elements, :bonus]
-    WEAPON_DETAILS = [:kind, :attack_attribute, :states, :elements, :type_effectiveness, :bonus]
+      :skill_hit, :cri, :autostate, :charge_time, :recharge, :total_aggro, :state_inf_bonus,
+      :state_inf_dur, :sin_bonus, :esper, :mp_cost, :hp_cost, :anger_cost, :item_cost,
+      :gold_cost, :skill_requirements, :skill_extensions, :max_assimilable_skills,
+      :steal_skill, :robbery_skill
+    ]
+    # quali dettagli mostrare per gli attributi comuni di equipaggiamento,
+    COMMON_DETAILS = [:hit, :cri, :eva, :odds, :element_rates, :state_rates,
+                      :element_amplifiers, :hp_on_guard, :mp_on_guard,
+                      :hp_on_win, :mp_on_win, :charge_bonus, :normal_attack_bonus,
+                      :heal_amplify, :heal_rate, :dom_bonus, :incentive, :sin_durab,
+                      :sin_bonus, :sin_on_kill, :sin_on_guard, :sin_on_cri, :sin_on_weak,
+                      :sin_on_heal, :sin_on_eva, :sin_on_start, :sin_on_state,
+                      :atb_base, :steal_bonus, :buy_discount, :sell_bonus,
+                      :drop_bonus, :gold_bonus, :exp_bonus, :ap_bonus, :mp_cost_rate,
+                      :hp_on_kill, :mp_on_kill, :anger_bonus, :anger_init,
+                      :anger_kill, :anger_turn, :max_anger, :anger_damage, :magic_def,
+                      :magic_dmg, :physical_dmg, :buff_durability, :debuff_durability,
+                      :state_inf_per, :state_inf_dur, :critical_damage, :synth_bonus,
+                      :low_hpmp_bonus,  :battle_triggers]
+    EQUIP_DETAILS = [:rarity, :required_level, :atk, :def, :spi, :agi, :stat_bonuses,
+                     :magic_states_plus, :heal_states_plus, :recharge, :perpetual_states]
+    ARMOR_DETAILS = [:armor_kind, :protected_states, :halved_elements, :set_bonus]
+    WEAPON_DETAILS = [:weapon_kind, :elements, :plus_state_set, :type_effectiveness, :weapon_power_ups]
+    STATE_DETAILS = [:stat_bonuses, :duration, :restrictions, :slip_damages, :resistances, :protected_states,
+                     :attack_elements, :halved_elements, :state_extensions, :apeiron]
     # la grandezza del testo dei dettagli. Se 0, usa predefinito
     TEXTSIZE = 0
     # le categorie degli oggetti
     ITEM_CATEGORIES = {
-        1 => [:usable, 'Utilizzabili'],
-        2 => [:resource, 'Materiali'],
-        3 => [:weapon, 'Armi'],
-        4 => [:armor, 'Armature'],
-        5 => [:key, 'Importanti'],
-        6 => [:battle, 'Battaglia']
+      1 => [:usable, 'Utilizzabili'],
+      2 => [:resource, 'Materiali'],
+      3 => [:weapon, 'Armi'],
+      4 => [:armor, 'Armature'],
+      5 => [:key, 'Importanti'],
+      6 => [:battle, 'Battaglia']
+    }
+
+    FEATURE_SHOW_CONDITION = {
+      :ranged? => 'item.is_a?(RPG::Weapon) or item.for_opponent?',
+      :ignore_defense => 'item.is_a?(RPG::Weapon) or item.for_opponent?'
     }
   end
+
   # prezzo di vendita predefinito
   def self.default_sell_price(item)
     formulas = Settings::SELLPRICE_FORMULAS
@@ -76,19 +97,11 @@ end
 # Nuovi vocaboli per oggetti e dettagli
 #==============================================================================
 module Vocab
-  class << self
-    # noinspection RubyResolve
-    alias int_param param
-  end
-
   # vari vocaboli
-  ITEM_VALUE = 'Prezzo vendita'
   ITEM_SCOPE = 'Bersaglio'
   ITEM_USE = 'Uso'
   ITEM_DAMAGE = 'Danno %s'
   ITEM_ELEMENT = 'Elemento'
-  ITEM_STATE_P = 'Causa Stati'
-  ITEM_STATE_M = 'Rimuove Stati'
   ITEM_ABSORB = 'Assorbe il danno'
   ITEM_RECOVER = 'Recupero %s'
   ITEM_POSSESS = 'Posseduti'
@@ -100,115 +113,79 @@ module Vocab
   SKILL_AGI_F = 'Inf. Velocità'
   EQUIP_KIND = 'Tipo'
   WEAPON_STATE = 'Infligge'
-  ARMOR_STATE = 'Conferisce immunità'
   ARMOR_ELEMENT = 'Dimezza elemento'
   ARMOR_ATTRIBUTE = 'Dimezza danni da'
-  WEAPON_2H = 'Richiede due mani'
-  WEAPON_DUAL_A = 'Doppio attacco'
-  ARMOR_PREVENT_CRITICAL = 'Previene colpi critici'
-  ARMOR_HALF_MP_COST = 'Dimezza il costo delle abilità'
-  ARMOR_AUTO_HP_RECOVER = 'Ripristina PV con il tempo'
-  ARMOR_2EXP_GAIN = 'Raddoppia l\'esperienza acquisita'
   ATTACK_ATTRIBUTE = 'Tipo danni'
   ATTR_EFFECTIVENESS = 'Efficace contro %s'
-  EQUIPPABLE_BY = 'Equipaggiabile da'
-  # Restituisce l'elemento dall'ID
-  # @param [Integer] element_id
-  # @return [String]
-  def self.element(element_id)
-    return $data_system.elements[element_id]
-  end
-
-  # Restituisce i vocaboli dei rispettivi parametri
-  # @return [String]
-  def self.hit
-    'Mira'
-  end
-
-  def self.eva
-    'Evasione'
-  end
-
-  def self.cri
-    'Critici'
-  end
-
-  def self.mag
-    'Furia Max'
-  end
-
-  # Restituisce un determinato parametro
-  # @param [Symbol] symbol
-  # @return [Integer]
-  def self.param(symbol)
-    case symbol
-    when :atk
-      return atk
-    when :def
-      return self.def
-    when :spi
-      return spi
-    when :agi
-      return agi
-    when :cri
-      return cri
-    when :eva
-      return eva
-    when :hit
-      return hit
-    when :odds, :odd
-      return odds
-    when :hp_a, :mhp, :max_hp, :hp, :maxhp
-      return hp
-    when :mp, :max_mp, :mmp, :maxmp
-      return mp
-    when :max_anger, :mag
-      return mag
-    else
-      int_param(symbol)
-    end
-  end
+  STATE_DURATION = 'Durata'
+  STATE_DURATION_TURNS = '%d turni'
+  STATE_DURATION_TURN = 'un turno'
+  RESTRICTIONS = [
+    'Nessuna', 'Impossibile usare magie', 'Perdita di controllo',
+    'Attacca gli alleati', 'Blocca le mosse', 'Blocca i movimenti'
+  ]
+  STATE_RESISTANCE = 'Prob. Media'
 
   # Vocaboli per l'obiettivo
   SCOPES = [
-      'Nessuno',
-      'Un nemico',
-      'Tutti i nemici',
-      'Un nemico, due volte',
-      'Un nemico a caso',
-      'Due nemici a caso',
-      'Tre nemici a caso',
-      'Alleato',
-      'Alleati',
-      'Alleato KO',
-      'Alleati KO',
-      'L\'utilizzatore',
-      'Tutti i presenti',
-      'Nemici specifici'
+    'Nessuno',
+    'Un nemico',
+    'Tutti i nemici',
+    'Un nemico, due volte',
+    'Un nemico a caso',
+    'Due nemici a caso',
+    'Tre nemici a caso',
+    'Alleato',
+    'Alleati',
+    'Alleato KO',
+    'Alleati KO',
+    'L\'utilizzatore',
+    'Tutti i presenti',
+    'Nemici specifici',
+    'Altri alleati'
   ]
   # Vocaboli per il tipo di armatura
   ARMOR_KINDS = {
-      0 => 'Supporto',
-      1 => 'Elmo',
-      2 => 'Corpo',
-      3 => 'Accessorio',
-      7 => 'Magnetite',
+    0 => 'Supporto',
+    1 => 'Elmo',
+    2 => 'Corpo',
+    3 => 'Accessorio',
+    7 => 'Magnetite',
   }
   # Vocaboli per l'occasione
   OCCASIONS = ['Sempre', 'Solo in battaglia', 'Solo dal Menu', 'Mai']
   # Restituisce il bersaglio
   def self.scope(id)
-    return SCOPES[id]
+    SCOPES[id]
   end
 
   # Restituisce l'occasione
   def self.occasion(id)
-    return OCCASIONS[id]
+    OCCASIONS[id]
   end
 
   # Restituisce il tipo di armatura
   def self.armor_kind(kind)
-    return ARMOR_KINDS[kind]
+    ARMOR_KINDS[kind]
+  end
+
+  def self.state_restriction(id)
+    RESTRICTIONS[id]
+  end
+
+  # @param [Symbol] trigger_type
+  # @return [Array<String>]
+  def self.battle_trigger(trigger_type)
+    description = {
+      :state_on_eva => ['Quando si evita un attacco','Attiva %s (%d%% prob.)'],
+      :state_on_heal => ['Con le magie curative','Causa %s (%d%% prob.)'],
+      :state_on_off_skill =>  ['Con magie offensive','Causa %s (%d%% prob.)'],
+      :state_on_damage => ['Quando si subiscono danni','Attiva %s (%d%% prob.)'],
+      :state_on_curse => ['Quando si subiscono danni','Causa %s (%d%% prob.)'],
+      :state_on_damage_user => ['Quando si viene attaccati da vicino','Causa %s (%d%% prob.)'],
+      :state_on_defense => ['Quando attaccato durante Difendi','Causa %s (%d%% prob.)'],
+    }[trigger_type]
+    description ||= [trigger_type.to_s, '%s %d']
   end
 end
 
@@ -226,6 +203,9 @@ class RPG::BaseItem
   attr_reader :resource # risorsa per la forgiatura
   attr_reader :use_method # metodo da usare per un oggetto
   attr_reader :use_scene # scena dove andare dopo l'uso di un oggetto
+  attr_reader :max_number #numero massimo
+  attr_reader :key_item # oggetto chiave?
+  attr_reader :trade_lock #non permette lo scambio tra giocatori
   # caricamento dei dettagli personalizzati
   def load_custom_details
     return if @det_loaded
@@ -237,10 +217,12 @@ class RPG::BaseItem
     @resource = false
     @features = []
     @sellprice = nil
+    @trade_lock = false
+    @max_number = H87Item::Settings::DEFAULT_MAX_ITEMS
     self.note.split(/[\r\n]+/).each { |line|
       case line
         #---
-      when /<nessuna descrizione>/i
+      when /<nessuna descrizione>/i, /<no info>/i
         @no_description = true
       when /<attr[ ]+(.*):[ ](.*)\[(\d+)]>/i
         @custom_dets.push([$1, $2, $3.to_i])
@@ -248,7 +230,7 @@ class RPG::BaseItem
         @custom_dets.push([$1, $2, 0])
       when /<feature:[ ]*(.*)>/i
         @features.push($1)
-      when /<tip:[ ]*(.*)>/i
+      when /<cdesc:[ ]*(.*)>/i
         @custom_desc.push($1)
       when /<key[ ]+item>/i
         @key_item = true
@@ -262,10 +244,33 @@ class RPG::BaseItem
         @use_method = $1
       when /<scene:[ ]*(.*)>/i
         @use_scene = $1
+      when /<num massimo:[ ]*(\d+)>/i
+        @max_number = $1.to_i
+      when /<blocca scambi>/i
+        @trade_lock = true
       else
         # niente
       end
     }
+  end
+
+  # Restituisce true se è scambiabile tra giocatori
+  def traddable?
+    return false if is_key_item? #non traddabile se è una chiave
+    return false if self.price == 0 #non traddabile se il prezzo è 0
+    # noinspection RubyResolve
+    return false if @trade_lock #non traddabile se bloccato da tag
+    return false if @rarity > 1 # se è un oggetto da leggendario in su
+    true #traddabile
+  end
+
+  # metodo alias sellable
+  def sellable?
+    traddable?
+  end
+
+  def is_key_item?
+    @key_item
   end
 
   # Restituisce il prezzo di vendita
@@ -289,7 +294,62 @@ class RPG::BaseItem
   end
 end
 
-#baseitem
+class RPG::UsableItem
+  def single_state?
+    self.plus_state_set.size == 1
+  end
+end
+
+class RPG::State
+  attr_reader :custom_dets # dettaglio personalizzato con categoria
+  attr_reader :custom_desc # dettaglio con sola descrizione
+  attr_reader :no_description # nasconde la descrizione automatica se true
+  attr_reader :features # mostra le funzioni importanti
+
+  def load_custom_details
+    return if @det_loaded
+    @det_loaded = true
+    @no_description = false
+    @custom_dets = []
+    @custom_desc = []
+    @features = []
+    self.note.split(/[\r\n]+/).each do |line|
+      case line
+        #---
+      when /<nessuna descrizione>/i, /<no info>/i
+        @no_description = true
+      when /<attr[ ]+(.*):[ ](.*)\[(\d+)]>/i
+        @custom_dets.push([$1, $2, $3.to_i])
+      when /<attr[ ]+(.*):[ ](.*)>/i
+        @custom_dets.push([$1, $2, 0])
+      when /<feature:[ ]*(.*)>/i
+        @features.push($1)
+      when /<desc:[ ]*(.*)>/i
+        @custom_desc.push($1)
+      else
+        # niente
+      end
+    end
+  end
+
+  # @return [Array<Symbol>]
+  def extensions_sym
+    self.extension.collect do |str|
+      if str =~ /(\w+)\/[\d]+/
+        $1.downcase.to_sym
+      else
+        nil
+      end
+    end.compact
+  end
+end
+
+class RPG::Weapon
+  # @return [Array<Integer>]
+  def plus_state_set
+    @state_set
+  end
+end
 
 #==============================================================================
 # ** Sprite_ItemPopup
@@ -505,7 +565,10 @@ end
 class Window_ItemInfo < Window_DataInfo
   # Variabili d'istanza pubbliche
   attr_accessor :see_possessed # visualizza la quantità posseduta
-  attr_accessor :see_sellprice # visualizza il prezzo di vendita
+  attr_accessor :show_requirements
+  attr_accessor :show_item_name
+  attr_accessor :hidden_stats
+
   # Inizializzazione
   # @param [Integer] x
   # @param [Integer] y
@@ -526,40 +589,180 @@ class Window_ItemInfo < Window_DataInfo
     draw_item_data
   end
 
+  def update
+    super
+    return unless visible
+    update_scrolling
+  end
+
+  def update_scrolling
+    return if item.nil?
+    return if contents.height <= contents_height
+    # reset quando arrivato alla fine
+    if scrolling_at_end? and @timing <= 0
+      return reset_content_position
+    end
+    # attesa prima di cominciare a scorrere
+    if self.oy == 0 and @timing < H87Item::Settings::SCROLL_FRAME_WAIT
+      return @timing += 1
+    end
+    # attesa quando arriva alla fine
+    if scrolling_at_end?
+      return @timing -= 1
+    end
+    # scorrimento
+    self.oy += H87Item::Settings::SCROLL_FRAME_SPEED
+  end
+
+  def scrolling_at_end?
+    self.oy + contents_height > contents.height
+  end
+
+  # ottiene il rettangolo corrente
+  # @return [Rect]
+  def current_rect
+    @line = 0 if @line.nil?
+    rect = Rect.new(0, @line, contents_width, line_height)
+    if @original_item != nil
+      rect.x += 12
+      rect.width -= 12
+    end
+    rect
+  end
+
+  # crea i contenuti della finestra. Il flag test serve per creare
+  # un contents senza altezza
+  # @param [Boolean] test
+  def create_contents(test = false)
+    contents.dispose
+    if contents_width > 0 && contents_height > 0 && !test
+      self.contents = Bitmap.new(contents_width, calc_contents_height)
+    else
+      self.contents = Bitmap.new(1, 1)
+    end
+  end
+
   # Imposta un oggetto
-  # @param [RPG::BaseItem] new_item
+  # @param [RPG::BaseItem, nil] new_item
   def set_item(new_item)
     return if @item.equal?(new_item)
     @item = new_item
+    reset_content_position
+    create_contents
     refresh
   end
 
+  def reset_content_position
+    self.oy = 0
+    @timing = 0
+  end
+
+  # @return [Fixnum]
+  #noinspection RubyYardReturnMatch
+  def calc_contents_height
+    @simulate = true
+    @line = 0
+    draw_item_data
+    @simulate = false
+    height = @line
+    @line = 0
+    [height, contents_height].max
+  end
+
   # Restituisce l'oggetto della finestra
-  # @return [RPG::UsableItem,RPG::Armor,RPG::Weapon]
+  # @return [RPG::UsableItem,RPG::Armor,RPG::Weapon, RPG::Skill, RPG::State]
   def item
-    @item;
+    @item
+  end
+
+  # Restituisce l'oggetto iniziale della finestra
+  # @return [RPG::UsableItem,RPG::Armor,RPG::Weapon, RPG::Skill, RPG::State, nil]
+  def original_item
+    @original_item
   end
 
   # Disegna i dati principali dell'oggetto
   def draw_item_data
+    return if item.nil?
+    draw_current_item_name if @show_item_name
     draw_item_possessed if @see_possessed
-    draw_item_price if @see_sellprice
+    draw_item_price
+    draw_skill_learn_requirements
     unless item.no_description
       case item
       when RPG::Item
-        draw_usable_item_detail; draw_item_detail
+        draw_usable_item_detail
+        draw_item_detail
       when RPG::Weapon
-        draw_equip_detail; draw_weapon_detail
+        draw_equip_detail
+        draw_weapon_detail
+        draw_common_detail
       when RPG::Armor
-        draw_equip_detail; draw_armor_detail
+        draw_equip_detail
+        draw_armor_detail
+        draw_common_detail
       when RPG::Skill
+        draw_usable_item_detail
         draw_skill_detail
+      when RPG::State
+        draw_state_detail
+        draw_common_detail
       else
         # niente
       end
-      draw_script_detail
+      draw_all_features
     end
     draw_item_custom_details
+  end
+
+  # @param [Array<Symbol>] ary
+  def draw_all_attributes(ary)
+    ary.each { |element| draw_attribute(element) }
+  end
+
+  # disegna i dettagli comuni degli oggetti utilizzabili in battaglia o sul menu
+  def draw_usable_item_detail
+    draw_all_attributes H87Item::Settings::USABLE_DETAILS - @hidden_stats
+  end
+
+  # Disegna i dettagli di un oggetto
+  def draw_item_detail
+    draw_all_attributes H87Item::Settings::ITEM_DETAILS - @hidden_stats
+  end
+
+  # disegna i dettagli comuni a tutti gli oggetti
+  def draw_common_detail
+    draw_all_attributes H87Item::Settings::COMMON_DETAILS - @hidden_stats
+  end
+
+  # Disegna i dettagli dell'equipaggiamento
+  def draw_equip_detail
+    draw_all_attributes H87Item::Settings::EQUIP_DETAILS - @hidden_stats
+  end
+
+  # Disegna i dettagli dell'arma
+  def draw_weapon_detail
+    draw_all_attributes H87Item::Settings::WEAPON_DETAILS - @hidden_stats
+  end
+
+  # Disegna i dettagli dell'armatura
+  def draw_armor_detail
+    draw_all_attributes H87Item::Settings::ARMOR_DETAILS - @hidden_stats
+  end
+
+  # disegna i dettagli delle abilità
+  def draw_skill_detail
+    draw_all_attributes H87Item::Settings::SKILL_DETAILS - @hidden_stats
+  end
+
+  # disegna i dettagli degli status (per passive)
+  def draw_state_detail
+    draw_all_attributes H87Item::Settings::STATE_DETAILS - @hidden_stats
+  end
+
+  def draw_all_features
+    parse_features(Settings::FEATURES.keys - @hidden_stats)
+    parse_innested_features(Settings::VARIABLE_FEATURES.keys - @hidden_stats)
   end
 
   # Riaggiorna la grandezza
@@ -569,55 +772,191 @@ class Window_ItemInfo < Window_DataInfo
     end
   end
 
-  # Altezza delle lettere
-  def auto_height
-    if H87Item::Settings::TEXTSIZE == 0
-      line_height
+  # Altezza delle lettere automatica in modo da massimizzare il contenuto
+  # in finestra.
+  # @return [Fixnum]
+  def line_height
+    return super if H87Item::Settings::TEXTSIZE == 0
+    contents.text_size("A").height + 2
+  end
+
+  # disegna un determinato attributo. Controlla prima se c'è
+  # il metodo draw_nome_attributo, altrimenti cerca in automatico
+  # l'attributo dall'oggetto e lo disegna.
+  def draw_attribute(attr_sym)
+    method_name = sprintf('draw_%s', attr_sym).to_sym
+    if self.class.method_defined?(method_name)
+      self.send(method_name)
     else
-      contents.text_size("A").height + 2
+      fetch_discrete_parameter(attr_sym)
     end
+  end
+
+  # disegna tutti i parametri contenuti nell'array. I parametri sono
+  # definiti all'intnerno elle classi degli item. Se non esistono salta.
+  # Questo metodo non dovrebbe essere più usato.
+  # @deprecated parsare gli attributi è meglio.
+  # @param [Array<Symbol>] parameter_array
+  def parse_parameters(parameter_array)
+    parameter_array.each do |param|
+      fetch_discrete_parameter param
+    end
+  end
+
+  def draw_current_item_name
+    return if original_item
+    unless @simulate
+      rect = current_rect
+      draw_item_name(item, rect.x, rect.y, true, rect.width)
+    end
+
+    @line += line_height
+  end
+
+  # @param [Array<Symbol>] feature_array
+  def parse_features(feature_array)
+    feature_array.each do |feature|
+      next unless item.has? feature
+      next if H87Item::Settings::FEATURE_SHOW_CONDITION[feature] &&
+        !eval(H87Item::Settings::FEATURE_SHOW_CONDITION[feature])
+      old_shadow = contents.font.shadow unless @simulate
+      if Settings::FEATURE_COLORS[feature] and !@simulate
+        color1 = get_feature_color(Settings::FEATURE_COLORS[feature][0])
+        color2 = get_feature_color(Settings::FEATURE_COLORS[feature][1])
+        if color2
+          color2.deopacize!(100)
+          contents.font.shadow = false
+        end
+      else
+        color1 =  power_up_color
+        color2 = nil
+      end
+      draw_feature Vocab.feature(feature), color1, color2
+      contents.font.shadow = old_shadow unless @simulate
+    end
+  end
+
+  # @return [Color, nil]
+  def get_feature_color(val)
+    return nil if val.nil?
+    return self.send(val) if val.is_a?(Symbol)
+    return text_color(val) if val.is_a?(Integer)
+    return val if val.is_a?(Color)
+    nil
+  end
+
+  # @param [Array<Symbol>] feature_array
+  def parse_innested_features(feature_array)
+    feature_array.each do |feature|
+      next unless item.has? feature
+      value = item.send(feature)
+      val = Parameter_Value.new(feature).calc_val(value)
+      draw_feature(Vocab.feature(feature, val))
+    end
+  end
+
+  def fetch_discrete_parameter(param)
+    value = item.get_val param
+    return if value.nil? or value == 0
+    param_data = Parameter_Value.new(param)
+    value = param_data.calc_val value
+    showed = param_data.parse_val value
+    reverse = param_data.reverse?
+    color = normal_color
+    if value.is_a?(Numeric)
+      if value > 0 or (value < 0 and reverse)
+        color = power_up_color
+      elsif value < 0 or (value > 0 and reverse)
+        color = power_down_color
+      end
+    end
+    icon = param_data.icon_index
+    draw_detail(param_data.param_name, showed, icon, line_height, color, :left)
   end
 
   # Disegna un dettaglio generico
   # @param [String] param
-  # @param [String, Integer, Float] value
+  # @param [String, Integer, Float, nil] value
   # @param [Integer] icon
   # @param [Integer] height
   # @param [Color] color
-  def draw_detail(param, value = nil, icon = 0, height = auto_height,
+  def draw_detail(param, value = nil, icon = 0, height = line_height,
                   color = normal_color, icon_pos = :right)
-    width = contents_width
-    y = @line
-    x = 0
-    #draw_bg_rect(0, y, contents_width, height)
-    draw_underline(@line / line_height)
-    if icon != 0 and icon_pos == :left
-      draw_icon(icon, 0, y)
-      x = 24
+    if @simulate
+      create_contents(true) if contents.disposed?
+      x = (icon > 0 ? ICON_WIDTH : 0) + current_rect.x
+      if text_width(param.to_s + value.to_s) + x > current_rect.width
+        @line += height
+      end
+      return @line += height
     end
+    rect = current_rect
+    #draw_underline(@line / line_height)
     if value.nil?
       change_color(color)
-      draw_text(x, y, width, height, param, 1)
+      draw_text(rect, param, 1)
     else
+      need_newline = text_width(param.to_s + value.to_s) + (icon > 0 ? ICON_WIDTH : 0) > rect.width
+      if need_newline
+        draw_bg_srect(rect.x, rect.y, rect.width, rect.height + line_height)
+      else
+        draw_bg_from_rect(rect)
+      end
+      if icon != 0 and icon_pos == :left
+        draw_icon(icon, rect.x, rect.y)
+        rect.x += ICON_WIDTH
+        rect.width -= ICON_WIDTH
+      end
       change_color(system_color)
-      draw_text(x, y, width, height, param)
+      draw_text(rect, param)
       change_color(color)
-      draw_text(0, y, width, height, value, 2)
+      if need_newline
+        @line += height
+        rect.y += line_height
+      end
+      draw_text(rect, value, 2)
       #xx = width - contents.text_size(value).width - 28
       #draw_icon(icon, xx, y)
     end
     if icon != 0 and icon_pos == :right
-      icon_x = width - (value != nil ? text_width(value) : 0) - 24
-      draw_icon(icon, icon_x, y)
+      icon_x = rect.x + rect.width - (value != nil ? text_width(value.to_s) : 0) - ICON_WIDTH
+      draw_icon(icon, icon_x, rect.y)
     end
     @line += height
+  end
+
+  # @param [Array<String>] lines
+  # @param [Color] color
+  # @param [nil, Color] bg_color
+  def draw_multiline_feature(lines, color = normal_color, bg_color = nil)
+    return @line += (line_height * lines.size) if @simulate
+    rect = current_rect
+    rect.height = line_height * lines.size
+    if bg_color
+      draw_bg_from_rect(rect, bg_color.deopacize(75), bg_color.deopacize)
+    else
+      draw_bg_from_rect(rect, sc2)
+    end
+    change_color color
+    lines.each do |line|
+      draw_text(current_rect, line, 1)
+      @line += line_height
+    end
   end
 
   # Mostra una funzione speciale
   # @param [String] feature
   # @param [Color] color
-  def draw_feature(feature, color = power_up_color)
-    draw_detail(feature, nil, 0, auto_height, color)
+  # @param [Color] bg_color
+  def draw_feature(feature, color = power_up_color, bg_color = nil)
+    return @line += line_height if @simulate
+    rect = current_rect
+    if bg_color
+      draw_bg_from_rect(rect, bg_color.deopacize(75), bg_color.deopacize)
+    else
+      draw_bg_from_rect(rect, sc2)
+    end
+    draw_detail(feature, nil, 0, line_height, color)
   end
 
   # Disegna un parametro
@@ -632,7 +971,55 @@ class Window_ItemInfo < Window_DataInfo
     color = power_up_color if value > 0 or (value < 0 and reverse)
     color = power_down_color if value < 0 or (value > 0 and reverse)
     perc = percentuale ? "%" : ""
-    draw_detail(param, sprintf('%+d%s', value, perc), icon, auto_height, color)
+    draw_detail(param, sprintf('%+d%s', value, perc), icon, line_height, color, :left)
+  end
+
+  # disegna il nome del paraemtro e un elenco di icone
+  # @param [String] param
+  # @param [Array<Integer>] icon_array
+  def draw_param_with_icons(param, icon_array)
+    unless @simulate
+      change_color system_color
+      draw_text(current_rect, param)
+      change_color normal_color
+    end
+    @line += line_height
+    draw_icon_set(icon_array)
+  end
+
+  def draw_param_gauge(param, rate, text, gauge_color1 = mp_gauge_color1, gauge_color2 = mp_gauge_color2)
+    unless @simulate
+      change_color system_color
+      rect = current_rect
+      draw_text(rect, param)
+      x = rect.x + text_width(param.to_s + ' ')
+      y = rect.y
+      width = rect.width - x
+      draw_gauge(x, y, width, rate, gauge_color1, gauge_color2)
+      draw_text(x, y, width, line_height, text, 1)
+    end
+    @line += 24
+  end
+
+  # @param [Array<Hash>] params
+  # @param [String] title
+  def draw_param_list(params, title = nil)
+    draw_param_title(title) if title
+    params.each do |param|
+      unless @simulate
+        rect = current_rect
+        enabled = param[:enabled].nil? ? true : param[:enabled]
+        if param[:icon]
+          draw_icon(param[:icon], rect.x, rect.y, enabled)
+          rect.x += ICON_WIDTH
+          rect.width -= ICON_WIDTH
+          color = param[:color] ? param[:color] : normal_color
+          change_color(color, enabled)
+          draw_text(rect, param[:text])
+        end
+      end
+      @line += line_height
+    end
   end
 
   # Disegna un set di icone
@@ -650,499 +1037,70 @@ class Window_ItemInfo < Window_DataInfo
     draw_detail(Vocab::ITEM_POSSESS, $game_party.item_number(item))
   end
 
+  # disegna un titolo di sezione e va a capo
+  def draw_param_title(title)
+    unless @simulate
+      change_color system_color
+      draw_text(current_rect, title)
+    end
+    @line += line_height
+  end
+
+  def draw_skill_learn_requirements
+    return unless item.is_a?(RPG::Skill) or item.is_a?(RPG::State)
+    return if actor.nil?
+    return unless @show_requirements
+    requirements = []
+    if item.ap_cost > 0
+      enabled = actor.ap >= item.ap_cost
+      param = {
+        :icon => Icon.check(enabled),
+        :text => sprintf('%d %s', item.ap_cost, Vocab.ap_long),
+        :color => enabled ? power_up_color : power_down_color,
+        :enabled => !enabled
+      }
+      requirements.push(param)
+    end
+    if item.required_level > 1
+      enabled = actor.level >= item.required_level
+      param = {
+        :icon => Icon.check(enabled),
+        :text => sprintf('%s %d', Vocab.level, item.required_level),
+        :color => enabled ? power_up_color : power_down_color,
+        :enabled => !enabled
+      }
+      requirements.push(param)
+    end
+    item.required_skills.each do |skill_id|
+      enabled = actor.skill_level(skill_id) >= $data_skills[skill_id].level
+      param = {
+        :icon => Icon.check(enabled),
+        :text => $data_skills[skill_id].name,
+        :color => enabled ? power_up_color : power_down_color,
+        :enabled => !enabled
+      }
+      requirements.push(param)
+    end
+    item.required_passives.each do |skill_id|
+      enabled = actor.passive_learn?($data_states[skill_id])
+      param = {
+        :icon => Icon.check(enabled),
+        :text => $data_states[skill_id].name,
+        :color => enabled ? power_up_color : power_down_color,
+        :enabled => !enabled
+      }
+      requirements.push(param)
+    end
+    return if requirements.empty?
+    draw_param_list(requirements, Vocab.requirements)
+  end
+
   # Disegna il prezzo di un oggetto
   def draw_item_price
+    return if item.is_a?(RPG::Skill)
+    return if item.is_a?(RPG::State)
     return unless item.sellable?
-    draw_detail(Vocab::ITEM_VALUE, sprintf("%d %s", item.selling_price, Vocab.gold))
-  end
-
-  def draw_usable_item_detail
-    (0..H87Item::Settings::USABLE_DETAILS.size - 1).each { |i|
-      draw_usable_property(H87Item::Settings::USABLE_DETAILS[i])
-    }
-  end
-
-  def draw_usable_property(sym)
-    case sym
-    when :scope
-      draw_scope
-    when :occasion
-      draw_occasion
-    when :damage
-      draw_damage
-    when :absorb
-      draw_absorb
-    when :element
-      draw_element_set
-    when :state_plus
-      draw_state_set
-    when :state_minus
-      draw_minus_state_set
-    when :attack_attribute
-      draw_attack_attributes
-    when :type_effectiveness
-      draw_enemy_type_effectiveness
-    else
-      # niente
-    end
-  end
-
-  # Disegna i dettagli di un oggetto
-  def draw_item_detail
-    (0..H87Item::Settings::ITEM_DETAILS.size - 1).each { |i|
-      draw_item_property(H87Item::Settings::ITEM_DETAILS[i])
-    }
-  end
-
-  # Disegna le proprietà dell'ottetto
-  # @param [Symbol] sym
-  def draw_item_property(sym)
-    case sym
-    when :hp_recover
-      draw_hp_recover
-    when :mp_recover
-      draw_mp_recover
-    else
-      # niente
-    end
-  end
-
-  # Disegna le proprietà di un equipaggiamento
-  # @param [Symbol] sym
-  def draw_equip_property(sym)
-    case sym
-    when :atk
-      draw_atk
-    when :def
-      draw_def
-    when :spi
-      draw_spi
-    when :agi
-      draw_agi
-    when :hit
-      draw_hit
-    when :eva
-      draw_eva
-    when :odds
-      draw_odds
-    else
-      # niente
-    end
-  end
-
-  # Disegna i dettagli dell'equipaggiamento
-  def draw_equip_detail
-    (0..H87Item::Settings::EQUIP_DETAILS.size - 1).each { |i|
-      draw_equip_property(H87Item::Settings::EQUIP_DETAILS[i])
-    }
-  end
-
-  # Disegna i dettagli dell'arma
-  def draw_weapon_detail
-    (0..H87Item::Settings::WEAPON_DETAILS.size - 1).each { |i|
-      draw_weapon_property(H87Item::Settings::WEAPON_DETAILS[i])
-    }
-  end
-
-  # Disegna le proprietà dell'arma
-  def draw_weapon_property(sym)
-    case sym
-    when :kind
-      draw_weapon_kind
-    when :states
-      draw_atk_states
-    when :elements
-      draw_atk_element
-    when :bonus
-      draw_weapon_bonus
-    when :attack_attribute
-      draw_attack_attributes
-    when :type_effectiveness
-      draw_enemy_type_effectiveness
-    else
-      # niente
-    end
-  end
-
-  # Disegna i dettagli dell'armatura
-  def draw_armor_detail
-    (0..H87Item::Settings::ARMOR_DETAILS.size - 1).each { |i|
-      draw_armor_property(H87Item::Settings::ARMOR_DETAILS[i])
-    }
-  end
-
-  # Disegna le proprietà dell'armatura
-  def draw_armor_property(sym)
-    draw_equip_property(sym)
-    case sym
-    when :kind
-      draw_armor_kind
-    when :states
-      draw_def_states
-    when :elements
-      draw_def_elements
-    when :bonus
-      draw_armor_bonus
-    else
-      # niente
-    end
-  end
-
-  def draw_skill_detail
-    (0..H87Item::Settings::SKILL_DETAILS.size - 1).each { |s|
-      draw_skill_property(H87Item::Settings::ARMOR_DETAILS[i])
-    }
-  end
-
-  def draw_skill_property(sym)
-    case sym
-    when :scope
-      draw_scope
-    when :occasion
-      draw_occasion
-    when :damage
-      draw_damage
-    when :absorb
-      draw_absorb
-    when :element
-      draw_element_set
-    when :state_plus
-      draw_state_set
-    when :state_minus
-      draw_minus_state_set
-    when :damage
-      draw_base_damage
-    when :atk_f
-      draw_atk_f
-    when :spi_f
-      draw_spi_f
-    when :def_f
-      draw_def_f
-    when :agi_f
-      draw_agi_f
-    when :mp_cost
-      draw_mp_cost
-    when :hp_cost
-      draw_hp_cost
-    when :anger_cost
-      draw_anger_cost
-    when :gold_cost
-      draw_gold_cost
-    when :item_price
-      draw_item_cost
-    when :recharge
-      draw_recharge_req
-    when :aggro
-      draw_aggro_bonus
-    when :sinergy
-      draw_sinergy_adder
-    when :tank_odd
-      draw_tank_odd
-    when :state_inf_bonus
-      draw_state_inf_bonus
-    when :state_inf_per
-      draw_state_inflict_perc
-    when :state_inf_dur
-      draw_state_inf_durability
-    else
-      # niente
-    end
-  end
-
-  # Mostra il bersaglio
-  def draw_scope
-    return if item.occasion == 3
-    return if item.scope == 0
-    draw_detail(Vocab::ITEM_SCOPE, Vocab.scope(item.scope))
-  end
-
-  # Mostra l'occasione
-  def draw_occasion
-    return if item.occasion == 3
-    draw_detail(Vocab::ITEM_USE, Vocab.occasion(item.occasion))
-  end
-
-  # Mostra il danno
-  def draw_damage
-    return if item.base_damage == 0
-    param = item.damage_to_mp ? Vocab.mp_a : Vocab.hp_a
-    if item.base_damage > 0
-      draw_detail(sprintf(Vocab::ITEM_DAMAGE, param), item.base_damage)
-    else
-      draw_detail(sprintf(Vocab::ITEM_RECOVER, param), item.base_damage)
-    end
-  end
-
-  # mostra l'influenza dell'attacco
-  def draw_atk_f
-    return if item.atk_f == 0
-    draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
-  end
-
-  # mostra l'influenza dello spirito
-  def draw_spi_f
-    return if item.spi_f == 0
-    draw_detail(Vocab::SKILL_ATK_F, item.atk_f)
-  end
-
-  # mostra l'influenza della difesa
-  def draw_def_f
-    return if item.def_f == 0
-    draw_detail(Vocab::SKILL_DEF_F, item.def_f)
-  end
-
-  # mostra l'influenza dell'agilità
-  def draw_agi_f
-    return if item.agi_f == 0
-    draw_detail(Vocab::SKILL_AGI_F, item.agi_f)
-  end
-
-  # mostra il costo PM
-  def draw_mp_cost
-    return if item.mp_cost == 0
-    draw_detail(Vocab.skill_param_vocab(:mp_cost), item.mp_cost)
-  end
-
-  # mostra il costo PV
-  def draw_hp_cost
-    return if item.hp_cost == 0
-    draw_detail(Vocab.skill_param_vocab(:hp_cost), item.hp_cost)
-  end
-
-  # mostra il costo furia
-  def draw_anger_cost
-    return if item.anger_cost == 0
-    draw_detail(Vocab.skill_param_vocab(:anger_cost), item.anger_cost)
-  end
-
-  # mostra il consumo oggetti
-  def draw_item_cost
-    return if item.consume_item == 0
-    draw_detail(Vocab::ITEM_CONSUME, sprintf('x%d', item.consume_item_n),
-                $data_items[item.consume_item].icon_index,
-                auto_height, normal_color, :right)
-  end
-
-  # mostra il consumo di oro
-  def draw_gold_cost
-    return if item.gold_cost == 0
-    draw_detail(sprintf(Vocab::ITEM_COST, Vocab.currency_unit),
-                item.gold_cost)
-  end
-
-  # Mostra se assorbe danni
-  def draw_absorb
-    return unless item.absorb_damage
-    draw_detail(Vocab::ITEM_ABSORB)
-  end
-
-  # Disegna il set di elementi
-  def draw_element_set
-    return if item.element_set.empty?
-    draw_detail(Vocab::ITEM_ELEMENT)
-    icons = []
-    item.element_set.each { |element|
-      icon = element_icon(element)
-      icons.push(icon) unless icon
-    }
-    draw_icon_set(icons)
-  end
-
-  # Disegna il set di stati alterati
-  def draw_state_set
-    return if item.plus_state_set.empty?
-    draw_detail(Vocab::ITEM_STATE_P)
-    icons = []
-    item.plus_state_set.each { |s| icons.push($data_states[s].icon_index) }
-    draw_icon_set(icons)
-  end
-
-  # Disegna il set di stati che rimuove
-  def draw_minus_state_set
-    return if item.minus_state_set.empty?
-    draw_detail(Vocab::ITEM_STATE_M)
-    icons = []
-    item.minus_state_set.each { |s| icons.push($data_states[s].icon_index) }
-    draw_icon_set(icons)
-  end
-
-  # Disegna la cura HP
-  def draw_hp_recover
-    return if item.hp_recovery_rate == 0 && item.hp_recovery == 0
-    param = sprintf(Vocab::ITEM_RECOVER, Vocab.hp_a)
-    if item.hp_recovery == 0
-      draw_detail(param, sprintf("%+d%%", item.hp_recovery_rate))
-    elsif item.hp_recovery_rate == 0
-      draw_detail(param, item.hp_recovery)
-    else
-      draw_detail(param, sprintf("%d %+d%%", item.hp_recovery, item.hp_recovery_rate))
-    end
-  end
-
-  # Disegna la cura MP
-  def draw_mp_recover
-    return if item.mp_recovery_rate == 0 && item.mp_recovery == 0
-    param = sprintf(Vocab::ITEM_RECOVER, Vocab.mp_a)
-    if item.mp_recovery == 0
-      draw_detail(param, sprintf("%+d%%", item.mp_recovery_rate))
-    elsif item.mp_recovery_rate == 0
-      draw_detail(param, item.mp_recovery)
-    else
-      draw_detail(param, sprintf("%d %+d%%", item.mp_recovery, item.mp_recovery_rate))
-    end
-  end
-
-  # ottiene l'icona dell'elemento
-  def element_icon(element_id)
-    $data_system.attribute_icon(element_id)
-  end
-
-  # Mostra vari parametri
-  def draw_hit
-    draw_parameter(Vocab.hit, item.hit, true);
-  end
-
-  def draw_cri
-    draw_parameter(Vocab.cri, item.cri, true);
-  end
-
-  def draw_eva
-    draw_parameter(Vocab.eva, item.eva, true);
-  end
-
-  def draw_atk
-    draw_parameter(Vocab.atk, item.atk);
-  end
-
-  def draw_spi
-    draw_parameter(Vocab.spi, item.spi);
-  end
-
-  def draw_def
-    draw_parameter(Vocab.def, item.def);
-  end
-
-  def draw_agi
-    draw_parameter(Vocab.agi, item.agi);
-  end
-
-  def draw_odds
-    draw_parameter(Vocab.odds, item.odds);
-  end
-
-  # Mostra il tipo di arma
-  def draw_weapon_kind
-    item.w_types.each do |tipo|
-      next if Vocab.wtype(tipo).nil?
-      draw_detail(Vocab::EQUIP_KIND, Vocab.wtype(tipo))
-    end
-  end
-
-  # Mostra gli stati alterati che aggiunge l'arma
-  def draw_atk_states
-    return if item.state_set.empty?
-    item.state_set.each { |state_id|
-      state = $data_states[state_id]
-      draw_detail(Vocab::WEAPON_STATE, state.name, state.icon_index)
-    }
-  end
-
-  # Mostra l'elemento dell'arma
-  def draw_atk_element
-    return if item.magic_elements.empty?
-    item.magic_elements.each do |element|
-      draw_detail(Vocab::ITEM_ELEMENT, element.name, element.icon_index)
-    end
-  end
-
-  def draw_enemy_type_effectiveness
-    return if item.monster_type_effectiveness.empty?
-    item.monster_type_effectiveness.each do |element|
-      draw_feature(sprintf(Vocab::ATTR_EFFECTIVENESS, element.name))
-    end
-  end
-
-  def draw_attack_attributes
-    return if item.damage_types.empty?
-    item.damage_types.each do |element|
-      draw_detail(Vocab::ATTACK_ATTRIBUTE, element.name, element.icon_index)
-    end
-  end
-
-  # Disegna i bonus dell'arma
-  def draw_weapon_bonus
-    draw_detail(Vocab::WEAPON_2H) if item.two_handed
-  end
-
-  # Disegna il tipo di armatura
-  def draw_armor_kind
-    draw_detail(Vocab::EQUIP_KIND, Vocab.armor_kind(item.kind))
-  end
-
-  # Disegna le immunità dell'equipaggiamento
-  def draw_def_states
-    return if item.state_set.empty?
-    draw_detail(Vocab::ARMOR_STATE)
-    icons = []
-    item.state_set.each { |state_id|
-      state = $data_states[state_id]
-      icons.push(state.icon_index)
-    }
-    draw_icon_set(icons)
-  end
-
-  # Disegna le difese elementali e attributi
-  def draw_def_elements
-    return if item.element_set.empty?
-    draw_element_protections
-    draw_attribute_protections
-  end
-
-  # protezione dagli elementi
-  def draw_element_protections
-    elements = $data_system.magic_elements.select { |ele| item.element_set.include? ele.id }
-    return if elements.empty?
-    if elements.size == 1
-      element = elements.first
-      draw_detail(Vocab::ARMOR_ELEMENT, element.name, element.icon_index)
-    else
-      draw_detail(Vocab::ARMOR_ELEMENT)
-      draw_icon_set(elements.collect { |ele| ele.icon_index })
-    end
-  end
-
-  # protezione dagli attributi
-  def draw_attribute_protections
-    attributes = $data_system.weapon_attributes.select { |a| item.element_set.include? a.id }
-    return if attributes.empty?
-    if attributes.size == 1
-      attr = attributes.first
-      draw_detail(Vocab::ARMOR_ATTRIBUTE, attr.name, attr.icon_index)
-    else
-      draw_detail(Vocab::ARMOR_ATTRIBUTE)
-      draw_icon_set(elements.collect { |attr| attr.icon_index })
-    end
-  end
-
-  # Disegna i bonus dell'armatura
-  def draw_armor_bonus
-    draw_feature(Vocab::ARMOR_PREVENT_CRITICAL) if item.prevent_critical
-    draw_feature(Vocab::ARMOR_HALF_MP_COST) if item.half_mp_cost
-    draw_feature(Vocab::ARMOR_AUTO_HP_RECOVER) if item.auto_hp_recover
-    draw_feature(Vocab::ARMOR_2EXP_GAIN) if item.double_exp_gain
-  end
-
-  # Disegna i dettagli personalizzati
-  def draw_item_custom_details
-    item.custom_dets.each do |detail|
-      draw_detail(detail[0], detail[1], detail[2])
-    end
-    item.custom_desc.each do |desc|
-      draw_detail(desc)
-    end
-    item.features.each do |feature|
-      draw_feature(feature)
-    end
+    draw_detail(Vocab.attribute(:selling_price), sprintf("%d %s", item.selling_price, Vocab.gold))
   end
 end
 
@@ -1206,6 +1164,7 @@ class Window_Item < Window_Selectable
         next unless item.category == @category or @category == :all
       end
       @data.push(item)
+      #noinspection RubyResolve
       if item.is_a?(RPG::Item) and item.id == $game_party.last_item_id
         self.index = @data.size - 1
       end
@@ -1269,17 +1228,10 @@ class Scene_Title < Scene_Base
 
   # Inizializza i parametri degli oggetti
   def load_h87_items
-    $data_items.each { |item|
-      next if item.nil?
-      item.load_custom_details
-    }
-    $data_weapons.each { |weapon|
-      next if weapon.nil?
-      weapon.load_custom_details
-    }
-    $data_armors.each { |armor|
-      next if armor.nil?
-      armor.load_custom_details
-    }
+    $data_items.compact.each { |item| item.load_custom_details }
+    $data_weapons.compact.each { |weapon| weapon.load_custom_details }
+    $data_armors.compact.each { |armor| armor.load_custom_details }
+    $data_skills.compact.each { |skill| skill.load_custom_details }
+    $data_states.compact.each { |state| state.load_custom_details }
   end
 end

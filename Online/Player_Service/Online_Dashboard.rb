@@ -83,14 +83,14 @@ class Window_OnlineDashboard < Window_Base
     exp = events.inject(1) { |sum, event| sum + (event.exp_rate / 100.0) - 1 }
     gold = events.inject(1) { |sum, event| sum + (event.gold_rate / 100.0) - 1 }
     drop = events.inject(1) { |sum, event| sum + (event.drop_rate / 100.0) - 1 }
-    jp = events.inject(1) { |sum, event| sum + (event.jp_rate / 100.0) - 1 }
+    ap = events.inject(1) { |sum, event| sum + (event.ap_rate / 100.0) - 1 }
 
-    bonus = [:exp, :gold, :jp, :drop].select { |bonus| eval(bonus.to_s) != 1}
+    bonus = [:exp, :gold, :ap, :drop].select { |bonus| eval(bonus.to_s) != 1}
     bonus_vocabs = {
         :exp => 'Punti esperienza',
         :gold => 'Monete ottenute',
         :drop => 'Probabilità di drop',
-        :jp => 'PA guadagnati'
+        :ap => 'PA guadagnati'
     }
 
     return if bonus.size == 0

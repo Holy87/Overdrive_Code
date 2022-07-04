@@ -20,25 +20,11 @@ end
 
 class RPG::System
   def gold_icon
-    Icon_Settings::GOLD_ICON
+    Icon.gold
   end
 
   def param_icon(symbol)
-    Icon_Settings::STAT_ICONS[symbol]
-  end
-
-  def two_swords_damage_rate
-    CPanel::TSWRate
-  end
-
-  # rateo di danno quando nel party
-  # c'è qualcuno con Altruismo
-  def skill_protect_rate
-    CPanel::PROTECTRATE
-  end
-
-  def self.default_save_version
-    CPanel::SAVE_VERSION
+    Icon.param(symbol)
   end
 end
 

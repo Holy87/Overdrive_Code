@@ -1,7 +1,7 @@
 #==============================================================================
 # ** Classi Oggetto di Holy87
 # Difficoltà utente: ★
-# v1.0
+# v1.01
 # -----------------------------------------------------------------------------
 # Descrizione:
 # Questo script ti permette di mostrare delle stelline sull'icona del'abilità,
@@ -284,10 +284,12 @@ class Window_Base < Window
   #-----------------------------------------------------------------------------
   def draw_item_name(item, x, y, enabled = true, width = 172)
     disegna_nome_oggetto(item, x, y, enabled, width)
-    if item != nil and item.tier != 0 and H87_ItemClass::SHOW_ON != :none
-      x += H87_ItemClass::SHOW_ON == :icon ? 0 : 24 + text_size(item.name).width + 1
-      draw_icon(H87_ItemClass::Icone[item.tier], x, y, enabled)
-    end
+    return if item.nil?
+    return unless item.is_a?(RPG::BaseItem)
+    return if item.tier == 0
+    H87_ItemClass::SHOW_ON == :none
+    x += H87_ItemClass::SHOW_ON == :icon ? 0 : 24 + text_size(item.name).width + 1
+    draw_icon(H87_ItemClass::Icone[item.tier], x, y, enabled)
   end
 end
 

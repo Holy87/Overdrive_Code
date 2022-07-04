@@ -344,7 +344,7 @@ module Keyboard
   # @param [Integer, Symbol] key
   # @param [Integer] buff_size
   # @return [String] the key text
-  def self.unicode_char(key, buff_size = 10)
+  def self.unicode_char(key, buff_size = 20)
     key = key_symbol_to_code(key)
     buffer = ' ' * buff_size
     # this step makes the game crash

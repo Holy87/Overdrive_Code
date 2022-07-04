@@ -101,9 +101,9 @@ class RPG::Enemy
   def init_steal_data
     return if @steal_data_init
     @steal_data_init = true
-    @steal_bonus = 0
     @steals = []
     @gold_steal = nil
+    @steal_bonus = 0
     self.note.split(/[\n\r]+/).each do |line|
       # noinspection RegExpSingleCharAlternation
       case line
@@ -115,8 +115,6 @@ class RPG::Enemy
         @steals.push(StealItem.new(type, $2.to_i, $3.to_i))
       when /<steal gold: [ ]*(\d+)>/i
         @gold_steal = $1.to_i
-      when /<steal bonus:[ ]*([+\-]\d+)%>/i
-        @steal_bonus = $1.to_f / 100
       else
         # type code here
       end

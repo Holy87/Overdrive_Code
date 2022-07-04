@@ -334,6 +334,11 @@ class Game_Actor < Game_Battler
     @step_skills.delete skill_id if @step_skills
     @battle_skills.delete skill_id if @battle_skills
   end
+
+  def on_player_walk
+    h87_turn_skills_on_player_walk
+    scale_step
+  end
 end
 
 #===============================================================================

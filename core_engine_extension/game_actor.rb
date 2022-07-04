@@ -18,6 +18,7 @@ class Game_Actor < Game_Battler
       alias :ex_attr_parameter_limit :parameter_limit
       alias :ex_attr_calc_hit :calc_hit
       alias :ex_attr_calc_eva :calc_eva
+      alias :ex_attr_normal_states :states
     end
     # Inizializza i valori prima di una battaglia
     def init_for_battle
@@ -144,6 +145,13 @@ class Game_Actor < Game_Battler
     def native_hit
       95
     end
+
+    # visualizza gli stati dell'eroe
+    # @return [Array<RPG::State>]
+    def states
+      (ex_attr_normal_states + perpetual_states).compact.
+        sort{|s1, s2| s2.priority <=> s1.priority}
+    end
   
     # @return [Fixnum, NilClass]
     def atk_animation_id
@@ -211,7 +219,15 @@ class Game_Actor < Game_Battler
     end
   
     def max_assimilable_skills
-      2 + features_sum(:max_assimilable)
+      assimilate_skill = skills.select { |skill| skill.assimilate? }.first
+      return 0 if skill.nil?
+      [1, assimilate_skill.max_assimilable]
+    end
+
+    # restituisce il numero di colpi disponibile prima che l'abilità
+    # assimilata scompaia
+    def assimilated_skill_rounds
+      1 # al momento non sono previsti colpi aggiuntivi
     end
   
     # @param [RPG::Skill] skill
@@ -375,7 +391,7 @@ class Game_Actor < Game_Battler
     end
   
     def apply_hp_limiter(value)
-      [[value, 0].max, maxhp_limit].min
+      [[value, 1].max, maxhp_limit].min
     end
   
     # Restituisce l'attacco dell'eroe. Riscritto completamente.
@@ -533,10 +549,15 @@ class Game_Actor < Game_Battler
     def mp_on_kill
       (maxmp * features_sum(:mp_on_kill)).to_i
     end
+
+    # restituisce gli stati atuo-attivati dagli equipaggiamenti
+    def perpetual_states
+      feature_array(:perpetual_states, true).map { |state_id| $data_states[state_id] }.compact
+    end
   
     # Restituisce i passi compiuti dall'eroe
     def steps
-      @steps = 0 if @steps.nil?; @steps
+      @steps ||= 0
     end
   
     # Modifica il valore dei passi dell'eroe
@@ -561,7 +582,7 @@ class Game_Actor < Game_Battler
       party_def = $game_party.defender
       if party_def != nil and !self.defender? and @hp_damage > 0
         old_dmg = @hp_damage
-        @hp_damage *= CPanel::PROTECTRATE
+        @hp_damage *= $data_system.skill_protect_rate
         defender = $game_party.defender
         defender.hp -= defender.calc_defender_damage(old_dmg, @hp_damage)
       end
@@ -578,7 +599,7 @@ class Game_Actor < Game_Battler
   
     # Modifica il danno se c'è un difensore
     # noinspection RubyResolve
-    def riduci_danno_evocazione
+    def apply_summon_damage_reduction
       return unless $game_temp.esper_active
       return if is_esper?
       domination = nil

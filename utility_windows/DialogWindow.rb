@@ -34,6 +34,8 @@ class Window_PopupDialog < Window_Selectable
     create_contents
     refresh
     center_window
+    self.x += SceneManager.scene.dialog_adjust_x
+    self.y += SceneManager.scene.dialog_adjust_y
   end
 
   # @param [Hash] choices
@@ -162,6 +164,14 @@ class Scene_MenuBase < Scene_Base
   def create_h87dialog_window
     @dialog_window = Window_PopupDialog.new
     @dialog_window.deactivate
+  end
+
+  def dialog_adjust_x
+    0
+  end
+
+  def dialog_adjust_y
+    0
   end
 
   # Mostra la finestra di dialogo. Puoi specificare anche la finestra che

@@ -143,7 +143,7 @@ class Scene_Dominations < Scene_MenuBase
   def create_powerup_effect_window
     x = @power_window.x
     width = @power_window.width
-    @emp_effect_window = Window_DominationJP.new(x, 0, width)
+    @emp_effect_window = Window_DominationAP.new(x, 0, width)
     @emp_effect_window.y = @command_window.y - @emp_effect_window.height
     @detail_window.bind(@emp_effect_window)
   end

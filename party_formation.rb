@@ -296,7 +296,7 @@ class Window_PartyMembers < Window_Selectable
     draw_actor_hp(actor, x, y, width)
     draw_actor_mp(actor, x, y + line_height, width)
     draw_actor_exp(actor, x, y + line_height * 2, width)
-    draw_actor_jp(actor, x, y + line_height * 3, width)
+    draw_actor_ap(actor, x, y + line_height * 3, width)
   end
 
   # Disegna le informazioni extra
@@ -310,8 +310,6 @@ class Window_PartyMembers < Window_Selectable
     draw_actor_state(actor, x + x_st, y, width - x_st)
     draw_actor_equip_icons(actor, x, y + line_height, width)
     draw_actor_basic_stats(actor, x, y + line_height * 2, width)
-    #draw_actor_exp(actor, x, y + line_height * 2, width)
-    #draw_actor_jp(actor, x, y + line_height * 3, width)
   end
 
   # disegna i parametri dell'eroe
@@ -771,11 +769,10 @@ class Scene_Battle < Scene_Base
 end
 
 class Game_Troop < Game_Unit
-  alias distribute_active_members_jp distribute_jp unless $@
+  alias distribute_active_members_ap distribute_ap unless $@
 
-  def distribute_jp
-    distribute_active_members_jp
-    jp = $game_troop.dead_members.inject(0) {|sum, enemy| sum + enemy.enemy.jp } * $game_party.reserve_exp_rate
-    $game_party.stand_by_members.compact.each { |member| member.earn_jp(jp.to_i) }
+  def distribute_ap
+    ap = (ap_total * $game_party.reserve_exp_rate).to_i
+    $game_party.stand_by_members.compact.each { |member| member.earn_ap(ap) }
   end
 end

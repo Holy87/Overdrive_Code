@@ -41,7 +41,7 @@ module SETS
       #Configura i vari set. A sinistra lo stato da attivare, nell'array tutti gli
       #equipaggiamenti necessari.
       #Stato => [Armatura1,Armatura2,Armatura3,...]
-      188=>[36,68],   #Armors Alluminio Huges
+      188=>[26,68],   #Armors Alluminio Huges
       190=>[6,31,77], #Armors Ferro + Scudo
       189=>[31,77],   #Armors Ferro
       191=>[30,76],   #Armors Folletto
@@ -157,3 +157,36 @@ class Game_Battler
     no_set_states + set_bonuses
   end
 end #game_battler
+
+class RPG::Armor
+  # bonus set. 0 se non ne ha, altrimenti restituisce
+  # lo status bonus
+  def set_bonus
+    @set_bonus ||= init_set_bonus
+  end
+
+  def has_variant_set?
+    return false if set_bonus == 0
+    return false if SETS::Armors[set_bonus + 1].nil?
+    (SETS::Armors[set_bonus] - SETS::Armors[set_bonus + 1]).empty?
+  end
+
+  # @return [Integer, nil]
+  def facultative_set_equip_id
+    return nil unless has_variant_set?
+    (SETS::Armors[set_bonus + 1] - SETS::Armors[set_bonus]).first
+  end
+
+  private
+
+  def init_set_bonus
+    @set_bonus = 0
+    SETS::Armors.each_pair do |state_id, armors|
+      if armors.include? @id
+        @set_bonus = state_id
+        return @set_bonus
+      end
+    end
+    @set_bonus
+  end
+end

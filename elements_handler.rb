@@ -19,6 +19,19 @@ module Element_Settings
       15 => 110, 16 => 111, 26 => 1278
   }
 
+  ELEMENT_COLORS = {
+    7 => Color.new(243, 125, 130),
+    8 => Color.new(247, 122, 60),
+    9 => Color.new(255, 30, 0),
+    10 => Color.new(195, 229, 245),
+    11 => Color.new(255, 212, 86),
+    12 => Color.new(58, 194, 237),
+    13 => Color.new('#80ab44'),
+    14 => Color.new('#86eec1'),
+    15 => Color.new('#f7ea8d'),
+    16 => Color.new('#c55bc3')
+  }
+
   # Tabella dei rate di danno per attributi arma, elementi e tipi nemici
   RATE_TABLE = {
       # RANK:             A    B    C    D   E  F
@@ -72,6 +85,13 @@ module Element_Settings
   # @param [Integer] element_id
   def self.icon(element_id)
     ICONS[element_id] || 0
+  end
+
+  # element color
+  # @param [Integer] element_id
+  # @return [Color]
+  def self.color(element_id)
+    ELEMENT_COLORS[element_id]
   end
 
   # attribute type
@@ -258,12 +278,15 @@ class RPG::Element_Data
   attr_reader :name
   # @return [Integer] the element type
   attr_reader :type
+  # @return [Color] the element color
+  attr_reader :color
 
   def initialize(element_id)
     @id = element_id
     @icon_index = Element_Settings::icon element_id
     @name = $data_system.elements[element_id]
     @type = Element_Settings::type element_id
+    @color = Element_Settings::color element_id
   end
 
   # restituisce la tabella dei rate
@@ -389,18 +412,19 @@ class Game_Battler
     result
   end
 
+  # Non funziona più -> sovrascritto negli attributi aggiuntivi
   # @param [Game_Actor, Game_Enemy] user
   # @param [RPG::UsableItem, RPG::Skill, RPG::Item] obj
   def make_obj_damage_value(user, obj)
     h87_elements_make_obj_damage_value(user, obj)
-    @hp_damage *= max_amplifier(user, obj)
-    @mp_damage *= max_amplifier(user, obj)
+    @hp_damage *= max_element_amplifier(user, obj)
+    @mp_damage *= max_element_amplifier(user, obj)
   end
 
   # @param [RPG::UsableItem] obj
   # @param [Game_Enemy, Game_Actor, Game_Battler] user
   # @return [Float]
-  def max_amplifier(user, obj)
+  def max_element_amplifier(user, obj)
     return 1.0 unless obj.is_a?(RPG::Skill)
     return user.heal_power_rate.to_f if obj.base_damage < 0
     obj.element_set.max_by{|ele_id| user.element_amplifier(ele_id)} || 1.0
@@ -421,7 +445,7 @@ class Game_Battler
   # @param [RPG::Skill] obj
   def apply_state_changes(obj)
     h87_elements_apply_state_changes(obj)
-    apply_element_effect_strategy(obj)
+    #apply_element_effect_strategy(obj) TODO: terminare la modifica
   end
 
   # @param [RPG::Skill, Game_Battler] obj
@@ -469,19 +493,19 @@ class Game_Battler
   end
 
   def burning?
-    states.include?($data_states[Element_Settings::BURN_STATE_ID])
+    has_state?($data_states[Element_Settings::BURN_STATE_ID])
   end
 
   def iced?
-    states.include?($data_states[Element_Settings::ICED_STATE_ID])
+    has_state?($data_states[Element_Settings::ICED_STATE_ID])
   end
 
   def shocked?
-    states.include?($data_states[Element_Settings::SHOCK_STATE_ID])
+    has_state?($data_states[Element_Settings::SHOCK_STATE_ID])
   end
 
   def wet?
-    states.include?($data_states[Element_Settings::WET_STATE_ID])
+    has_state?($data_states[Element_Settings::WET_STATE_ID])
   end
 end
 

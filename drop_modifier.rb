@@ -31,8 +31,8 @@
 #   aggiunto a status ed equipaggiamenti, aumenta la probabilità di
 #   drop di tutti i nemici del x%. Vale anche se il nemico è affetto
 #   da uno status che ha quel tag.
-# ● <jp rate: +x%>
-#   aggiunto a status ed equipaggiamenti, aumenta i JP ottenuti dai
+# ● <ap rate: +x%>
+#   aggiunto a status ed equipaggiamenti, aumenta i PA ottenuti dai
 #   nemici
 
 #===============================================================================
@@ -49,7 +49,7 @@ module Drop_Modifier_Settings
       :exp_rate => 'exp_rate',
       :gold_rate => 'gold_rate',
       :drop_rate => 'drop_rate',
-      :jp_rate => 'jp_rate'
+      :ap_rate => 'ap_rate'
   }
 
   # Valori di default dei parametri di gioco (nel caso non sia attivo o non sia
@@ -57,7 +57,7 @@ module Drop_Modifier_Settings
   DROP_RATE = 1.0   # rate dei drop
   GOLD_RATE = 1.0   # moltiplicatore oro
   EXP_RATE = 1.0    # moltiplicatore exp
-  JP_RATE = 1.0     # moltiplicatore JP
+  AP_RATE = 1.0     # moltiplicatore AP
 end
 
 #===============================================================================
@@ -69,7 +69,7 @@ module Drop_Modifier_Core
   #--------------------------------------------------------------------------
   REGEXP_EXP_BONUS = /<exp rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_GOLD_BONUS = /<gold rate:[ ]*([+\-]\d+)[%％]>/i
-  REGEXP_JP_BONUS = /<jp rate:[ ]*([+\-]\d+)[%％]>/i
+  REGEXP_AP_BONUS = /<ap rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_DROP_BONUS = /<drop rate:[ ]*([+\-]\d+)[%％]>/i
   REGEXP_ITEM_DROP = /<drop (item|armor|weapon)[ ]+(\d+):[ ]*(.+)>/i
   # per le configurazioni precedenti con KGC::ItemDrop
@@ -100,8 +100,8 @@ module Game_Metrics
     data[:gold]
   end
 
-  def self.jp_rate
-    data[:jp]
+  def self.ap_rate
+    data[:ap]
   end
 
   # restituisce l'hash di tutti i moltiplicatori
@@ -115,7 +115,7 @@ module Game_Metrics
         :exp => DROP_RATE,
         :gold => GOLD_RATE,
         :drop => DROP_RATE,
-        :jp => JP_RATE
+        :ap => AP_RATE
     }
 
     return @metrics unless USE_ONLINE_FEATURES
@@ -130,7 +130,7 @@ module Game_Metrics
     @metrics[:exp] = online_data(server_data, :exp_rate) || @metrics[:exp]
     @metrics[:gold] = online_data(server_data, :gold_rate) || @metrics[:gold]
     @metrics[:drop] = online_data(server_data, :drop_rate) || @metrics[:drop]
-    @metrics[:jp] = online_data(server_data, :jp_rate) || @metrics[:jp]
+    @metrics[:ap] = online_data(server_data, :ap_rate) || @metrics[:ap]
     @metrics
   end
 
@@ -139,7 +139,7 @@ module Game_Metrics
   # @return [Float,nil]
   def self.online_data(server_data, symbol)
     return nil unless server_data[DATA_BUCKETS[symbol]]
-    server_data[DATA_BUCKETS[:exp_rate]] / 100.0
+    server_data[DATA_BUCKETS[symbol]] / 100.0
   end
 
   # @return [Hash]
@@ -157,7 +157,7 @@ module Drop_Common
   attr_reader :exp_bonus
   attr_reader :drop_bonus
   attr_reader :gold_bonus
-  attr_reader :jp_bonus
+  attr_reader :ap_bonus
 
   # inizializzazione dei parametri
   def drop_attr_init
@@ -174,8 +174,8 @@ module Drop_Common
         @exp_bonus = $1.to_f / 100
       when Drop_Modifier_Core::REGEXP_GOLD_BONUS
         @gold_bonus = $1.to_f / 100
-      when Drop_Modifier_Core::REGEXP_JP_BONUS
-        @jp_bonus = $1.to_f / 100
+      when Drop_Modifier_Core::REGEXP_AP_BONUS
+        @ap_bonus = $1.to_f / 100
       else
         # niente
       end
@@ -268,9 +268,9 @@ class RPG::Enemy
     (@exp * $game_system.exp_rate).to_i
   end
 
-  alias normal_jp_earn jp unless $@
-  def jp
-    (normal_jp_earn * $game_system.jp_rate).to_i
+  alias :ap_without_bonus :ap unless $@
+  def ap
+    (ap_without_bonus * $game_system.ap_rate).to_i
   end
 
   # creates a custom drop item
@@ -357,10 +357,10 @@ class Game_System
     Game_Metrics.exp_rate
   end
 
-  # the jp rate
+  # the ap rate
   # @return [Float]
-  def jp_rate
-    Game_Metrics.jp_rate
+  def ap_rate
+    Game_Metrics.ap_rate
   end
 end
 
@@ -383,9 +383,9 @@ class Game_Battler
     features_sum :gold_bonus
   end
 
-  # the jp bonus
-  def jp_bonus
-    features_sum :jp_bonus
+  # the ap bonus
+  def ap_bonus
+    features_sum :ap_bonus
   end
 end
 
@@ -453,18 +453,15 @@ end
 # ** Game_Actor
 #===============================================================================
 class Game_Actor < Game_Battler
-  alias h87_drop_gain_exp gain_exp unless $@
-  alias h87_drop_earn_jp earn_jp unless $@
+  alias earn_exp_wo_bonus :gain_exp unless $@
+  alias earn_ap_wo_bonus :earn_ap unless $@
 
   # fa ottenere l'esperienza all'eroe
   # @param [Boolean] show
   # @param [Integer] exp
   def gain_exp(exp, show)
-    h87_drop_gain_exp((exp * exp_bonus).to_i, show)
-  end
-
-  def earn_jp(amount = 0)
-    h87_drop_earn_jp((amount * jp_bonus).to_i)
+    #noinspection RubyArgCount
+    earn_exp_wo_bonus((exp * exp_bonus).to_i, show)
   end
 end
 

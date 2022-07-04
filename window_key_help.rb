@@ -5,7 +5,6 @@
 # schermate Status, Skills, Equip ecc...
 #===============================================================================
 class Window_KeyHelp < Window_Base
-  attr_accessor :columns
   #--------------------------------------------------------------------------
   # * Inizializzazione
   # columns: numero di colonne
@@ -17,6 +16,7 @@ class Window_KeyHelp < Window_Base
     @columns = columns
     @controller_connected = Input.controller_connected?
   end
+
   #--------------------------------------------------------------------------
   # * restituisce il rettangolo del comando
   # @param [Rect] index
@@ -28,6 +28,7 @@ class Window_KeyHelp < Window_Base
     y = 0
     Rect.new(x, y, r_width, r_height)
   end
+
   #--------------------------------------------------------------------------
   # * aggiunge il metodo per controllare la connessione del controller
   #--------------------------------------------------------------------------
@@ -38,8 +39,9 @@ class Window_KeyHelp < Window_Base
 
   # aggiorna tutti i comandi
   def refresh
-    @commands.each_with_index {|command, index| set_command(index, command, true)}
+    @commands.each_with_index { |command, index| set_command(index, command, true) }
   end
+
   #--------------------------------------------------------------------------
   # * determina se un controller è stato connesso o disconnesso
   #--------------------------------------------------------------------------
@@ -52,10 +54,20 @@ class Window_KeyHelp < Window_Base
       false
     end
   end
-  #--------------------------------------------------------------------------
-  # * restituisce il numero di colonne
-  #--------------------------------------------------------------------------
-  def columns; @columns; end
+
+  # restituisce il numero di colonne
+  def columns
+    @columns
+  end
+
+  # imposta un numero di colonne e aggiorna la finestra
+  # @param [Fixnum] value
+  def columns=(value)
+    return if @columns == value
+    @columns = value
+    refresh
+  end
+
   #--------------------------------------------------------------------------
   # * imposta il comando su una colonna
   # @param [Integer] index
@@ -67,7 +79,7 @@ class Window_KeyHelp < Window_Base
     @commands[index] = new_command
     rect = command_rect(index)
     self.contents.clear_rect(rect)
-    new_command.keys.each_with_index {|key, i|
+    new_command.keys.each_with_index { |key, i|
       draw_key_icon(key, rect.x + ICON_WIDTH * i, rect.y, new_command.enabled?)
     }
     rect.x += ICON_WIDTH * new_command.keys.size
@@ -75,6 +87,7 @@ class Window_KeyHelp < Window_Base
     change_color(normal_color, new_command.enabled?)
     draw_text(rect, new_command.text)
   end
+
   #--------------------------------------------------------------------------
   # * imposta il comando su una colonna passando i parametri
   # @param [Integer] index
@@ -86,6 +99,7 @@ class Window_KeyHelp < Window_Base
     new_command = Key_Command_Container.new(keys, text, enabled)
     set_command(index, new_command)
   end
+
   #--------------------------------------------------------------------------
   # * cambia l'abilitazione del comando
   #--------------------------------------------------------------------------
@@ -94,6 +108,7 @@ class Window_KeyHelp < Window_Base
     @commands[index].enabled = enabled
     set_command(index, @commands[index], true)
   end
+
   #--------------------------------------------------------------------------
   # * reimposta il testo del comando
   #--------------------------------------------------------------------------
@@ -129,6 +144,7 @@ class Key_Command_Container
   def enabled?
     @enabled
   end
+
   #--------------------------------------------------------------------------
   # * confronto
   # @param [Key_Command_Container] other

@@ -612,7 +612,7 @@ class Window_EnemyInfo < Window_DataInfo
     draw_text(x, y, width, line_height, enemy.enemy_type, 2)
     draw_text(x, y + line_height, width, line_height, enemy.level, 2)
     draw_text(x, y + line_height * 2, width, line_height, enemy.exp, 2)
-    draw_text(x, y + line_height * 3, width, line_height, enemy.jp, 2)
+    draw_text(x, y + line_height * 3, width, line_height, enemy.ap, 2)
     draw_text(x, y + line_height * 4, width, line_height, enemy.gold, 2)
   end
 

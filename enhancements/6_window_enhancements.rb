@@ -239,8 +239,12 @@ class Window_Base < Window
   # @param [Integer] width      larghezza
   # @param [Integer] height     altezza (predefinito testo)
   # @param [Color] color        colore (predefinito scuro)
-  def draw_bg_rect(x, y, width = contents_width, height = line_height, color = sc1)
-    contents.fill_rect(x + 1, y + 1, width - 2, height - 2, color)
+  def draw_bg_rect(x, y, width = contents_width, height = line_height, color = sc1, color2 = nil)
+    if color2
+      contents.gradient_fill_rect(x + 1, y + 1, width - 2, height - 2, color, color2, true)
+    else
+      contents.fill_rect(x + 1, y + 1, width - 2, height - 2, color)
+    end
   end
 
   # Disegna la barra di sfondo al parametro con bordi smussati
@@ -249,12 +253,21 @@ class Window_Base < Window
   # @param [Integer] width      larghezza
   # @param [Integer] height     altezza (predefinito testo)
   # @param [Color] color        colore (predefinito scuro)
-  def draw_bg_srect(x, y, width = contents_width, height = line_height, color = sc1)
-    contents.fill_rect(x + 1, y + 1, width - 2, height - 2, color)
-    contents.clear_rect(x + 1, y + 1, 1, 1)
-    contents.clear_rect(x + 1, height - 2, 1, 1)
-    contents.clear_rect(width - 2, y + 1, 1, 1)
-    contents.clear_rect(width - 2, height - 2, 1, 1)
+  # @param [Color, nil] color2  colore se gradiente
+  def draw_bg_srect(x, y, width = contents_width, height = line_height, color = sc1, color2 = nil)
+    draw_bg_rect(x, y, width, height, color, color2)
+    contents.set_pixel(x + 1, y + 1, Color::TRANSPARENT)
+    contents.set_pixel(x + 1, y + height - 2, Color::TRANSPARENT)
+    contents.set_pixel(x + width - 2, y + 1, Color::TRANSPARENT)
+    contents.set_pixel(x + width - 2, y + height - 2, Color::TRANSPARENT)
+  end
+
+  # Disegna la barra di sfondo con colore dando un Rect
+  # @param [Rect] rect
+  # @param [Color] color
+  # @param [Color, nil] color2
+  def draw_bg_from_rect(rect, color = sc1, color2 = nil)
+    draw_bg_srect(rect.x, rect.y, rect.width, rect.height, color, color2)
   end
 
   # Restituisce le coordinate di una determinata riga della finestra

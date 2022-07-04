@@ -314,6 +314,7 @@ class Scene_Battle < Scene_Base
     return if skill.nil?
     ab.set_last_skill_used skill.id
     ab.anger -= ab.calc_anger_cost(skill) if ab.charge_gauge?
+    ab.anger = 0 if skill.clear_anger
     if ab.assimilated?(skill)
       ab.consume_assimilated_skill(skill)
     end
@@ -350,7 +351,7 @@ class Scene_Battle < Scene_Base
     battler.double_damage = battler.hp_damage != 0 && battler.mp_damage != 0
     sprite.damage_pop(damage)
     force_battler_animation(battler, animation_id) if animation_id > 0
-    battler.execute_damage(battler, true)
+    battler.execute_damage_without_action(battler)
   end
 
   # mostra l'animazione sul battler
@@ -363,10 +364,12 @@ class Scene_Battle < Scene_Base
   end
 
   # Alias di fine turno
-  def turn_end(param = nil)
-    process_autostate_skill
+  # @param [Game_Battler] param
+  def turn_end(member = nil)
+    process_autostate_skill(member)
+    process_turn_resets(member)
     # noinspection RubyArgCount
-    h87_attragg_turn_end(param)
+    h87_attragg_turn_end(member)
     infect_plague
     charge_anger
   end
@@ -387,16 +390,25 @@ class Scene_Battle < Scene_Base
 
   # @param [Game_Battler] battler
   def process_autostate_skill(battler = @active_battler)
+    return if battler.nil?
     skill = battler.action.skill
     return if skill.nil?
     return if skill.autostate.nil?
-    return if battler.states.include?($data_states[skill.autostate.state_id])
+    return if battler.has_state?(skill.autostate.state_id)
     return if skill.autostate.state_rate <= rand
     state = $data_states[skill.autostate.state_id]
     return if state.message1.empty?
     return if state.priority < 1
     text = sprintf(state.message1.gender(battler.gender), battler.name)
     push_popup(text, state.icon_index)
+  end
+
+  # @param [Game_Battler] battler
+  def process_turn_resets(battler = @active_battler)
+    return if battler.nil?
+    skill = battler.action.skill
+    return if skill.nil?
+    @cumuled_damage = 0 if skill.reset_damage
   end
 
   # Processo di vittoria
@@ -465,18 +477,6 @@ class Window_Skill < Window_Selectable
     if @actor.assimilated?(skill)
       draw_icon(H87AttrSettings::ASSIMILATE_ICON, rect.x, rect.y)
     end
-  end
-end
-
-module Vocab
-  # Vocabolo Furia
-  def self.anger
-    'FU'
-  end
-
-  # Vocabolo Furia (abbreviato)
-  def self.fu_a
-    anger
   end
 end
 
@@ -605,6 +605,9 @@ class Game_BattleAction
     if obj.for_opponents_with_state?
       return opponents_unit.alive_members.
         select { |member| obj.target_states.all? { |state_id| member.state_ids.include?(state_id) } }
+    end
+    if obj.for_other_friends?
+      return friends_unit.alive_members.select {|member| member.id != self.id}
     end
     $game_temp.is_meele_skill = meele_and_actor?
     targets = h87attr_make_obj_targets(obj)

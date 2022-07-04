@@ -1,6 +1,6 @@
 $imported = {} if $imported == nil
 $imported["H87_EquipEnchant"] = true
-#==============================================================================
+# ==============================================================================
 # ** H87Enchant
 #------------------------------------------------------------------------------
 #  Modulo di impostazioni e supporto per gli incantamenti
@@ -68,6 +68,7 @@ module H87Enchant
   # pnt: fa ignorare la difesa del bersaglio
   # scn: abilità scanner
   # duk: contrattacca quando evade
+  # atd: bonus attacco normale
   WEAPON_TAGS = {
       1 => ["Stordente", "sta 8", "Probabilità di stordire con l'attacco.", 971],
       2 => ["Velenoso", "sta 2", "Probabilità di avvelenare con l'attacco.", 965],
@@ -116,7 +117,7 @@ module H87Enchant
       45 => ["Furfante", "stl +30", "Aumenta le probabilità di furto del 30%.", 991],
       46 => ["Assorbi", "ele 8 +30", "Aumenta le abilità di assorbimento del 30%.", 1098],
       47 => ["Parassita", "vmp +5", "Assorbe il 5% di tutti i danni inflitti", 1022],
-      48 => ["Medico", "hea +30" "Potenza delle magie curative +50%.", 1021],
+      48 => ["Medico", "hea +30" "Potenza delle magie curative +30%.", 1021],
       49 => ["Resistenza", "lhp hp def +50", "Aumenta la Difesa del 50% quando i PV sono bassi.", 1225],
       50 => ["Animalista", "dmb +20", "Aumenta la durata delle evocazioni.", 1019],
       51 => ["Vita2", "mhp +15", "Aumenta i PV massimi del 15%.", 976],
@@ -204,10 +205,31 @@ module H87Enchant
       151 => ['Veggente', 'scn', 'Permette di conoscere le debolezze del bersaglio', 815],
       152 => ['Opportunista', 'duk, eva +10', 'Aumenta l\'evasione. Contrattacca su schivata', 1071],
 
-      # Abilità notte nera
+      # Abilità notte lucente
       153 => ['Caricante', 'amp 4, ico 570', 'Ogni volta che si esegue un attacco normale, recupera 4 PM.'],
-      154 => ['Energica', 'ela 7 +30 , ico 571', 'Potenzia i danni da Energia del 30%.'],
+      154 => ['Santa', 'ele 15, ico 571, hea +30', 'Aquisisce l\'elemento Sacro e amplifica le cure del 30%.'],
       155 => ['Energica', 'ela 7 +30 , ico 572', 'Potenzia i danni da Energia del 30%.'],
+      156 => ['Velenosa', 'sta 2, ico 573', 'Avvelena i nemici colpiti.'],
+
+      157 => ['Pesante','atd +15', 'Aumenta il danno dell\'attacco normale del 15%'],
+
+
+      # Abilità agli accessori (Work in progress)
+      500 => ['Tagliente', 'ela 2 +10', 'Aumenta i danni da Taglio del 10%.'],
+      501 => ['Scorticante', 'ela 1 +10', 'Aumenta i danni da Lacerazione del 10%.'],
+      502 => ['Penetrante', 'ela 3 +10', 'Aumenta i danni da Perforazione del 10%.'],
+      503 => ['Indurente', 'ela 4 +10', 'Aumenta i danni da Impatto del 10%.'],
+      504 => ['Energia+', 'ela 7 +15', 'Aumenta i danni da Energia del 15%.'],
+      505 => ['Vitalità+', 'ela 8 +15', 'Aumenta i danni da Vitalità del 15%.'],
+      506 => ['Fuoco+', 'ela 9 +15', 'Aumenta i danni da Fuoco del 15%.'],
+      507 => ['Ghiaccio+', 'ela 10 +15', 'Aumenta i danni da Ghiaccio del 15%.'],
+      508 => ['Lampo+', 'ela 11 +15', 'Aumenta i danni da Elettricità del 15%.'],
+      509 => ['Acqua+', 'ela 12 +15', 'Aumenta i danni da Acqua del 15%.'],
+      510 => ['Terra+', 'ela 13 +15', 'Aumenta i danni da Terra del 15%.'],
+      511 => ['Vento+', 'ela 14 +15', 'Aumenta i danni da Vento del 15%.'],
+      512 => ['Luce+', 'ela 15 +15', 'Aumenta i danni da Luce del 15%.'],
+      513 => ['Oscuro+', 'ela 16 +15', 'Aumenta i danni da Oscurità del 15%.'],
+      514 => ['Cura+', '', 'Aumenta la potenza delle cure del 15%.'],
 
 
 
@@ -470,6 +492,8 @@ module EquipEnchant
       @escape_bonus += value
     when :ela
       @element_amplify[id] = value
+    when :atd
+      @normal_attack_bonus = value
     when :hea
       @heal_amplify = value
     when :rec
@@ -499,7 +523,7 @@ module EquipEnchant
     when :dmb
       @dom_bonus += value / 100.0
     when :stl
-      @__steal_prob_plus += value
+      @steal_bonus += value
     when :ico
       @icon_index = value
     when :lhm
@@ -513,9 +537,9 @@ module EquipEnchant
     when :ref
       @physical_reflect += value
     when :pls
-      @state_inflict_perc += value
+      @state_inf_bon += value
     when :sid
-      @state_inflict_durability += value
+      @state_inf_dur += value
     when :mat
       @magic_attack += value
     when :amp
@@ -529,7 +553,7 @@ module EquipEnchant
     when :kir
       @anger_kill += value.to_i
     when :pnt
-      @qualities.push(:avoid_defense)
+      @qualities.push(:ignore_defense)
     when :duk
       @qualities.push(:parry)
     else
@@ -541,26 +565,14 @@ module EquipEnchant
   #   effect: effetto [pv/pm,parametro]
   # @param [Array] effect
   def setmhplow(effect)
-    param1 = effect[1]
-    param2 = effect[2]
-    stat = effect[3].to_f / 100.0
-    return unless [:hp, :mp].include?(param1)
-    return unless [:atk, :def, :spi, :agi, :cri, :hit, :eva, :odd].include?(param2)
-    @hmplow[param1] = {} if @hmplow[param1].nil?
-    @hmplow[param1][param2] = stat
+    set_hp_mp_low_param(effect[1], effect[2], effect[3].to_i)
   end
 
   # Aggiunge l'effetto a HP/MP bassi in percentuale
   #   effect: effetto [pv/pm,parametro]
   # @param [Array] effect
   def setmhplowp(effect)
-    param1 = effect[1]
-    param2 = effect[2]
-    stat = effect[3].to_f / 100.0
-    return unless [:hp, :mp].include?(param1)
-    return unless [:atk, :def, :spi, :agi].include?(param2)
-    @hmplowp[param1] = {} if @hmplowp[param1].nil?
-    @hmplowp[param1][param2] = stat
+    set_hp_mp_low_param_per(effect[1], effect[2], effect[3].to_i)
   end
 
   # Restituisce l'ID reale dell'equip
@@ -786,14 +798,10 @@ class RPG::Weapon
   # Restituisce la descrizione dell'arma
   def description
     if powered?
-      @description + "|\\c[14]" + @power_description
+      separator = @description.include?('|') ? ' ' : '|'
+      @description + separator + '\c[14]' + @power_description
     else
-      if power_up_possible?
-        extra = '|\\c[12]Potenziamenti possibili: ' + power_ups.map { |x| x.name } * ', '
-      else
-        extra = ''
-      end
-      @description + extra
+      @description
     end
   end
 

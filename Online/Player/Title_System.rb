@@ -47,14 +47,14 @@ module Player_Titles
       40 => ['Pantofolaio', "Titolo conferito per aver completato i lavori alla casa."],
       41 => ['Fabbro in erba', "Titolo conferito per aver forgiato più di 40 equipaggiamenti.",1],
       42 => ['Milionario',"Titolo conferito per essere riuscito ad arrivare|a 1.000.000 di monete."],
-      43 => ['Coniglio', "Titolo conferito per essere fuggito spess dalle battaglie.|La ritirata tattica non è mai una vergogna!"],
+      43 => ['Coniglio', "Titolo conferito per essere fuggito spesso dalle battaglie.|La ritirata tattica non è mai una vergogna!"],
       44 => ['Nerd', "Conferito per aver raggiunto le 80 ore di gioco!"],
       45 => ['Festaiolo',"Conferito per aver partecipato ad almeno un evento.",2],
       46 => ['Cheater', "Conferito per aver avviato il gioco in modalità test.|Non barare! :(", 3],
       47 => ['Spirito natalizio', "Conferito per aver giocato a Natale.|Buone feste!",1],
-      48 => ['Bel nome', "Conferito perché ti chiami come il creatore di Overdrive", 2],
+      48 => ['(Bel nome)', "Conferito perché ti chiami come il creatore di Overdrive", 2],
       49 => ['Nabbo', "Conferito per aver perso contro degli Slime. Sul serio!?", 1, true], # da programmare
-      50 => ['Apeiron', "Conferito per aver inflitto un danno di 99999.", 3] # da programmare
+      50 => ['Apeiron', "Conferito per aver inflitto un colpo da 99999PV.", 3] # da programmare
   }
 
   # alcuni titoli possono essere sbloccati quando si conquista un nuovo obiettivo.

@@ -62,7 +62,7 @@ module Gift_Code_Service
       when :gold
         $game_party.gain_gold(n)
       when :ap
-        $game_party.all_members.each { |member| member.earn_jp(n) }
+        $game_party.all_members.each { |member| member.earn_ap(n) }
       when :title
         $game_system.unlock_title(n)
       when RPG::Weapon, RPG::Armor, RPG::Item
@@ -201,7 +201,7 @@ class Window_GiftCode < Window_Selectable
     when :gold
       draw_text(rect, sprintf('%d %s', reward[1], Vocab.currency_unit))
     when :ap
-      draw_text(rect, sprintf('%d %s', reward[1], Vocab.jp))
+      draw_text(rect, sprintf('%d %s', reward[1], Vocab.ap))
     when :title
       draw_text(rect, sprintf('%s: %s', Vocab.player_title, Player_Titles.get_title(reward[1]).name))
     else

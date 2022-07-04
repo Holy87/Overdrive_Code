@@ -156,6 +156,7 @@ module Sprite_Engine
   def sprite_engine_init
     @float_x = 0.0
     @float_y = 0.0
+    @moving = false
   end
 
   # Aggiornamento
@@ -223,26 +224,78 @@ module Sprite_Engine
   #   new_x: coordinata X destinazione
   #   new_y: coordinata Y destinazione
   #   speed: velocità (1 di default)
-  # @param [Integer] new_x
-  # @param [Integer] new_y
-  # @param [Integer] speed
-  def set_move(new_x, new_y, speed = 1)
+  # @param [Integer, Symbol] new_x
+  # @param [Integer, Symbol] new_y
+  # @param [Integer] x_speed
+  # @param [Integer] y_speed
+  # @param [Method] method
+  def move_to(new_x, new_y, x_speed = 1, y_speed = 1, method = nil)
     new_x = self.x if new_x == :same
     new_y = self.y if new_y == :same
     @new_pos_x = new_x
     @new_pos_y = new_y
-    @set_move_speed = [[speed, 0.01].max, 20].min
+    @x_state = self.x
+    @y_state = self.y
+    @x_speed = [[x_speed, 0.01].max, 20].min
+    @y_speed = [[y_speed, 0.01].max, 20].min
+    @move_handler = method
+    @moving = true
   end
+
+  # ferma il movimento dello sprite
+  def stop_move
+    @new_pos_x = nil
+    @new_pos_y = nil
+    @x_state = nil
+    @y_state = nil
+    @move_handler = nil
+    @moving = false
+  end
+
+  private
 
   # Aggiornamento del movimento
   def udpate_normal_move
-    return if @new_pos_x.nil?
-    self.x += (self.x <=> @new_pos_x)
-    self.y += (self.y <=> @new_pos_y)
-    if self.x == @new_pos_x && self.y == @new_pos_y
-      @new_pos_x = nil
-      @new_pos_y = nil
+    return unless @moving
+    if @new_pos_x.nil? and @new_pos_y.nil?
+      @moving = false
+      call_move_handler
+    else
+      update_x_move
+      update_y_move
     end
+  end
+
+  def update_x_move
+    return if @new_pos_x.nil?
+    if (@x_state - @new_pos_x).abs <= @x_speed
+      self.x = @new_pos_x
+      @new_pos_x = nil
+      return
+    end
+    @x_state += (@new_pos_x <=> self.x) * @x_speed
+    self.x = @x_state.to_i
+  end
+
+  def update_y_move
+    return if @new_pos_y.nil?
+    if (@y_state - @new_pos_y).abs <= @y_speed
+      self.y = @new_pos_y
+      @new_pos_y = nil
+      return
+    end
+    @y_state += (@new_pos_y <=> self.y) * @y_speed
+    self.y = @y_state.to_i
+  end
+
+  def destination_ok?(coord1, coord2)
+    (coord1 - coord2).abs <= @set_move_speed
+  end
+
+  # Chiama l'evento di fine movimento
+  def call_move_handler
+    return if @move_handler.nil?
+    @move_handler.call
   end
 
   # Aggiornamento dello Zoom

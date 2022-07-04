@@ -7,6 +7,11 @@ $imported = {} if $imported == nil
 $imported["H87-Spark_Engine"] = 1.0
 module Spark_Engine
   DEFAULT_SPARK_IMAGE = 'Spark'
+  RANDOM = 0
+  UP = 8
+  DOWN = 2
+  RIGHT = 6
+  LEFT = 4
   #--------------------------------------------------------------------------
   # * Variabili d'istanza pubbliche
   #--------------------------------------------------------------------------
@@ -14,6 +19,7 @@ module Spark_Engine
   attr_accessor :spark_density    # densità di creazione delle scintille
   attr_accessor :spark_bitmap     # bitmap delle scintille
   attr_accessor :spark_spawn_ray  # raggio di comparsa delle scintille
+  attr_accessor :spark_direction
   #--------------------------------------------------------------------------
   # * Inizializzazione delle variabili
   #--------------------------------------------------------------------------
@@ -23,6 +29,7 @@ module Spark_Engine
     @spark_active = false
     @spark_density = 10
     @spark_spawn_ray = 10
+    @spark_direction = RANDOM
     @is_spark = false
   end
   #--------------------------------------------------------------------------
@@ -77,7 +84,21 @@ module Spark_Engine
     spark_y = rand(@spark_spawn_ray*2) - @spark_spawn_ray
     spark.x = spark_x + sprite_center_x
     spark.y = spark_y + sprite_center_y
-    spark.set_direction(spark.x - sprite_center_x, spark.y - sprite_center_y)
+    case @spark_direction
+    when RANDOM
+      spark.set_direction(spark.x - sprite_center_x, spark.y - sprite_center_y)
+    when UP
+      spark.set_direction(0, (rand(2)+1) * -1)
+    when DOWN
+      spark.set_direction(0, (rand(2)+1))
+    when LEFT
+      spark.set_direction((rand(2)+1) * -1, 0)
+    when RIGHT
+      spark.set_direction((rand(2)+1), 0)
+    else
+      spark.set_direction(0, 0)
+    end
+
     spark.opacity = self.opacity
     @sparks.push(spark)
   end

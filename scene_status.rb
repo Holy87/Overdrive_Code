@@ -68,6 +68,9 @@ module StatusSettings
                          :description => 'Bonus per la probabilità di infliggere stati negativi ai nemici.',
                          :format => '%+d%%',
                          :default => 0},
+      :normal_attack_bonus => {:text => 'Danno att. normale',
+                               :description => 'Rappresenta il danno causato con l\'attacco normale.',
+                               :format => '%d%%', :default => 100, :formula => 'x*100'},
       :state_inf_dur => {
           :text => 'Bonus durata stati',
           :description => 'Bonus durata in turni per gli stati che causa ad|alleati e nemici.',
@@ -240,7 +243,7 @@ module StatusSettings
   end
 
   def self.smooth_speed
-    2;
+    2
   end
 end
 
@@ -266,31 +269,31 @@ module Vocab
   # Consiglio della finestra d'aiuto
   # @return [String]
   def self.help_tip
-    'Seleziona per dettagli';
+    'Seleziona per dettagli'
   end
 
   # Consiglio della finestra d'aiuto
   # @return [String]
   def self.preferred_params
-    'Parametri principali:';
+    'Parametri principali:'
   end
 
   # Cambia equip
   # @return [String]
   def self.change_equip_status
-    ' All\'equip.';
+    ' All\'equip.'
   end
 
   # Vai alle abilità
   # @return [String]
   def self.skill_status
-    ' Alle abilità';
+    ' Alle abilità'
   end
 
   # Cambia l'eroe
   # @return [String]
   def self.hero_change_status
-    ' Cambia eroe';
+    ' Cambia eroe'
   end
 
   # Tipo di feature
@@ -558,12 +561,12 @@ class Window_Base < Window
   # @param [Integer] x
   # @param [Integer] y
   # @param [Integer] width
-  def draw_actor_jp(actor, x, y, width = 120)
-    draw_icon(YEM::SKILL::JP_ICON, x + width - 24, y)
+  def draw_actor_ap(actor, x, y, width = 120)
+    #draw_icon(SkillSettings::AP_ICON, x + width - 24, y)
     change_color(system_color)
-    draw_text(x, y, width - 24, line_height, YEM::SKILL::JP_TERM)
+    draw_text(x, y, width - 24, line_height, Vocab.ap)
     change_color(normal_color)
-    draw_text(x, y, width - 24, line_height, actor.jp, 2)
+    draw_text(x, y, width - 24, line_height, actor.ap, 2)
   end
 end
 
@@ -639,7 +642,7 @@ class Window_ActorInfo < Window_Base
     draw_actor_hp(actor, x, 0, contents_width - x)
     draw_actor_mp(actor, x, line_height, contents_width - x)
     draw_actor_exp(actor, x, line_height * 2, contents_width - x)
-    draw_actor_jp(actor, x, line_height * 3, (contents_width - x) / 2)
+    draw_actor_ap(actor, x, line_height * 3, (contents_width - x) / 2)
   end
 end
 
@@ -1654,7 +1657,7 @@ class Scene_NewStatus < Scene_MenuBase
   # Evento alla chiamata skills
   def on_skill_call
     Sound.play_ok
-    SceneManager.call(Scene_Skill)
+    SceneManager.call(Scene_NewSkill)
   end
 
   # Velocità di movimento

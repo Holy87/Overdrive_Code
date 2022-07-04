@@ -1,12 +1,36 @@
+module MultiAttributable
+  # determina se l'oggetto ha una certa feature.
+  # @abstract
+  # @param [Symbol] feature_name
+  def has?(feature_name)
+    fail NotImplementedError
+  end
+
+  def quality?(quality_sym)
+    return false unless @qualities.include? quality_sym
+    @qualities.include? quality_sym
+  end
+
+  # ottiene un valore da un attributo o metodo, e restituisce
+  # nil se il metodo o l'attributo non esiste
+  # @param [Symbol] feature_name
+  def get_val(attr_name)
+    return nil unless self.class.method_defined?(attr_name)
+    self.send(attr_name)
+  end
+end
+
 #==============================================================================
 # ** ExtraAttr
 #---------------------------------------------------------------------------
 # Contiene le stringhe per gli attributi
 #==============================================================================
 module ExtraAttr
+  include MultiAttributable
 
   PARAM_BONUS_ADD = /<(maxhp|maxmp|mhp|mmp|odds|atk|spi|agi|def|cri|hit|eva):[ ]*([+\-]\d+)>/i
   PARAM_BONUS_PER = /<(atk|def|spi|agi|maxhp|maxmp|mhp|mmp|cri|hit|eva|odds):[ ]*([+\-]\d+)%>/i
+  PARAM_BONUS_PER_LCY = /<(atk|def|spi|agi|maxhp|maxmp|mhp|mmp|cri|hit|eva|odds) per[ ]*(\d+)>/i
   DOM_BONUS = /<(?:BONUS_EVOCAZIONE|bonus evocazione):[ ]*(\d+)([%％])>/i
   VIRIL = /<(?:VIRILE|virile)>/i
   ARTIFICIS = /<(?:ARTIFICIERE|artificiere)>/i
@@ -32,7 +56,7 @@ module ExtraAttr
   MP_RATE = /<costo[ _]mp:[ ]*([+\-]\d+)([%％])>/i
   HELP_STRT = /<help>/i
   HELP_END = /<\/help>/i
-  FAST_HELP = /<h\+(.+)>/mi
+  FAST_HELP = /<fh\+(.+)>/mi
   VLINK = /<vlink>/i
   APEIRON = /<apeiron>/i
   SET_SKILL = /<skills:[ ]*(\d+(?:\s*,\s*\d+)*)>/i
@@ -58,7 +82,6 @@ module ExtraAttr
   ANGER_TURN = /<ira turno:[ ]*([+\-]\d+)>/i
   ANGER_DAMG = /<ira su danno:[ ]*(\d+)>/i
   ANGER_KILL = /<ira kill:[ ]*(\d+)>/i
-  MAX_NUMBER = /<num massimo:[ ]*(\d+)>/i
   TANK_ODDS = /<odio tank:[ ]*([+\-]\d+)>/i
   ATK_P_STA = /<status attacco:[ ]*(\d+)>/i
   ATK_M_STA = /<status rimosso:[ ]*(\d+)>/i
@@ -83,7 +106,6 @@ module ExtraAttr
   SK_TYPE_CS = /<sk_type:[ ]*(.)>/i
   MASTERY = /<mastery (.+):[ ]*([+\-]\d+)%[ ]*(.+)>/i
   MONSTER_T = /<troop:[ ]*(\d+)>/i
-  TRADE_LOCK = /<blocca scambi>/i
   MECHANIC = /<meccanica>/i
   GUARD_TEXT = /<nome guardia:[ ]*(.+)>/i
   ATTACK_TEXT = /<nome attacca:[ ]*(.+)>/i
@@ -130,8 +152,6 @@ module ExtraAttr
   AVOID_SELF = /<avoid self>/i
   PROTECTOR = /<protector>/i
   UNPROTECTED = /<unprotected>/i
-  OFF_MAGIC_STATE = /<status magie off:[ ]*(\d+)>/i
-  HEA_MAGIC_STATE = /<status magie cur:[ ]*(\d+)>/i
   MENU_SWITCH = /^<menu switch:[ ]*(\d+)>$/i
   SUPER_GUARD = /<super guard>/
   PHARMACOLOGY = /<pharmacology>/
@@ -140,7 +160,7 @@ module ExtraAttr
   HP_ON_KILL = /<hp kill:[ ]*(\d+)([%％])>/i
   MP_ON_KILL = /<mp kill:[ ]*(\d+)([%％])>/i
   LINKED_ELEMENT = /<linked[ _]element:[ ]*(\d+)>/i
-  STATE_DEFENSE = /<state[ _]rate[ ]+(\d+):[ ]*([\+\-]\d+)%>/i
+  STATE_DEFENSE = /<state[ _]rate[ ]+(\d+|all)[ ]*:[ ]*([\+\-]\d+)%>/i
   AUTOSTATE_SKILL = /<autostate[ ]+(\d+):[ ]*(\d+)%>/i
   FORCE_ON_TARGET = /<force on[ ]+(actor|domination)>/i
   VANISH_ON_ATTACK = /<svanisce con attacco>/i
@@ -153,7 +173,25 @@ module ExtraAttr
   ATTACK_ANIMATION = /<attack[ _]animation:[ ]*(\d+)>/i
   AVOID_DEFENSE = /<avoid[ _]defense>/i
   HIT_ALL = /<target[ _]all>/i
+  HIT_OTHERS = /<target[ _]other[ _]allies>/i
   HIT_WITH_STATES = /<target[ _]states:[ ]*(.+)>/i
+  CANNOT_CRITICAL = /<no[ _]critical>/i
+  CRI_RATE = /<cri:[ ]*([+\-]\d+)[%]?>/i
+  CRI_CONDITION = /<crtcon:[ ]*(.+)>/i
+  CUSTOM_FORMULA = /<formula:[ ]*(.+)>/i
+  CUSTOM_F_DESC = /<fdesc:[ ]*(.+)>/i
+  AP_RATE = /<(ap|jp)[ _]rate:[ ]*([\+\-]\d+)%>/i
+  NORMAL_ATK_BONUS = /<attack[ _]damage:[ ]*([\+\-]\d+)%>/i
+  NORMAL_ATK_PLUS = /<attack[ _]damage:[ ]*(\d+)>/i
+  INHERIT_NORMAL_ATK = /<normal attack bonus>/i
+  PERPETUAL_STATE = /<perpetual[ _]state:[ ]*(\d+)>/i
+  ODD_TRANSFER = /<transfer[ _]aggro>/i
+  CLEAR_ANGER = /<clear[ _]anger>/i
+  HIDE_STATE_INFO = /<HIDE[ _]STATE[ _]INFO>/i
+  STATE_ON_TRIGGER = /<state[ _]on[ _](.+):[ ]*(\d+), (\d+)%>/i
+  STATE_ON_TRIGGER_CERTAIN = /<state[ _]on[ _](.+):[ ]*(\d+)>/i
+  KNOCKBACK = /<knockback:[ ]*(\d+)%>/
+  TOGGLE_TYPE = /<toggle>/i
   # Variabili di istanza pubbliche
   attr_reader :hit
   attr_reader :cri
@@ -167,13 +205,12 @@ module ExtraAttr
   attr_reader :odds
   attr_reader :dom_bonus # bonus dominazioni
   attr_reader :charm # charm
-  attr_reader :status_hit #stato attivato ad attacco
-  attr_reader :status_hit_prob #prob. attivazione stato
-  attr_reader :status_dmg #stato attivato a danno
-  attr_reader :status_dmg_prob #prob. attivazione stato
+  #attr_reader :status_hit #stato attivato ad attacco
+  #attr_reader :status_hit_prob #prob. attivazione stato
+  #attr_reader :status_dmg #stato attivato a danno
+  #attr_reader :status_dmg_prob #prob. attivazione stato
   attr_reader :item_save #prob. di non consumare l'oggetto
   attr_reader :fast_ready #bonus ricarica esper, solo per dominazioni
-  attr_reader :save_domination #solo per dominazioni, nessun malus su morte
   attr_reader :item_bonus #bonus cura oggetti
   attr_reader :atb_bonus
   attr_reader :atb_song #passiva che velocizza se è una canzone
@@ -189,8 +226,8 @@ module ExtraAttr
   attr_reader :attack_minus_states
   attr_reader :vampire_rate #% di danni assorbiti con qualsiasi danno
   attr_reader :skill_set #non è più usato
-  attr_reader :bombifica #skill che trasforma nemici in bombe
-  attr_reader :phisic_dmg #danno fisico (% bonus di danno inflitto)
+  attr_reader :bombifica #status che trasforma nemici in bombe
+  attr_reader :physical_dmg #danno fisico (% bonus di danno inflitto)
   attr_reader :magic_def #difesa magica (% di danno subìto)
   attr_reader :magic_dmg #attacco magico (% bonus di danno inflitto)
   attr_reader :heal_rate # rate di cura HP, MP e Furia
@@ -218,7 +255,6 @@ module ExtraAttr
   attr_reader :debuff_durability #durata debuff
   attr_reader :state_inf_dur #addizionatore turni di status inflitto
   attr_reader :skill_type_cost #modificatore costo per un tipo di skill
-  attr_reader :trade_lock #l'equipaggiamento non è scambiabile
   attr_reader :guard_text #testo guardia
   attr_reader :attack_text #testo attacca
   attr_reader :last_chance #ultima chance
@@ -231,7 +267,7 @@ module ExtraAttr
   attr_reader :critical_damage #modificatore danno critico
   attr_reader :spoil_bonus #bonus drop del nemico (da status)
   attr_reader :ranged #tipo distanza
-  attr_reader :counter_states #array ID stati che infligge con la difesa
+  #attr_reader :counter_states #array ID stati che infligge con la difesa
   attr_reader :barrier_rate #rateo di assorbimento barriera
   attr_reader :barrier_save #rateo di risparmio PM della barriera
   attr_reader :zombie_state #è uno status zombie, quindi non cura
@@ -247,8 +283,6 @@ module ExtraAttr
   attr_reader :rune # flag assorbi tutte le magie
   attr_reader :mp_on_attack # guadagna MP attaccando
   attr_reader :autoscan # auto scan
-  attr_reader :max_assimilable # numro massimo di abilità assimilabili insieme
-  attr_reader :assimilate_rounds # numero di colpi disponibili per l'abilità assimilata
   attr_reader :protector # flag protettore (per i nemici o status)
   attr_reader :super_guard # flag superguardia
   attr_reader :pharmacology # flag doppio effetto item
@@ -261,12 +295,12 @@ module ExtraAttr
   attr_reader :custom_level_multiplier
   attr_reader :attack_elements
   attr_reader :custom_attack_animation
+  attr_reader :ap_rate
+  attr_reader :normal_attack_bonus
+  attr_reader :normal_attack_plus
+  attr_reader :perpetual_states
   # @return [Array<Symbol>] le qualità specifiche (on-off)
   attr_reader :qualities
-  # @return [Array<Integer>]
-  attr_reader :offensive_magic_states
-  # @return [Array<Integer>]
-  attr_reader :heal_magic_states
   # @return [Hash]
   attr_reader :state_rate_set
   # @return [Hash]
@@ -276,15 +310,15 @@ module ExtraAttr
   def load_extra_attr
     return if @attributi_caricati
     @attributi_caricati = true
+    @battle_triggers = {}
     @qualities = []
     @description = '' if @description.nil?
-    @description = @passive_description if @passive_description
     @equip_level = default_level
     @dom_bonus = 0
     @charm = 0
     @counter_states = []
     @minus_state_set = []
-    @param_gift = {:atk => 0, :def => 0, :spi => 0, :agi => 0}
+    @param_gift = { :atk => 0, :def => 0, :spi => 0, :agi => 0 }
     @status_hit = 0
     @status_hit_prob = 0
     @status_dmg = 0
@@ -299,7 +333,7 @@ module ExtraAttr
     @physical_reflect = 0
     @anger_init = 0
     @magic_def = 0.0
-    @phisic_dmg = 0.0
+    @physical_dmg = 0.0
     @magic_dmg = 0.0
     @mp_on_attack = 0
     @heal_rate = 0
@@ -308,10 +342,10 @@ module ExtraAttr
     @skill_set = []
     @mp_cost_rate = 0.0
     @anger_kill = 0
+    @perpetual_states = []
     @party_bonus = {}
     @anger_turn = 0
     @anger_damage = 0
-    @max_number = 99
     @attack_plus_states = []
     @attack_minus_states = []
     @spirit_attack = 0
@@ -344,10 +378,7 @@ module ExtraAttr
     @mp_on_guard = 0
     @fu_on_guard = 0
     @attack_attr = nil
-    @max_assimilable = 0
     @slip_damage_per = 0
-    @offensive_magic_states = []
-    @heal_magic_states = []
     @hp_on_kill = 0
     @mp_on_kill = 0
     @linked_element = 0
@@ -356,16 +387,19 @@ module ExtraAttr
     @custom_guard_skill = 0
     @custom_level_multiplier = 0
     @attack_elements = []
+    @ap_rate = 0
     @custom_attack_animation = nil
+    @normal_attack_bonus = 0
+    @normal_attack_plus = 0
     @maxhp = 0 if @maxhp.nil?; @maxmp = 0 if @maxmp.nil?; @cri = 0; @odds = 0
     @hit = 0 if @hit == nil; @eva = 0 if @eva == nil
     @atk = 0 if @atk.nil?; @def = 0 if @def.nil?
     @spi = 0 if @spi.nil?; @agi = 0 if @agi.nil?
-    @stat_per ={ :atk => 0, :def => 0, :spi => 0, :maxhp => 0, :maxmp => 0,
-                 :agi => 0, :hit => 0, :eva => 0, :cri => 0, :odds => 0}
+    @stat_per = { :atk => 0, :def => 0, :spi => 0, :maxhp => 0, :maxmp => 0,
+                  :agi => 0, :hit => 0, :eva => 0, :cri => 0, :odds => 0 }
     self.note.split(/[\r\n]+/).each { |row|
       if reading_help
-        if row =~ HELP_END
+        if row =~ HELP_END or row =~ /<\/passive description>/i
           reading_help = false
         else
           @description += row
@@ -388,11 +422,9 @@ module ExtraAttr
       when DEFENDER
         @qualities.push(:defender)
       when STATE_DMG
-        @status_dmg = $1.to_i
-        @status_dmg_prob = $2.to_f / 100
+        add_battle_trigger(:state_on_damage, $1.to_i, $2.to_i)
       when STATE_HIT
-        @status_hit = $1.to_i
-        @status_hit_prob = $2.to_f / 100
+        add_battle_trigger(:state_on_hit, $1.to_i, $2.to_i)
       when ESPER_REC
         @qualities.push(:esper_recharger)
       when ITEM_SAVE
@@ -415,7 +447,7 @@ module ExtraAttr
         @qualities.push(:rhytm)
       when MP_RATE
         @mp_cost_rate = $1.to_f / 100.0
-      when HELP_STRT
+      when HELP_STRT, /<passive description>/
         reading_help = true
       when VLINK
         @qualities.push(:vlink)
@@ -436,7 +468,7 @@ module ExtraAttr
       when BOMBER
         @qualities.push(:bombify)
       when PHI_DAMG
-        @phisic_dmg += $1.to_f / 100.0
+        @physical_dmg += $1.to_f / 100.0
       when MAG_RATE
         @magic_def -= $1.to_f / 100.0
       when MAG_DEFR
@@ -461,8 +493,6 @@ module ExtraAttr
         @anger_kill += $1.to_i
       when ANGER_TURN
         @anger_turn += $1.to_i
-      when MAX_NUMBER
-        @max_number = $1.to_i
       when ATK_P_STA
         @attack_plus_states.push($1.to_i)
       when ATK_M_STA
@@ -495,8 +525,6 @@ module ExtraAttr
         @qualities.push(:ignore_bonus)
       when SK_COST_TP
         @skill_type_cost[$1] = $2 / 100.0
-      when TRADE_LOCK
-        @qualities.push(:trade_lock)
       when MASTERY
         e_type = $1
         value = $2.to_i
@@ -563,8 +591,6 @@ module ExtraAttr
         @mp_on_attack = $1.to_i
       when AUTOSCAN
         @qualities.push(:autoscan)
-      when MAX_ASSIMILABLE
-        @max_assimilable = $1.to_i
       when USE_ANGER
         @qualities.push(:use_anger)
       when SLIP_DAMAGE_PER
@@ -575,10 +601,15 @@ module ExtraAttr
         @qualities.push(:protector)
       when UNPROTECTED
         @qualities.push(:unprotected)
-      when OFF_MAGIC_STATE
-        @offensive_magic_states.push $1.to_i
-      when HEA_MAGIC_STATE
-        @heal_magic_states.push $1.to_i
+      when STATE_ON_TRIGGER
+        value = $2.to_i
+        rate = $3.to_i
+        trigger_sym = ('state_on_' + $1.gsub(' ', '_')).to_sym
+        add_battle_trigger(trigger_sym, value, rate)
+      when STATE_ON_TRIGGER_CERTAIN
+        value = $2.to_i
+        trigger_sym = ('state_on_' + $1.gsub(' ', '_')).to_sym
+        add_battle_trigger(trigger_sym, value)
       when SUPER_GUARD
         @qualities.push :super_guard
       when PHARMACOLOGY
@@ -594,7 +625,11 @@ module ExtraAttr
       when LINKED_ELEMENT
         @linked_element = $1.to_i
       when STATE_DEFENSE
-        @state_rate_set[$1.to_i] = $2.to_i
+        if $1.downcase == 'all'
+          @state_rate_set[:all] = $2.to_i
+        else
+          @state_rate_set[$1.to_i] = $2.to_i
+        end
       when VANISH_ON_ATTACK
         @qualities.push(:vanish_on_attack)
       when CUSTOM_ATTACK
@@ -657,13 +692,6 @@ module ExtraAttr
     return 0 if @mastery[param].nil?
     return 0 if @mastery[param].e_type != e_type
     @mastery[param].value
-  end
-
-  # Restituisce true se è scambiabile tra giocatori
-  def traddable?
-    return false if self.price == 0
-    return false if @trade_lock
-    true
   end
 
   # Determina se l'equipaggiamento non si può disequipaggiare

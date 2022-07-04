@@ -1,7 +1,3 @@
-module Settings
-  NEW_ADVICE_ICON = 512
-end
-
 #===============================================================================
 # ** Scene_Menu
 #===============================================================================
@@ -79,7 +75,7 @@ class Scene_Menu < Scene_Base
     $game_party.menu_actor = $game_party.members[@status_window.index]
     case @command_window.current_symbol
     when :skill
-      SceneManager.call(Scene_Skill)
+      SceneManager.call(Scene_NewSkill)
     when :equip
       SceneManager.call(Scene_NewEquip)
     when :status

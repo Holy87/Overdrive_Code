@@ -528,16 +528,6 @@ class Window_DataInfo < Window_Base
     self.index += n
   end
   #--------------------------------------------------------------------------
-  # * Disegna la barra di sfondo al parametro
-  #     x: coordinata X
-  #     y: coordinata Y
-  #     width: larghezza
-  #     height: altezza
-  #--------------------------------------------------------------------------
-  def draw_bg_rect(x, y, width, height, color = sc1)
-    contents.fill_rect(x+1, y+1, width-2, height-2, color)
-  end
-  #--------------------------------------------------------------------------
   # * Disegna l'oggetto
   #     item: oggetto
   #     x: posizione X

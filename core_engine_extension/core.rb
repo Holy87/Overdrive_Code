@@ -122,8 +122,6 @@
 #  ▼ STATUS
 #  ● <status attacco: x> aggiunge lo status X all'attacco
 #  ● <status rimosso: x> rimuove lo status X all'attacco
-#  ● <status magie off: x> può applicare lo status X alla magia se causa danni, com probabilità dimezzate
-#  ● <status magie cur: x> può applicare lo status X alla magia se cura
 #  ● <buff> o <debuff> per impostare uno status positivo o negativo.
 #  ● <slip x% damage> danno progressivo del x% dei danni che ha causato
 #  ● l'abilità utilizzata per applicare lo status
@@ -138,8 +136,10 @@
 #  ● <virale> lo status è virale e viene trasmesso.
 #  ● <svanisce con attacco> lo stato viene rimosso con un attacco
 #  ● <disarma> l'eroe è disarmato.
+#  ● <attack damage: +x%> aumenta il danno dell'attacco normale dell'X%
+#  ● <perpetual state: x> solo per equip, imposta uno status perennemente attivo
 #  ▼ POTERI E OGGETTI
-#  ● <h+x> l'help aggiunge x
+#  ● <fh+x> l'help aggiunge x
 #  ● <ranged> l'arma/skill è a distanza
 #  ● <spirit stone> l'oggetto è una spirit stone
 #  ● <rimuovi stato: x> rimuove lo stato x, ma non funziona ancora
@@ -162,41 +162,140 @@
 #  ● <only for domination> per le skill dei nemici, solo per le evocazioni
 #  ● <target all> colpisce tutti i nemici ed alleati sul campo.
 #  ● <target states: x, y...> colpisce tutti i nemici che hanno gli stati x, y ecc...
+#  ● <target other allies> l'abilità può colpire solo altri alleati escluso sé stesso
 #  ● <ricarica skills> reimposta la ricarica di tutte le abilità
+#  ● <transfer aggro> passa tutta l'aggro accumulata su un altro personaggio
+#  ● <clear anger> porta a 0 la Furia dell'utilizzatore
+#  ● <no critical> non può avere attacchi critici
+#  ● <crtcon: COND> condizione per un danno critico (codice valutato)
+#  ● <formula: FORM> formula personalizzata dell'abilità (codice valutato)
+#  ● <fdesc: FORM> descrizione della formula nella finestra delle info abilità
 #==============================================================================
 
 module H87AttrSettings
-    DEFAULT_MAX_CHARGE = 100
-    DEFAULT_ANGER_INCR = 10
-    DAMAGE_REFLECT_ANIM_ID = 440
-    VAMPIRE_ANIM_ID = 439
-    CHARGE_GAUGE_CLASSES = [2, 6, 11, 12, 16]
-    TANKS = [21, 1, 13, 7] #i tank in ordine di priorità
-    HEALERS = [6, 19, 11, 1, 6, 15, 7] #i guaritori in ordine di priorità
-    NUKERS = [2, 13, 10, 7]
-    RANGED_ELEMENTS = [] # prima erano 5 e 6
-    VLINK_RATE = 0.15
-    GUARD_HP_HEAL_ANIMATION_ID = 324
-    GUARD_MP_HEAL_ANIMATION_ID = 469
-    BOSS_SLIP_DIVISOR = 10 # divisore danni da veleno se è un boss
-    BARRIER_MP_CONSUME = 0.2 # percentuale di consumo della barriera ai danni
-    # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
-    # quindi se assorbe un danno di 100, consuma 20MP
-  
-    # suno quando la barriera si distrugge
-    BARRIER_BREAK_SE = 'Break'
-  
-    PARAMS_CAN_ZERO = [:cri, :eva, :hit]
-  
-    ASSIMILATED_MESSAGE = '%s ha ottenuto %s da %s!'
-    CANNOT_ASSIMILATE = 'Nessuna abilità assimilabile!'
-    ASSIMILATE_ICON = 562
-  
-    # Fortuna di base (per tutti)
-    # La fortuna è un nuovo parametro che influisce su Mira, Critico, evitare critici,
-    # Evasione, prob. di causare o resistere
-    # agli stati alterati
-    BASE_LUCK = 5
-  
-    BOMB_SKILL = 549 #skill chiamata quando bombifica viene attivato
+  DEFAULT_MAX_CHARGE = 100
+  DEFAULT_ANGER_INCR = 10
+  DAMAGE_REFLECT_ANIM_ID = 440
+  KNOCKBACK_ANIM_ID = 531
+  VAMPIRE_ANIM_ID = 439
+  CHARGE_GAUGE_CLASSES = [2, 6, 11, 12]
+  TANKS = [21, 1, 13, 7] #i tank in ordine di priorità
+  HEALERS = [6, 19, 11, 1, 6, 15, 7] #i guaritori in ordine di priorità
+  NUKERS = [2, 13, 10, 7]
+  RANGED_ELEMENTS = [] # prima erano 5 e 6
+  VLINK_RATE = 0.15
+  GUARD_HP_HEAL_ANIMATION_ID = 324
+  GUARD_MP_HEAL_ANIMATION_ID = 469
+  BOSS_SLIP_DIVISOR = 10 # divisore danni da veleno se è un boss
+  BARRIER_MP_CONSUME = 0.2 # percentuale di consumo della barriera ai danni
+  # esempio: 0.2 consuma il 20% degli MP in rapporto agli HP
+  # quindi se assorbe un danno di 100, consuma 20MP
+
+  # permettere alle magie di causare danno critico?
+  CRITICAL_MAGIC = true
+  # suno quando la barriera si distrugge
+  BARRIER_BREAK_SE = 'Break'
+  # parametri che possono raggiungere lo zero
+  PARAMS_CAN_ZERO = [:cri, :eva, :hit]
+
+  # Abilità che verrà usata come calcolo del danno dell'attacco
+  DEFAULT_ATTACK_SKILL = 1
+  MAGIC_ATTACK_SKILL = 2
+
+  # Funzione dell'abilità Assimila
+  ASSIMILATED_MESSAGE = '%s ha ottenuto %s da %s!'
+  CANNOT_ASSIMILATE = 'Nessuna abilità assimilabile!'
+  ASSIMILATE_ICON = 562
+
+  # Fortuna di base (per tutti)
+  # La fortuna è un nuovo parametro che influisce su Mira, Critico, evitare critici,
+  # Evasione, prob. di causare o resistere
+  # agli stati alterati. Per ora non funziona
+  BASE_LUCK = 5
+
+  BOMB_SKILL = 549 #skill chiamata quando bombifica viene attivato
+
+  # Revamp delle formule danno per skill ed oggetti
+  FORMULA_CALC_PARAMS = [:atk_f, :spi_f, :def_f, :agi_f, :mhp_f, :mmp_f, :hp_lo, :hp_hi, :mp_lo, :mp_hi,
+                         :odds_f, :anger_f, :atk_e, :spi_e, :def_e, :agi_e, :hp_lo_e, :mp_lo_e, :hp_hi_e, :mp_hi_e,
+                         :last_dmg, :cum_dmg, :debuff_e]
+
+  # Moltiplicatori parametri. Ad esempio una skill magica fa spi_f*2 - dif, una fisica fa atk_f*4 - dif*2.
+  # ----
+  # moltiplicatore parametro sul danno. Se non definito, è 1.
+  PARAMS_DMG_MULTIPLIERS = {
+    :atk_f => 4, :spi_f => 2, :agi_f => 1, :def_f => 2, :debuff_e => 0.1, :anger_f => 0.01
+  }
+
+  # moltiplicatore difesa su danno. Se non definito, è 0 (ignora)
+  PARAMS_DMG_DEFENSE_MUL = {
+    :atk_f => 2, :spi_f => 1, :def_f => 1
+  }
+
+  MULTIPLIERS = [:debuff_e, :anger_f]
+
+  # definisce il modo in cui i parametri del danno vengono calcolati
+  PARAMS_CALCULATORS = {
+    :atk_f => 'user.atk', :spi_f => 'user.spi', :def_f => 'user.def', :agi_f => 'user.agi',
+    :mhp_f => 'user.mhp', :mmp_f => 'user.mmp', :hp_lo => 'user.mhp - user.hp',
+    :mp_lo => 'user.mmp - user.mp', :hp_hi => 'user.hp', :mp_hi => 'user.mp',
+    :odds_f => 'user.odds', :anger_f => 'user.anger', :atk_e => 'self.atk', ':spi_e' => 'self.spi',
+    :def_e => 'self.def', :agi_e => 'self.agi', :hp_lo_e => 'self.mhp - self.hp',
+    :mp_lo_e => 'self.mmp - self.mp', :hp_e => 'self.hp', :mp_e => 'self.mp',
+    :last_dmg => 'user.last_damage', :cum_dmg => 'user.cumuled_damage',
+    :mhp_e => 'self.mhp', :mmp_e => 'self.mmp', :debuff_e => 'self.debuff_number'
+  }
+
+  # Vocaboli per i parametri
+  MAX_ABBREV = 'MAX %s'
+  LOW_ABBREW = '%s MANC.'
+  TARGET = '%s BERS'
+end
+
+module Vocab
+
+  def self.max_a
+    H87AttrSettings::MAX_ABBREV
   end
+
+  def self.low_a
+    H87AttrSettings::LOW_ABBREW
+  end
+
+  def self.target_a
+    H87AttrSettings::TARGET
+  end
+
+  # restituisce il nome abbreviato del parametro
+  def self.param_abbrev(param_sym)
+    param = param_sym.to_s.gsub('_f','').to_sym
+    case param
+    when :atk, :spi, :def, :agi, :odds
+      self.param(param)[0..2].upcase
+    when :hp, :hp_hi
+      self.hp_a
+    when :mp, :mp_hi
+      self.mp_a
+    when :mhp
+      sprintf(self.max_a, self.hp_a)
+    when :mmp
+      sprintf(self.max_a, self.mp_a)
+    when :anger
+      self.anger
+    when :hp_lo
+      sprintf(self.low_a, self.hp_a)
+    when :mp_lo
+      sprintf(self.low_a, self.mp_a)
+    when :cum_dmg
+      'TOT DMG'
+    when :last_dmg
+      'ULT DMG'
+    when :atk_e, :spi_e, :agi_e, :def_e, :hp_e, :mp_e, :hp_lo_e, :mp_lo_e, :hp_hi_e, :mp_hi_e, :mhp_e, :mmp_e, :debuff_e
+      sprintf(self.target_a, param_abbrev(param.to_s.gsub('_e','').to_sym))
+    when :debuff
+      'N°DBF'
+    else
+      self.param(param)
+    end
+  end
+end

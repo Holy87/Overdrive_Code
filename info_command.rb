@@ -94,6 +94,7 @@ class Window_HelpCommnad < Window_Command
   def initialize(x, y)
     super
     self.openness = 0
+    deactivate
   end
   #--------------------------------------------------------------------------
   # * Get Window Width

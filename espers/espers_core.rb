@@ -147,8 +147,8 @@ module Vocab
   def self.boost_desc;"Attivando i Turbo l'evocazione sarà più potente, ma resterà|per minor tempo in campo.";end
   def self.domination_ready;"%s è pronto a combattere.";end
   def self.power_up_incr;"Incrementa il parametro %s di %d punti";end
-  def self.esper_jp_help;"PA di %s"; end
-  def self.esper_jp_no_m;"Nessun proprietario"; end
+  def self.esper_ap_help;"PA di %s"; end
+  def self.esper_ap_no_m;"Nessun proprietario"; end
 end
 
 #===============================================================================
@@ -671,9 +671,9 @@ class Game_Actor < Game_Battler
   #--------------------------------------------------------------------------
   def jp(cl_id = 0)
     if is_esper?
-      esper_master ? esper_master.jp(cl_id) : 0
+      esper_master ? esper_master.ap(cl_id) : 0
     else
-      esp_jp(cl_id)
+      esp_ap=cl_id
     end
   end
   #--------------------------------------------------------------------------
@@ -1023,8 +1023,8 @@ class Scene_Battle < Scene_Base
   #--------------------------------------------------------------------------
   def azzera_tutto
     actor = $game_actors[7]
-    if $game_party.members.include?(actor) and actor.states.include?($data_states[20])
-      DF.print("incluso")
+    if $game_party.members.include?(actor) and actor.has_state?(20)
+      Logger.info("incluso")
       $scene.spriteset.set_action(true, actor.index, "Torna_Demone")
     end
     begin
@@ -1037,7 +1037,7 @@ class Scene_Battle < Scene_Base
       end_skill_selection
       end_target_selection
     rescue
-      DF.print("ERRORE")
+      Logger.info("ERRORE")
       return
     end
   end

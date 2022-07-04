@@ -182,3 +182,9 @@ class Game_System
 end
 
 #gane_system
+
+class RPG::System
+  def self.default_save_version
+    CPanel::SAVE_VERSION
+  end
+end

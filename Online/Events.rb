@@ -47,7 +47,7 @@ class Online::Event
   attr_accessor :drop_rate
   attr_accessor :gold_rate
   attr_accessor :exp_rate
-  attr_accessor :jp_rate
+  attr_accessor :ap_rate
   attr_accessor :description
 
   def initialize(data)
@@ -59,7 +59,7 @@ class Online::Event
     @drop_rate = data['drop_rate']
     @gold_rate = data['gold_rate']
     @exp_rate = data['exp_rate']
-    @jp_rate = data['jp_rate']
+    @ap_rate = data['ap_rate']
     @id = data['event_id']
   end
 

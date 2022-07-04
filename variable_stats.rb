@@ -1,5 +1,5 @@
 $imported = {} if $imported == nil
-$imported["H87_VariableStats"] = true
+$imported["H87_VariableStats"] = 1.1
 # ==============================================================================
 #  ** PARAMETRI VARIABILI di Holy87
 #  -----------------------------------------------------------------------------
@@ -17,44 +17,54 @@ module VariableStatsConfig
   #-----------------------------------------------------------------------------
   # * Configura qual è la percentuale al di sotto del quale si attiva il bonus
   #-----------------------------------------------------------------------------
-  HP_CRISIS_RATE = 25 # % di hp sotto il quale si attiva il bonus
-  MP_CRISIS_RATE = 20 # % di mp sotto il quale si attiva il bonus
-  FU_CRISIS_RATE = 20 # % di furia sotto il quale si attiva il bonus
+  CRISIS_RATES = {
+    :hp => 25, # % di hp sotto il quale si attiva il bonus
+    :mp => 20, # % di mp sotto il quale si attiva il bonus
+    :fu => 20  # % di furia sotto il quale si attiva il bonus
+  }
 end
 
 module VariableStats
   HMPLOW = /<(.*)[ ]min[ ](.*):[ ]*([+\-]\d+)>/i
-  HMPLOWP= /<(.*)[ ]min[ ](.*):[ ]*([+\-]\d+)([%％])>/i
+  HMPLOWP= /<(.*)[ ]min[ ](.*):[ ]*([+\-]*\d+)([%％])>/i
   #-----------------------------------------------------------------------------
   # * Caricamento delle informazioni
   #-----------------------------------------------------------------------------
   def load_variable_stats
     return if @var_stat_loaded
     @var_stat_loaded = true
-    @hmplow = {}
-    @hmplowp = {}
+    @hp_mp_low = {}
+    @hp_mp_low_per = {}
     self.note.split(/[\r\n]+/).each { |riga|
       case riga
       when HMPLOW
         param1 = $1.downcase.to_sym
         param2 = $2.downcase.to_sym
         stat = $3.to_i
-        next unless [:hp,:mp,:fu].include?(param1)
-        next unless [:atk,:def,:spi,:agi,:cri,:hit,:eva,:odd].include?(param2)
-        @hmplow[param1] = {} if @hmplow[param1].nil?
-        @hmplow[param1][param2] = stat
+        set_hp_mp_low_param(param1, param2, stat)
       when HMPLOWP
         param1 = $1.downcase.to_sym
         param2 = $2.downcase.to_sym
-        stat = $3.to_f/100.0
-        next unless [:hp,:mp,:fu].include?(param1)
-        next unless [:atk,:def,:spi,:agi].include?(param2)
-        @hmplowp[param1] = {} if @hmplowp[param1].nil?
-        @hmplowp[param1][param2] = stat
+        stat = $3.to_i
+        set_hp_mp_low_param_per(param1, param2, stat)
       else
         # type code here
       end
     }
+  end
+
+  def set_hp_mp_low_param(param, stat, value)
+    return unless [:hp,:mp,:fu].include?(param)
+    return unless [:atk,:def,:spi,:agi,:cri,:hit,:eva,:odd].include?(stat)
+    @hp_mp_low[param] = {} if @hp_mp_low[param].nil?
+    @hp_mp_low[param][stat] = value
+  end
+
+  def set_hp_mp_low_param_per(param, stat, value)
+    return unless [:hp,:mp,:fu].include?(param)
+    return unless [:atk,:def,:spi,:agi,:cri,:hit,:eva,:odd].include?(stat)
+    @hp_mp_low_per[param] = {} if  @hp_mp_low_per[param].nil?
+    @hp_mp_low_per[param][stat] = value.to_f/100.0
   end
   #-----------------------------------------------------------------------------
   # * Restituisce il bonus del parametro richiesto
@@ -62,9 +72,9 @@ module VariableStats
   #    param2: parametro bonus
   #-----------------------------------------------------------------------------
   def crisis_param(param1, param2)
-    return 0 if @hmplow[param1].nil?
-    return 0 if @hmplow[param1][param2].nil?
-    @hmplow[param1][param2]
+    return 0 if @hp_mp_low[param1].nil?
+    return 0 if @hp_mp_low[param1][param2].nil?
+    @hp_mp_low[param1][param2]
   end
   #-----------------------------------------------------------------------------
   # * Restituisce il bonus moltiplicatore del parametro richiesto
@@ -72,9 +82,19 @@ module VariableStats
   #    param2: parametro bonus
   #-----------------------------------------------------------------------------
   def crisis_param_perc(param1, param2)
-    return 0 if @hmplowp[param1].nil?
-    return 0 if @hmplowp[param1][param2].nil?
-    @hmplowp[param1][param2]
+    return 0 if @hp_mp_low_per[param1].nil?
+    return 0 if @hp_mp_low_per[param1][param2].nil?
+    @hp_mp_low_per[param1][param2]
+  end
+
+  # @return [Hash]
+  def crisis_params
+    @hp_mp_low
+  end
+
+  # @return [Hash]
+  def crisis_params_per
+    @hp_mp_low_per
   end
 
 end
@@ -117,19 +137,19 @@ class Game_Battler
 
   # Restituisce true se gli HP sono inferiori alla soglia  critica
   def in_hp_crisis?
-    rate = VariableStatsConfig::HP_CRISIS_RATE
+    rate = VariableStatsConfig::CRISIS_RATES[:hp]
     (self.hp.to_f/self.maxhp)< rate.to_f/100
   end
 
   # Restituisce true se gli MP sono inferiori alla soglia critica
   def at_mp_limit?
-    rate = VariableStatsConfig::MP_CRISIS_RATE
+    rate = VariableStatsConfig::CRISIS_RATES[:mp]
     (self.mp.to_f/self.maxmp) < rate.to_f/100
   end
 
   def at_fury_limit?
     return false unless charge_gauge?
-    rate = VariableStatsConfig::FU_CRISIS_RATE
+    rate = VariableStatsConfig::CRISIS_RATES[:fu]
     (self.anger.to_f/self.max_anger) < rate.to_f/100
   end
   #-----------------------------------------------------------------------------
