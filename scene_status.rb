@@ -15,7 +15,8 @@ module StatusSettings
       :physical_reflect, :heal_rate,
       :anger_incr, :initial_anger,
       :anger_kill, :anger_turn,
-      :win_hp, :win_mp, :sinergic_increase, :sin_duration_bonus
+      :win_hp, :win_mp, :sinergic_increase, :sin_duration_bonus,
+      :hp_on_guard_value, :mp_on_guard_value, :fu_on_guard_value
   ]
 
   # L'elenco delle difese agli stati alterati mostrabili
@@ -109,10 +110,39 @@ module StatusSettings
       :sin_duration_bonus => {:text => 'Durata Sinergia', :default => 0, :format => '%+g%%', :formula => 'x*100',
                               :description => 'Allunga la durata della Sinergia quando attiva,|in percentuale'},
       :heal_rate => {:text => 'Capacità Guarigione', :default => 100, :format => '%d%%', :formula => '(x*100).to_i',
-                     :description => "Determina quanti PV e PM vengono ripristinati|in proporzione alle cure ricevute da abilità ed oggetti."}
+                     :description => "Determina quanti PV e PM vengono ripristinati|in proporzione alle cure ricevute da abilità ed oggetti."},
+      :hp_on_guard_value => {:text => "PV curati con Difendi", :condition => :hp_on_guard?,
+                      :description => "Questo parametro si riferisce a quanti PV verranno curati quando utilizzi il comando Difendi."},
+      :mp_on_guard_value => {:text => "PM caricati con Difendi", :condition => :mp_on_guard?,
+                      :description => "Questo parametro si riferisce a quanti PM verranno caricati quando utilizzi il comando Difendi."},
+      :fu_on_guard_value => {:text => "Furia con Difendi", :condition => :fu_on_guard?,
+                      :description => "Questo parametro si riferisce a quanta Furia otterrai quando utilizzi il comando Difendi."},
 
 
   }
+
+  DISPLAYER_CAPABILITIES = [
+    {:capability => :charge_gauge?, :text => 'Uso della Furia', :description => '\n[0] può padroneggiare la sua Furia, usandola come energia per determinate|abilità fisiche. Inoltre può caricare la Furia attaccando.'},
+    {:capability => :ranged_attack?, :text => 'Attacchi a distanza', :description => 'Gli attacchi di \n[0] possono colpire i nemici nelle retrovie.'},
+    {:capability => :has_last_chance?, :text => 'Ultima Chance', :description => 'Solo una volta a battaglia, se \n[0] riceve un colpo fatale resta con 1PV invece di morire.'},
+    {:capability => :pharmacology, :text => 'Farmacista', :description => 'Gli oggetti utilizzati da \n[0] curano il doppio.'},
+    {:capability => :can_parry?, :text => 'Contrattacco schivata', :description => 'Se \n[0] evita un attacco fisico, il nemico subisce un contrattacco.'},
+    {:capability => :avoid_defense?, :text => 'Penetrazione', :description => 'Gli attacchi normali di \n[0] oltrepassano le difese del bersaglio.'},
+    {:capability => :super_guard, :text => 'Superdifesa', :description => 'Quando \n[0] usa il comando Difendi, subisce 1/4 di danni.'},
+    {:capability => :apeiron?, :text => 'Apeiron', :description => 'I PV massimi di \n[0] possono superare i 9999 e i restanti parametri i 999.'},
+    {:capability => :virile?, :text => 'Virile', :description => 'Quando \n[0] è nel gruppo, gli oggetti spinti si spostano al doppio della velocità.'},
+    {:capability => :show_atb?, :text => 'Mostra ATB nemici', :description => 'Se \n[0] è nel gruppo, riesci a vedere la barra di caricamento dei nemici.'},
+    {:capability => :scassinatore?, :text => 'Scassinatore', :description => 'Se \n[0] è nel gruppo, puoi scassinare serrature bloccate.'},
+    {:capability => :mechanic?, :text => 'Meccanico', :description => 'Se \n[0] è nel gruppo, puoi riparare cose rotte.'},
+    {:capability => :can_jump_longer?, :text => 'Salto lungo', :description => 'Se \n[0] è nel gruppo, puoi saltare un blocco in più.'},
+    {:capability => :two_swords_style, :text => 'Due armi', :description => '\n[0] può equipaggiare ed usare due armi.'},
+    {:capability => :autoscan?, :text => 'Saggezza', :description => 'Se \n[0] è nel gruppo, puoi conoscere i punti deboli dei nemici quando li selezioni.'},
+    {:capability => :state_guard, :text => 'Difesa Zen', :description => 'Mentre \n[0] si difede, dimezza le probabilità di essere afflitto da stati negativi.'}
+  ]
+
+  # se true, mostra la differenza dal parametro a quello base,
+  # se false, mostra il parametro base (senza equip, come mamma l'ha fatto)
+  DRAW_PARAM_DIFFERENCE = false
   # File bitmap dei ruoli (in Graphics\System)
   ROLES_IMG = 'Roles'
   # Comandi dello status
@@ -691,7 +721,11 @@ class Window_ActorStatus < Window_Base
     draw_param_icon(x, y, param)
     draw_param_name(x + 24, y, param, width - 24)
     draw_param_value(x + 24, y, param, width - 24)
-    draw_param_base_difference(width + 25, y, param, 120)
+    if StatusSettings::DRAW_PARAM_DIFFERENCE
+      draw_param_base_difference(width + 25, y, param, 120)
+    else
+      draw_native_param(width + 25, y, param, 120)
+    end
   end
 
   # Disegna la barra del parametro
@@ -747,6 +781,15 @@ class Window_ActorStatus < Window_Base
     return if value == 0
     change_color(value > 0 ? power_up_color : power_down_color)
     text = sprintf('(%+d)', value)
+    draw_text(x, y, width, line_height, text)
+  end
+
+  def draw_native_param(x, y, param, width)
+    return unless actor.has_native_param? param
+    value = actor.send(actor.native_param_sym(param))
+    return if actor.send(param) == value
+    change_color(normal_color, false)
+    text = sprintf('(%d)', value)
     draw_text(x, y, width, line_height, text)
   end
 
@@ -990,8 +1033,7 @@ class Window_ActorParams < Window_Selectable
   def draw_item(index)
     item = item(index)
     if item
-      rect = item_rect(index)
-      rect.width -= 4
+      rect = item_rect_for_text(index)
       param = get_param(@data[index])
       enabled = !item.as_default?(param)
       change_color(system_color, enabled)
@@ -1169,8 +1211,7 @@ class Window_Actor_StatusStats < Window_Selectable
   # Disegna un oggetto
   # @param [Integer] index
   def draw_item(index)
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     draw_performance(rect, index)
   end
 
@@ -1277,8 +1318,7 @@ class Window_ActorConditions < Window_Selectable
   # @param [Integer] index
   def draw_item(index)
     item = data(index)
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     draw_bg_rect(rect.x, rect.y) if item.priority > 0
     draw_icon(item.icon_index, rect.x, rect.y)
     change_color(normal_color)

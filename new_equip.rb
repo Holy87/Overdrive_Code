@@ -19,7 +19,7 @@ module EquipSettings
   #--------------------------------------------------------------------------
   # * I parametri che verranno mostrati nella finestra dell'eroe
   #--------------------------------------------------------------------------
-  PARAMS = [:mhp, nil, :mmp, :atk, :def, :spi, :agi, :hit, :cri, :eva,
+  PARAMS = [:mhp, :mmp, :mag, :atk, :def, :spi, :agi, :hit, :cri, :eva,
             :odds, :res]
   #--------------------------------------------------------------------------
   # * Le icone dei parametri
@@ -27,12 +27,11 @@ module EquipSettings
   ICONS = {:mhp => 1008, :mmp => 1009, :atk => 1010, :def => 1011,
            :spi => 1012, :agi => 1013, :hit => 1015, :cri => 1014,
            :eva => 1016, :odds => 1249, :res => 1251,
-           :mag => 1250, :maxhp => 1008, :maxmp => 1009,
-           :max_anger => 1250 }
+           :mag => 1250, :maxhp => 1008, :maxmp => 1009}
   # quali parametri vengono mostrati in percentuale?
   PARAM_PERCENTAGES = [:hit, :cri, :eva, :res]
   # quali parametri occupano il doppio dello spazio?
-  DOUBLE_SIZED_PARAMS = [:mhp]
+  DOUBLE_SIZED_PARAMS = []
   #--------------------------------------------------------------------------
   # * Altri parametri
   #--------------------------------------------------------------------------
@@ -188,18 +187,18 @@ class Game_Actor < Game_Battler
       return false unless first_weapon.changes_support_type?
       first_weapon.use_support == item.support_type
     else
-      return false if same_kind_accessory_not_allowed?
+      return false if same_kind_accessory_not_allowed?(item)
       return false if item.is_a?(RPG::Armor) and first_weapon != nil and first_weapon.changes_support_type? and item.kind == 0
       class_equippable?(item)
     end
   end
 
   # determina se non è permesso avere due accessori dello stesso tipo
-  def same_kind_accessory_not_allowed?
+  def same_kind_accessory_not_allowed?(item)
     EquipSettings::UNIQUE_ACCESSORY and
       item.is_a?(RPG::Armor) and
       item.kind == 3 and
-      equips.select { |equip| equip.real_id == item.real_id}.size > 0
+      equips.compact.select { |equip| equip.real_id == item.real_id}.size > 1
   end
 end
 
@@ -227,8 +226,8 @@ class Window_ActorStats < Window_Base
   # * L'eroe selezionato
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor;
-    @actor;
+  def actor
+    @actor
   end
 
   #--------------------------------------------------------------------------
@@ -370,14 +369,12 @@ class Window_ActorStats < Window_Base
   # @param [Integer] width
   #--------------------------------------------------------------------------
   def draw_param(x, y, param_type, width)
-    if param_type == :mmp && actor.charge_gauge?
-      draw_param(x, y, :mag, width)
-      return
-    end
+    return if param_type == :mag && !actor.charge_gauge?
+    return if param_type == :mmp && !actor.mp_gauge?
     draw_bg_rect(x, y, width)
     param = actor_parameter(actor, param_type)
     draw_icon(param_icon(param_type), x, y)
-    drawing_width = (width - 48) / 2
+    drawing_width = (width - 48) / (actor_clone == nil ? 1 : 2)
     change_color(normal_color)
     text = param.to_s
     text = sprintf('%d%%', param) if param_perc?(param_type)
@@ -385,6 +382,7 @@ class Window_ActorStats < Window_Base
     if actor_clone != nil
       x2 = x + 48 + drawing_width
       param2 = actor_parameter(actor_clone, param_type)
+      return if param == param2
       case param <=> param2
       when 0
         change_color(normal_color)
@@ -831,8 +829,7 @@ class Window_EquipList < Window_Selectable
   #--------------------------------------------------------------------------
   def draw_item(index)
     item = data(index)
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     if item
       draw_item_name(item, rect.x, rect.y, enable?(item), rect.width)
       draw_item_number(rect, item)
@@ -891,18 +888,9 @@ end
 #------------------------------------------------------------------------------
 # Mostra i comandi della schermata equipaggiamenti
 #==============================================================================
-class Window_EquipHelp < Window_Base
-  def initialize(x, y, width)
-    super(x, y, width, fitting_height(1))
-    refresh
-  end
-
-  #--------------------------------------------------------------------------
-  # * Scrittura
-  #--------------------------------------------------------------------------
-  def refresh
-    contents.clear
-    change_color(normal_color)
+class Window_EquipHelp < Window_KeyHelp
+  def initialize(width)
+    super(2, 0, 0, width)
     draw_help_remove
     draw_help_change
   end
@@ -911,19 +899,14 @@ class Window_EquipHelp < Window_Base
   # * Scrive l'aiuto di rimuovere l'equip
   #--------------------------------------------------------------------------
   def draw_help_remove
-    draw_key_icon(:X, 0, 0)
-    draw_text(24, 0, contents_width / 2 - 24, line_height, Vocab.help_remove)
+    set_command(0, Key_Command_Container.new([:X], Vocab.help_remove))
   end
 
   #--------------------------------------------------------------------------
   # * Scrive l'aiuto di cambiare eroe
   #--------------------------------------------------------------------------
   def draw_help_change
-    width = 50 + text_size(Vocab.help_actor_change).width
-    x = contents_width - width
-    draw_key_icon(:LEFT, x, 0)
-    draw_text(x, 0, width, line_height, Vocab.help_actor_change, 1)
-    draw_key_icon(:RIGHT, contents_width - 24, 0)
+    set_command(1, Key_Command_Container.new([:LEFT, :RIGHT], Vocab.help_actor_change))
   end
 end
 
@@ -951,8 +934,8 @@ class Scene_NewEquip < Scene_MenuBase
   # * Restituisce l'eroe attuale
   # @return [Game_Actor]
   #--------------------------------------------------------------------------
-  def actor;
-    @actor;
+  def actor
+    @actor
   end
 
   #--------------------------------------------------------------------------
@@ -992,7 +975,7 @@ class Scene_NewEquip < Scene_MenuBase
   # * Crea la finestra aiuto equipaggiamento
   #--------------------------------------------------------------------------
   def create_command_help_window
-    @comm_help_window = Window_EquipHelp.new(0, 0, equip_width)
+    @comm_help_window = Window_EquipHelp.new(equip_width)
     @comm_help_window.y = Graphics.height - @comm_help_window.height
   end
 

@@ -129,9 +129,9 @@ class Game_Map
     events.select{|_, event| event.save_chrystal? }.map{ |evt| evt[1] }
   end
 
-  # @return [Game_Event]
+  # @return [Game_Event, nil]
   def nearest_save_chrystal
-    save_chrystals.sort_by{|chrystal| player_distance_from_event chrystal}.first
+    save_chrystals.min_by{|chrystal| player_distance_from_event chrystal}
   end
 
   # determina la distanza tra eroe ed evento, in tile

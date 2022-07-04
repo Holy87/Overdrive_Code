@@ -206,14 +206,18 @@ module DataManager
 end
 
 class Game_Battler
-  alias steal_damage make_obj_damage_value unless $@
+  alias :damage_action_before_steal :execute_damage unless $@
 
+  # processo di esecuzione del danno
   # @param [Game_Battler] user
-  # @param [RPG::UsableItem] obj
-  def make_obj_damage_value(user, obj)
-    steal_damage(user, obj)
-    steal_action(user) if obj.steal?
-    robbery_action(user) if obj.robbery?
+  def execute_damage(user)
+    #noinspection RubyArgCount
+    damage_action_before_steal(user)
+    obj = @no_action_dmg ? nil : user.action.action_object
+    if obj != nil
+      steal_action(user) if obj.steal?
+      robbery_action(user) if obj.robbery?
+    end
   end
 
   # non implementato. Va nelle sottoclassi
@@ -238,7 +242,7 @@ end
 class Game_Actor < Game_Battler
   # azione per essere derubato dal nemico
   # @param [Game_Enemy] user
-  def steal_action2(user)
+  def steal_action(user)
     stolen_item = try_steal(user)
     if stolen_item
       add_drop stolen_item

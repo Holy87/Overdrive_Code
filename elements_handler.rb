@@ -398,12 +398,12 @@ class Game_Battler
   end
 
   # @param [RPG::UsableItem] obj
-  # @param [Game_Enemy, Game_Actor] user
+  # @param [Game_Enemy, Game_Actor, Game_Battler] user
   # @return [Float]
   def max_amplifier(user, obj)
     return 1.0 unless obj.is_a?(RPG::Skill)
-    return user.heal_power_rate if obj.base_atk < 0
-    obj.element_set.max_by{|ele_id| user.element_amplifier(ele_id)}
+    return user.heal_power_rate.to_f if obj.base_damage < 0
+    obj.element_set.max_by{|ele_id| user.element_amplifier(ele_id)} || 1.0
   end
 
   def heal_power_rate

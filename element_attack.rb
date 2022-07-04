@@ -51,6 +51,7 @@ class Game_Actor < Game_Battler
   #-----------------------------------------------------------------------------
   def plus_state_equip
     states = []
+    equips.compact.map { |equip| equip.magic_states_plus }.select { || }
     equips.each {|equip|
       next if equip.nil?
       equip.magic_states_plus.each {|state_id|

@@ -372,7 +372,7 @@ class Window_NotificationMessages < Window_Selectable
     draw_text(rect.x + 24, rect.y, contents_width - 24, line_height, message.title)
     unless message.read?
       x = rect.x + text_size(message.title + ' ').width + 24
-      draw_icon(Settings::NEW_ADVICE_ICON, x, rect.y)
+      draw_icon(Icon.new_advice, x, rect.y)
       #change_color crisis_color
       #draw_text(x, rect.y, contents_width, line_height, " - #{Vocab::New_Message}")
     end

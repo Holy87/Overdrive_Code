@@ -181,7 +181,7 @@ class Window_MenuCommand < Window_Command
     if @list[index][:ext] == :new
       x = rect.x + text_width(command_name(index))
       y = rect.y
-      draw_icon(Settings::NEW_ADVICE_ICON, x, y, enabled)
+      draw_icon(Icon.new_advice, x, y, enabled)
     end
   end
 end

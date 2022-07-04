@@ -124,17 +124,18 @@
 
     ● Win.version:
       restituisce un decimale con il numero di versione di Windows in uso.
+      Questa libreria è stata deprecata da Windows 8.1, e restituirà 6.2 anche
+      su Windows 8.1, 10 e 11.
         5.0 -> Windows 2000
         5.1 -> Windows Xp
         5.2 -> Windows Xp (64 bit)
         6.0 -> Windows Vista
         6.1 -> Windows 7
-        6.2 -> Windows 8
-        6.3 -> Windows 8.1
-        10.0-> Windows 10
+        6.2 -> Windows 8+
 
     ● Win.username
-      Restituisce una stringa con nome utente di Windows attualmente in uso
+      Restituisce una stringa
+ con nome utente di Windows attualmente in uso
 
     ● Win.homepath
       Restituisce il percorso utente del computer. Esempio:
@@ -406,7 +407,6 @@ module Win
   # | LPTSTR           | null-terminated string pointer | A*                    |
   # * note: Game.exe is 32-bit program, WPARAM and LPARAM are always 32-bit.
 
-
   # Win32APIs
   # noinspection RubyConstantNamingConvention
   GetUserName = Win32API.new('advapi32', 'GetUserName', 'PP', 'I')
@@ -584,7 +584,8 @@ module Win
     }
   end
 
-  # Restituisce la versione di Windows in uso
+  # Restituisce la versione di Windows in uso.
+  # @deprecated deprecato oltre Windows 8, che restituirà sempre 6.2.
   # @return [String]
   def self.version
     s = [20 + 128, 0, 0, 0, 0, ''].pack('LLLLLa128')

@@ -614,13 +614,25 @@ module ExtraAttr
       when ATTACK_ANIMATION
         @custom_attack_animation = $1.to_i
       when AVOID_DEFENSE
-        @qualities.push(:avoid_defense)
+        @qualities.push(:ignore_defense)
       when PARAM_BONUS_ADD
         set_param_add($1.downcase.to_sym, $2.to_i)
       when PARAM_BONUS_PER
         set_param_per($1.downcase.to_sym, $2.to_i)
+      when PARAM_BONUS_PER_LCY
+        set_param_per($1.downcase.to_sym, $2.to_i - 100)
       when APEIRON
         @qualities.push(:apeiron)
+      when AP_RATE
+        @ap_rate = $2.to_f / 100
+      when NORMAL_ATK_BONUS
+        @normal_attack_bonus = $1.to_f / 100.0
+      when NORMAL_ATK_PLUS
+        @normal_attack_plus = $1.to_i
+      when PERPETUAL_STATE
+        @perpetual_states.push($1.to_i)
+      when HIDE_STATE_INFO
+        @qualities.push(:hide_state_info)
       else
         #nothing
       end
@@ -673,22 +685,43 @@ module ExtraAttr
   end
 
   def vanish_on_attack?
-    has? :vanish_on_attack
+    quality? :vanish_on_attack
   end
 
   # determina se ha la qualità
   # @param [Symbol] quality_sym
   def has?(quality_sym)
-    @qualities.include? quality_sym
+    return true if @qualities.include? quality_sym
+    if self.class.method_defined?(quality_sym)
+      feature = self.send(quality_sym)
+      if feature.is_a?(Numeric)
+        feature > 0
+      else
+        feature
+      end
+    else
+      false
+    end
   end
 
   # determina se lo stato è un bonus set
   def set_bonus_state?
-    has? :set_bonus
+    quality? :set_bonus
   end
 
   def fixed_duration?
-    has? :fixed_duration
+    quality? :fixed_duration
+  end
+
+  # @param [Symbol] trigger_type
+  # @return [Array<RPG::Battle_Trigger>]
+  def triggers_for(trigger_type)
+    @battle_triggers[trigger_type] || []
+  end
+
+  # @return [Hash{Symbol->Array<RPG::Battle_Trigger>}]
+  def all_battle_triggers
+    @battle_triggers
   end
 
   private
@@ -713,10 +746,18 @@ module ExtraAttr
   end
 
   def set_param_per(stat, value)
-    stat = :maxhp if [:mhp, :maxhp].include?(stat)
-    stat = :maxmp if [:mmp, :maxmp].include?(stat)
+    stat = :maxhp if [:mhp, :max_hp].include?(stat)
+    stat = :maxmp if [:mmp, :max_mp].include?(stat)
     return set_param_add(stat, value) if [:agi, :hit, :cri].include?(stat)
     @stat_per[stat] = value
+  end
+
+  # @param [Symbol] trigger_type
+  # @param [Fixnum] value
+  # @param [Fixnum] rate
+  def add_battle_trigger(trigger_type, value, rate = 100)
+    @battle_triggers[trigger_type] ||= []
+    @battle_triggers[trigger_type].push(RPG::Battle_Trigger.new(trigger_type, value, rate))
   end
 end
 
@@ -777,5 +818,22 @@ module DataManager
     parse_bm_data($data_armors)
     parse_bm_data($data_states)
     parse_bm_data($data_enemies)
+  end
+end
+
+class RPG::Battle_Trigger
+  # @return [Symnol] tipo di trigger
+  attr_reader :type
+  # @return [Fixnum] valore generico del trigger (usato nel metodo)
+  attr_reader :value
+  # @return [Fixnum] rateo di probabilità
+  attr_reader :rate
+  # @param [Symbol] trigger_type
+  # @param [Object] value
+  # @param [Fixnum] rate
+  def initialize(trigger_type, value, rate = 100)
+    @type = trigger_type
+    @value = value
+    @rate = rate
   end
 end

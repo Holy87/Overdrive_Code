@@ -90,7 +90,7 @@ class Game_Party < Game_Unit
 
   # Restituisce il difensore del gruppo o nil (colui che prende danno al
   # posto degli alleati)
-  # @return [Game_Actor]
+  # @return [Game_Actor, nil]
   def defender
     battle_members.select { |member| member.defender? }.first
   end

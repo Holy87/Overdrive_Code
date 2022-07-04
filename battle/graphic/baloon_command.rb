@@ -40,7 +40,7 @@ module ActorCommandOptions
       18 => :magic
   }
 
-  UNHARMED_ICON = :attack
+  UNARMED_ICON = :attack
   DEFAULT_GUARD_ICON = :guard
   DEFAULT_SKILL_ICON = :skill
   ITEMS_ICON = :items
@@ -161,7 +161,7 @@ class Window_ActorCommand < Window_Command
     if actor.has_custom_attack?
       return actor.custom_attack_skill.icon_index
     end
-    return COMMAND_ICONS[UNHARMED_ICON] if actor.unharmed?
+    return COMMAND_ICONS[UNARMED_ICON] if actor.unarmed?
     actor.weapons.first.icon_index
   end
 
@@ -277,7 +277,7 @@ class RPG::Weapon
 end
 
 class Game_Actor < Game_Battler
-  def unharmed?
+  def unarmed?
     weapons.compact.empty?
   end
 end

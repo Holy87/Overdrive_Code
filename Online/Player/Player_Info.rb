@@ -145,7 +145,7 @@ class Window_PlayerInfo < Window_Base
     w2 = width / 2
     #noinspection RubyResolve
     draw_data(x, y, width / 2, Vocab.exp_a, player.exp)
-    draw_data(x2, y, w2, $data_system.gold_icon, player.gold)
+    draw_data(x2, y, w2, Icon.gold, player.gold)
   end
 
   # @param [Method] method

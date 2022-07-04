@@ -549,7 +549,11 @@ class Actor_BattleStatus
 
   # Anger gauge creation
   def create_anger_bar
-    real_bar_x =  actor.mp_gauge? ? @mp_bar.x + @mp_bar.width + 10 : bar_x
+    if actor.mp_gauge?
+      real_bar_x = bar_x + mp_width + 10
+    else
+      real_bar_x = bar_x
+    end
     @anger_bar = Battle_Charge_Bar.new(real_bar_x, 18, anger_width, @dark_background)
     @anger_bar.set_value(actor.anger_rate * 100)
     register_object(@anger_bar)
@@ -574,7 +578,7 @@ class Actor_BattleStatus
   def mp_width
     max_width = bar_max_width
     width = [actor.mmp * mp_divisor(max_width), max_width].min
-    width = [width, width - (10 + anger_width)].min if actor.charge_gauge?
+    width = [width, bar_max_width - (10 + anger_width)].min if actor.charge_gauge?
     width
   end
 

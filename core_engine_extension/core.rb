@@ -70,7 +70,7 @@
 #  ● <attacco magico: x%> l'attacco diventa una magia con il x% dello spirito. Tieni
 #  conto che nel caso degli eroi solo se l'arma principale ha attacco magico, usa
 #  quello. Per status ed altri equipaggiamenti, non viene applicato.
-#  ● <dona x: y%> dona il parametro x dell'y%, solo status
+#  ● <dona x: y%> dona il parametro x dell'y%, solo status - DISATTIVATO
 #  ● <pv vittoria: x%> cura il X% di pv alla vittoria
 #  ● <pm vittoria: x%> cura il X% di pm alla vittoria
 #  ● <rifletti fis: x%> riflette x% di danno fisico

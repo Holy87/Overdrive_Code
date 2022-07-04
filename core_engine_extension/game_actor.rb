@@ -552,12 +552,12 @@ class Game_Actor < Game_Battler
   
     # Modifica il danno se c'è un difensore
     def apply_transfer_damage
-      riduci_danno_difensore
-      riduci_danno_evocazione
+      apply_defender_damage
+      apply_summon_damage_reduction
     end
   
     # Modifica il danno se c'è un difensore
-    def riduci_danno_difensore
+    def apply_defender_damage
       party_def = $game_party.defender
       if party_def != nil and !self.defender? and @hp_damage > 0
         old_dmg = @hp_damage

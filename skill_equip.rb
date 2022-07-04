@@ -1,4 +1,3 @@
-require 'rm_vx_data'
 =begin
 SKILL EQUPPABILI v1.0
 Questo script mi permette di creare status ed equipaggiamenti che possono

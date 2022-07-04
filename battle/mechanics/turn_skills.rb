@@ -326,7 +326,8 @@ class Game_Enemy < Game_Battler
 end
 
 class Game_Actor < Game_Battler
-  alias h87_step_forget_skill forget_skill unless $@
+  alias :h87_step_forget_skill :forget_skill unless $@
+  alias :h87_turn_skills_on_player_walk :on_player_walk unless $@
 
   def forget_skill(skill_id)
     h87_step_forget_skill skill_id
@@ -620,19 +621,3 @@ class Scene_Skill < Scene_Base
     end
   end
 end #scene_skill
-
-#===============================================================================
-# ** Classe Game_Party
-#===============================================================================
-class Game_Party < Game_Unit
-  alias h87is increase_steps unless $@
-
-  # incrementa i passi dell'eroe
-  # noinspection RubyBlockToMethodReference
-  def increase_steps
-    h87is
-    $game_party.members.each { |member|
-      member.scale_step
-    }
-  end
-end #game_party

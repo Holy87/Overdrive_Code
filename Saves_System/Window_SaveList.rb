@@ -71,8 +71,7 @@ class Window_SaveList < Window_Selectable
   def draw_item(index)
     item = @data[index]
     return if item.nil?
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     draw_save_name(item, rect)
   end
 

@@ -511,7 +511,7 @@ class Window_ItemInfo < Window_DataInfo
   # @param [Integer] y
   # @param [Integer] w
   # @param [Integer] h
-  def initialzie(x, y, w, h)
+  def initialize(x, y, w, h)
     @see_possessed = false
     @see_sellprice = H87Item::Settings::DRAW_PRICE
     refresh_size

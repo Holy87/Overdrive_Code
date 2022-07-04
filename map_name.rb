@@ -148,6 +148,7 @@ class Scene_Menu < Scene_Base
     @location_window = Window_Location.new(x, 0, width)
     @location_window.y = Graphics.height - @location_window.height
     @status_window.height = Graphics.height - @location_window.height
+    @status_window.refresh
   end
   #--------------------------------------------------------------------------
   # * Creazione della finestra del tempo di gioco

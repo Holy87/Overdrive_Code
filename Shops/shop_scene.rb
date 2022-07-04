@@ -109,7 +109,6 @@ class Scene_NewShop < Scene_MenuBase
   end
 
   def back
-    @keys_window.set_mode :nothing
     @shop_window.set_action :nothing
     item_list_windows.each { |w| w.smooth_move(0 - w.width, w.y) }
     @command_window.activate

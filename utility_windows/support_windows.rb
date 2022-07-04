@@ -251,7 +251,7 @@ class Window_Category < Window_Selectable
     rect = item_rect(index)
     self.contents.clear_rect(rect)
     item = @data[index]
-    self.draw_text(rect.x, rect.y, rect.width, WLH, item.name)
+    self.draw_text(rect.x, rect.y, rect.width, line_height, item.name)
   end
   #--------------------------------------------------------------------------
   # * Ottiene l'oggetto
@@ -451,11 +451,11 @@ class Window_DataInfo < Window_Base
   # * Disegna l'indice della pagina
   #--------------------------------------------------------------------------
   def draw_page_index
-    self.contents.gradient_fill_rect(0,0,contents.width, WLH, sc1, sc2, true)
+    self.contents.gradient_fill_rect(0,0,contents.width, line_height, sc1, sc2, true)
     contents.clear_rect(0,0,1,1)
     contents.clear_rect(contents.width-1, 0,1,1)
-    contents.clear_rect(0,WLH-1,1,1)
-    contents.clear_rect(contents.width-1,WLH-1,1,1)
+    contents.clear_rect(0,line_height-1,1,1)
+    contents.clear_rect(contents.width-1,line_height-1,1,1)
     draw_page_state
   end
   #--------------------------------------------------------------------------
@@ -473,14 +473,13 @@ class Window_DataInfo < Window_Base
     return if @pages.size <= 1
     x = 0
     w = contents.width/2
+    change_color normal_color
     contents.font.color.alpha = fp? ? 128 : 255
-    self.draw_text(x, 0, w, WLH, "<")
+    self.draw_text(x, 0, w, line_height, "<")
     x += contents.text_size("<").width + 5
-    for i in 0..@pages.size-1
-      x += draw_page_name(x, @pages[i])
-    end
+    (0..@pages.size - 1).each { |i| x += draw_page_name(x, @pages[i]) }
     contents.font.color.alpha = lp? ? 128 : 255
-    self.draw_text(x, 0, w, WLH, ">")
+    self.draw_text(x, 0, w, line_height, ">")
     change_color(normal_color)
   end
   #--------------------------------------------------------------------------
@@ -492,11 +491,11 @@ class Window_DataInfo < Window_Base
     name = page_name(symbol)
     if page_active?(symbol)
       contents.font.color.alpha = 255
-      contents.gradient_fill_rect(x-2,0,contents.text_size(name).width+4,WLH,sc2,sc1,true)
+      contents.gradient_fill_rect(x-2,0,contents.text_size(name).width+4,line_height,sc2,sc1,true)
     else
       contents.font.color.alpha = 128
     end
-    self.draw_text(x, 0, contents.width/2, WLH, name)
+    self.draw_text(x, 0, contents.width/2, line_height, name)
     contents.text_size(name).width + 5
   end
   #--------------------------------------------------------------------------

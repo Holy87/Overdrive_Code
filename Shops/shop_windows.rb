@@ -252,8 +252,7 @@ class Window_ShopBuyN < Window_ShopItems
     good = @data[index]
     return if good.nil?
     item = good.item
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     enabled = enable?(good)
     draw_item_name(item, rect.x, rect.y, enabled, 200)
     if shop.sold_out? item
@@ -286,8 +285,7 @@ class Window_ShopSellN < Window_ShopItems
   def draw_item(index)
     item = @data[index]
     return if item.nil?
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     enabled = enable?(index)
     draw_item_name(item, rect.x, rect.y, enabled, 200)
     draw_item_number rect, item
@@ -337,8 +335,7 @@ class Window_ShopRebuy < Window_ShopItems
   def draw_item(index)
     article = @data[index]
     return if article.nil?
-    rect = item_rect(index)
-    rect.width -= 4
+    rect = item_rect_for_text(index)
     enabled = enable?(article)
     item = article.item
     draw_item_name(item, rect.x, rect.y, enabled, 200)
@@ -366,71 +363,13 @@ end
 # * Window_ShopKeys
 # finestra che mostra gli aiuti tasti nello shop
 #==============================================================================
-class Window_ShopKeys < Window_Base
+class Window_ShopKeys < Window_KeyHelp
 
   # Inizializzazione
   def initialize(x, y, width)
-    super(x, y, width, fitting_height(1))
-    @mode = :nothing
-    refresh
-  end
-
-  # refresh
-  def refresh
-    contents.clear
-    change_color(normal_color)
-    case @mode
-    when :nothing
-      refresh_select
-    when :buy
-      refresh_buy
-    when :sell
-      refresh_sell
-    when :rebuy
-      refresh_rebuy
-    else
-      #nulla
-    end
-  end
-
-  # refresh della selezione degli oggetti
-  def refresh_select
-    draw_commands(:C, Vocab.shop_select, :X, Vocab.key_change_view)
-  end
-
-  # refresh della selezione della quantità da comprare
-  def refresh_buy
-    draw_commands(:C, Vocab.key_buy, :X, Vocab.key_a_buy)
-  end
-
-  # refresh della selezione della quantità da vendere
-  def refresh_sell
-    draw_commands(:C, Vocab.key_sell, :X, Vocab.key_a_sell)
-  end
-
-  def refresh_rebuy
-    draw_commands(:C, Vocab.key_rebuy, :X, Vocab.key_a_rebuy)
-  end
-
-  # imposta la modalità e fa il refresh della finestra
-  # mode può essere :select, :buy o :sell
-  def set_mode(mode)
-    return if @mode == mode
-    @mode = mode
-    refresh
-  end
-
-  # disegna i comandi con il testo descrittivo
-  # @param [Symbol] com1
-  # @param [String] help1
-  # @param [Symbol] com2
-  # @param [String] help2
-  def draw_commands(com1, help1, com2, help2)
-    width = contents_width / 2
-    draw_key_icon(com1, 0, 0)
-    draw_text(24, 0, width - 24, line_height, help1)
-    draw_key_icon(com2, width, 0)
-    draw_text(width + 24, 0, width - 24, line_height, help2)
+    super(2, x, y, width)
+    set_command 0, Key_Command_Container.new([:C], Vocab.shop_select)
+    set_command 1, Key_Command_Container.new([:X], Vocab.key_change_view)
   end
 end
 

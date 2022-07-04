@@ -143,10 +143,10 @@ module Sinergy_Stats
   SIN_BONUS = /<bonus sinergia:[ ]*([+\-]\d+)([%％])>/i
   SIN_DEFEN = /<difesa sinergia:[ ]*([+\-]\d+)([%％])>/i
   SIN_ON_GRD = /<sinergia difendi:[ ]*(\d+)([%％])>/i
-  SIN_ON_ATK = /<sinergia attacca:[ ]*(\d+)([%％])>/i
-  SIN_ON_STA = /<sinergia status:[ ]*(\d+)([%％])>/i
-  SIN_ON_WEA = /<sinergia debole:[ ]*(\d+)([%％])>/i
-  SIN_ON_HEA = /<sinergia cura:[ ]*(\d+)([%％])>/i
+  SIN_ON_ATK = /<sinergia attacca:[ ]*([+\-]\d+)([%％])>/i
+  SIN_ON_STA = /<sinergia status:[ ]*([+\-]\d+)([%％])>/i
+  SIN_ON_WEA = /<sinergia debole:[ ]*([+\-]\d+)([%％])>/i
+  SIN_ON_HEA = /<sinergia cura:[ ]*([+\-]\d+)([%％])>/i
   SIN_ON_KIL = /<sinergia uccisione:[ ]*(\d+)>/i
   SIN_ON_VIC = /<sinergia vittoria:[ ]*(\d+)>/i
   SIN_ON_EVA = /<sinergia evasione:[ ]*(\d+)>/i
@@ -564,11 +564,10 @@ class Game_Battler
   # Restituisce gli stati alterati più quello del bonus sinergia se attivo
   # @return [Array<RPG::State>]
   def states
-    _states = h87sinergia_sts
-    if SINERGY_STATE > 0 and actor? and $game_party.sinergy_active?
-      _states.push($data_states[SINERGY_STATE])
-    end
-    _states
+    return h87sinergia_sts if SINERGY_STATE == 0
+    return h87sinergia_sts unless actor?
+    return h87sinergia_sts unless $game_party.sinergy_active?
+    h87sinergia_sts | $data_states[SINERGY_STATE]
   end
 end #game_battler
 

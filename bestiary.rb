@@ -459,7 +459,7 @@ class Window_EnemyList < Window_List
   # Disegna l'oggetto
   #     index: indice dell'oggetto
   def draw_item(index)
-    rect = item_rect(index)
+    rect = item_rect_for_text(index)
     self.contents.clear_rect(rect)
     item = @data[index]
     if $game_party.known_enemy?(item.id)
@@ -930,7 +930,7 @@ class Window_EnemyInfo < Window_DataInfo
     skill = $data_skills[action.skill_id]
     draw_icon(skill.icon_index, 0, y)
     if $game_party.all_members.select { |member| member.can_assimilate? }.any?
-      draw_icon(H87AttrSettings::ASSIMILATE_ICON, 0, y)
+      draw_icon(H87AttrSettings::ASSIMILATE_ICON, 0, y) if skill.assimilable?
     end
     draw_text(24, y, contents.width - 24, line_height, skill.name)
     draw_condition(y, action)
@@ -994,7 +994,7 @@ class Window_EnemyInfo < Window_DataInfo
     draw_bg_rect(0, y, contents.width, line_height)
     change_color normal_color
     draw_item_name(drop_item.item, 0, y, true, contents_width)
-    text = sprintf("%10.1f%%", drop_item.drop_percentage)
+    text = sprintf("%g%%", drop_item.drop_percentage)
     draw_text(24, y, contents.width - 24, line_height, text, 2)
   end
 

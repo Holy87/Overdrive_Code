@@ -116,7 +116,7 @@ class Key_Command_Container
   attr_accessor :enabled
   #--------------------------------------------------------------------------
   # * inizializzazione
-  # @param [Array] keys
+  # @param [Array, Symbol] keys
   # @param [String] text
   # @param [Boolean] enabled
   #--------------------------------------------------------------------------

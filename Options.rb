@@ -981,8 +981,7 @@ class Window_GameOptions < Window_Selectable
   def draw_item(index)
     item = @data[index]
     if item
-      rect = item_rect(index)
-      rect.width -= 4
+      rect = item_rect_for_text(index)
       draw_item_name(item, rect.x, rect.y, enable?(item))
       draw_item_state(rect, item)
     end

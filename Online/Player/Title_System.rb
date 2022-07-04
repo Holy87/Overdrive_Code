@@ -14,7 +14,7 @@ module Player_Titles
       6  => ['Spendaccione','Ottenuto per aver speso più di 1.000.000 ai negozi.'],
       7  => ['Collezionista','Ottenuto per aver trovato tutti i gettoni kora-kora',2],
       8  => ['RPG2S Staff','Fai parte dello staff di RPG2S! Wow!',4],
-      9  => ['Devastatore','Ottenuto perché sei riuscito ad infliggere|99.999 danni in un solo colpo!',3],
+      9  => ['Devastatore','Ottenuto perché sei riuscito ad infliggere|25.000 danni PV in un solo colpo!',2],
       10 => ['Fantallenatore','Ottenuto per aver conquistato tutte le Dominazioni.|Gotta catch\'em all!',2],
       11 => ['Serpente Solido','Ottenuto per essere riuscito ad infiltrarti nell\'aereonave|senza essere stato scoperto.',2, true],
       12 => ['Alchimista d\'acciaio','Ottenuto per aver elaborato|oltre 1000 oggetti con l\'alchimia.',2],
@@ -280,7 +280,7 @@ class Window_PlayerTitles < Window_Selectable
 
   def draw_item(index)
     title = @data[index]
-    rect = item_rect(index)
+    rect = item_rect_for_text(index)
     change_color title_color(title.type)
     draw_text(rect, title.name)
   end
@@ -322,11 +322,12 @@ class Game_Battler
   alias h87_title_system_execute_damage execute_damage unless $@
 
   # @param [Game_Battler] user
-  def execute_damage(user, no_action = false)
-    h87_title_system_execute_damage(user, no_action)
-    return if no_action
+  def execute_damage(user)
+    h87_title_system_execute_damage(user)
+    return if @no_action_dmg
     if self.enemy? and user.actor?
-      $game_system.unlock_title(9) if @hp_damage >= 99999
+      $game_system.unlock_title(9) if @hp_damage >= 25000
+      $game_system.unlock_title(50) if @hp_damage >= 99999
     end
   end
 end
