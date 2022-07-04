@@ -6,8 +6,17 @@
 module H87Item
   # IMPOSTAZIONI DELLO SCRIPT
   module Settings
-    # Disegnare il prezzo di vendita dell'oggetto?
-    DRAW_PRICE = true
+    # numero massimo accumulabile per ogni unità di oggetti. Nota che
+    # è possibile impostare diversamente per ogni notetag.
+    DEFAULT_MAX_ITEMS = 99
+    # quanti frame deve aspettare prima di cominciare a scorrere
+    # automaticamente
+    SCROLL_FRAME_WAIT = 120
+    # determina il numero massimo di oggetti in elenco (status aggiunti ecc...) oltre
+    # il quale invece di mstrarli in lista mostra una griglia di icone
+    MAX_SINGLE_ITEMS = 2
+    # velcità di scorrimento
+    SCROLL_FRAME_SPEED = 1
     # Impostare la formula di vendita
     SELLPRICE_FORMULAS = {
       :default => 'item.price / 3',
@@ -461,6 +470,7 @@ class Scene_Item < Scene_Base
     h87item_update
     @category_window.update
     @viewport.update
+    @info_window.update
     @item_popup.y = @target_window.strcursor.y + 30 if @item_popup.visible
   end
 
@@ -576,7 +586,11 @@ class Window_ItemInfo < Window_DataInfo
   # @param [Integer] h
   def initialize(x, y, w, h)
     @see_possessed = false
-    @see_sellprice = H87Item::Settings::DRAW_PRICE
+    @simulate = false
+    @show_requirements = false
+    @show_item_name = false
+    @original_item = nil
+    @hidden_stats = []
     refresh_size
     super(x, y, w, h)
   end
@@ -1025,11 +1039,13 @@ class Window_ItemInfo < Window_DataInfo
   # Disegna un set di icone
   # @param [Array<Integer>] icon_array
   def draw_icon_set(icon_array)
-    columns = contents_width / 24
-    (0..icon_array.size - 1).each { |i|
-      draw_icon(icon_array[i], 24 * (i % columns), @line + (i / columns * 24))
-    }
-    @line += 24 * (icon_array.size / columns * 24 + 2)
+    columns = contents_width / ICON_WIDTH
+    unless @simulate
+      (0..icon_array.size - 1).each { |i|
+        draw_icon(icon_array[i], ICON_WIDTH * (i % columns), @line + (i / columns * 24))
+      }
+    end
+    @line += 24 * (icon_array.size.to_f / columns).ceil
   end
 
   # disegna il numero posseduto di quest'oggetto dal gruppo

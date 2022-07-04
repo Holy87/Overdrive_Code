@@ -380,6 +380,7 @@ class Window_ItemInfo < Window_DataInfo
   # mostra il rank oggetto con un numero di stelle
   def draw_item_class
     return if item.tier == 0
+    return @line += 24 if @simulate
     icon = 568 # icona stella
     text = 'Classe'
     y = @line
